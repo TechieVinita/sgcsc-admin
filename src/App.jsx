@@ -8,6 +8,9 @@ import ResetPassword from './pages/ResetPassword';
 import AddResults from './pages/AddResults';
 import PrivateRoute from './components/PrivateRoute';
 
+import GalleryPage from "./pages/GalleryPage";
+
+
 export default function App() {
   const [token, setToken] = useState(localStorage.getItem('token') || null);
 
@@ -22,6 +25,8 @@ export default function App() {
         <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
         <Route path="/students" element={<PrivateRoute><Students /></PrivateRoute>} />
         <Route path="/add-result" element={<PrivateRoute><AddResults /></PrivateRoute>} />
+        <Route path="/gallery" element={<PrivateRoute><GalleryPage /></PrivateRoute>} />
+
 
         {/* 404 fallback */}
         <Route path="*" element={
