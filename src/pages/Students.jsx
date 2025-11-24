@@ -1,5 +1,6 @@
 // src/pages/Students.jsx
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import API from '../api/api';
 import StudentTable from '../components/StudentTable';
 import Navbar from '../components/Navbar';
@@ -11,6 +12,7 @@ export default function Students() {
   const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const fetchStudents = async () => {
     setLoading(true);
@@ -21,6 +23,12 @@ export default function Students() {
     } catch (err) {
       console.error('fetchStudents:', err);
       setError(err.userMessage || 'Failed to fetch students');
+      // if unauthorized, navigate to login
+      if (err?.response?.status === 401 || !localStorage.getItem('token')) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        navigate('/login');
+      }
     } finally {
       setLoading(false);
     }
@@ -28,6 +36,7 @@ export default function Students() {
 
   useEffect(() => {
     fetchStudents();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleDelete = async (id) => {
@@ -42,13 +51,12 @@ export default function Students() {
   };
 
   const handleEdit = (student) => {
-    // You can route to edit page or open modal for editing
-    // e.g. navigate(`/students/${student._id}`)
+    // route to an edit page if you create one
+    // navigate(`/students/${student._id}`)
     alert(`Edit student: ${student.name}`);
   };
 
   const handleAdd = (newStudent) => {
-    // Ensure consistent shape (server returns the created doc)
     setStudents((prev) => [newStudent, ...prev]);
     setShowModal(false);
   };
@@ -62,9 +70,10 @@ export default function Students() {
         <div className="container-fluid p-4">
           <div className="d-flex justify-content-between align-items-center mb-4">
             <h2 className="fw-bold">Students</h2>
-            <button className="btn btn-primary" onClick={() => setShowModal(true)}>
-              Add Student
-            </button>
+            <div>
+              <button className="btn btn-outline-secondary me-2" onClick={fetchStudents}>Refresh</button>
+              <button className="btn btn-primary" onClick={() => setShowModal(true)}>Add Student</button>
+            </div>
           </div>
 
           {error && (

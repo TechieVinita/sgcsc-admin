@@ -1,13 +1,15 @@
-import { Navigate } from 'react-router-dom';
+// src/components/PrivateRoute.jsx
+import { Navigate, useLocation } from 'react-router-dom';
 
 export default function PrivateRoute({ children }) {
   const token = localStorage.getItem('token');
+  const location = useLocation();
 
-  // If no token, redirect to login page
   if (!token) {
-    return <Navigate to="/" replace />;
+    // send user to login and keep track of where they were going
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // If token exists, render the protected component
+  // token exists — we allow render. Server will enforce permissions.
   return children;
 }
