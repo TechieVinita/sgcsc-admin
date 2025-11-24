@@ -35,6 +35,18 @@ export default function Sidebar() {
             Add Result
           </NavLink>
         </li>
+
+        {/* ✅ Add Gallery Link */}
+        <li className="nav-item mb-2">
+          <NavLink
+            to="/gallery"
+            className={({ isActive }) =>
+              `nav-link ${isActive ? 'active bg-primary text-white' : 'text-dark'} rounded`
+            }
+          >
+            Gallery
+          </NavLink>
+        </li>
       </ul>
     </div>
   );
