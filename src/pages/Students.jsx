@@ -1,5 +1,5 @@
 // src/pages/Students.jsx
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../api/api';
 import StudentTable from '../components/StudentTable';
@@ -12,6 +12,7 @@ export default function Students() {
   const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState('');
   const navigate = useNavigate();
 
   const fetchStudents = async () => {
@@ -23,10 +24,15 @@ export default function Students() {
     } catch (err) {
       console.error('fetchStudents:', err);
       setError(err.userMessage || 'Failed to fetch students');
+
       // if unauthorized, navigate to login
-      if (err?.response?.status === 401 || !localStorage.getItem('token')) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+      if (err?.response?.status === 401) {
+        try {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          localStorage.removeItem('admin_token');
+          localStorage.removeItem('admin_user');
+        } catch (_) {}
         navigate('/login');
       }
     } finally {
@@ -51,8 +57,8 @@ export default function Students() {
   };
 
   const handleEdit = (student) => {
-    // route to an edit page if you create one
-    // navigate(`/students/${student._id}`)
+    // you can later replace this with a dedicated edit page
+    // navigate(`/students/${student._id}`);
     alert(`Edit student: ${student.name}`);
   };
 
@@ -61,6 +67,18 @@ export default function Students() {
     setShowModal(false);
   };
 
+  const filteredStudents = useMemo(() => {
+    if (!search.trim()) return students;
+    const term = search.trim().toLowerCase();
+    return students.filter((s) => {
+      return (
+        (s.name && s.name.toLowerCase().includes(term)) ||
+        (s.rollNo && s.rollNo.toLowerCase().includes(term)) ||
+        (s.email && s.email.toLowerCase().includes(term))
+      );
+    });
+  }, [students, search]);
+
   return (
     <div className="d-flex min-vh-100 bg-light">
       <Sidebar />
@@ -68,11 +86,30 @@ export default function Students() {
         <Navbar />
 
         <div className="container-fluid p-4">
-          <div className="d-flex justify-content-between align-items-center mb-4">
-            <h2 className="fw-bold">Students</h2>
-            <div>
-              <button className="btn btn-outline-secondary me-2" onClick={fetchStudents}>Refresh</button>
-              <button className="btn btn-primary" onClick={() => setShowModal(true)}>Add Student</button>
+          <div className="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+            <h2 className="fw-bold mb-0">Students</h2>
+            <div className="d-flex gap-2">
+              <input
+                type="text"
+                className="form-control form-control-sm"
+                placeholder="Search by name, roll no, or email"
+                style={{ minWidth: 220 }}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              <button
+                className="btn btn-outline-secondary"
+                onClick={fetchStudents}
+                disabled={loading}
+              >
+                {loading ? 'Refreshing…' : 'Refresh'}
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={() => setShowModal(true)}
+              >
+                Add Student
+              </button>
             </div>
           </div>
 
@@ -87,7 +124,11 @@ export default function Students() {
               {loading ? (
                 <div className="p-4 text-center">Loading students...</div>
               ) : (
-                <StudentTable students={students} onEdit={handleEdit} onDelete={handleDelete} />
+                <StudentTable
+                  students={filteredStudents}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                />
               )}
             </div>
           </div>
@@ -98,7 +139,13 @@ export default function Students() {
         </div>
       </div>
 
-      {showModal && <AddStudentModal show={showModal} onClose={() => setShowModal(false)} onAdded={handleAdd} />}
+      {showModal && (
+        <AddStudentModal
+          show={showModal}
+          onClose={() => setShowModal(false)}
+          onAdded={handleAdd}
+        />
+      )}
     </div>
   );
 }

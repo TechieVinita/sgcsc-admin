@@ -1,7 +1,7 @@
 // src/pages/Login.jsx
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import API from '../api/api';
+import api from '../api/axiosInstance'; // shared axios instance
 
 export default function Login({ onLogin }) {
   const [email, setEmail] = useState('');
@@ -16,26 +16,44 @@ export default function Login({ onLogin }) {
     setLoading(true);
 
     try {
-      const res = await API.post('/auth/admin-login', { email, password });
-      // token may be at res.data.token or inside { token, user }
-      const token = res?.data?.token ?? res?.data?.data?.token;
-      if (!token) throw new Error('No token returned from server');
+      // POST to backend login
+      const res = await api.post('/auth/admin-login', { email, password });
 
-      // Save token
-      localStorage.setItem('token', token);
-      if (onLogin) onLogin(token);
+      // Possible shapes:
+      // 1) res.data = { success:true, data: { token, user } }
+      // 2) res.data = { token, user }
+      // 3) res.data = { token }
+      const payload = res?.data ?? {};
+      const token =
+        payload?.data?.token ?? payload?.token ?? payload?.accessToken ?? null;
 
-      // Try to fetch the admin user object
-      const user = await API.getAuthUser();
-      if (user) {
-        localStorage.setItem('user', JSON.stringify(user));
+      if (!token) {
+        throw new Error('No token returned by server');
       }
 
-      // Navigate to dashboard
+      // Save admin token (primary) and fallback 'token'
+      localStorage.setItem('admin_token', token);
+      localStorage.setItem('token', token); // keep for code that expects 'token'
+
+      // Prefer user returned in login response; if not present, do not call /auth/me here.
+      const returnedUser = payload?.data?.user ?? payload?.user ?? null;
+      if (returnedUser) {
+        localStorage.setItem('admin_user', JSON.stringify(returnedUser));
+        localStorage.setItem('user', JSON.stringify(returnedUser)); // fallback
+      }
+
+      if (onLogin) onLogin(token);
+
+      // Navigate to dashboard (fast). If you later add /auth/me, you can call it in App init.
       navigate('/dashboard');
     } catch (err) {
       console.error('Login error:', err);
-      setError(err?.userMessage || err?.response?.data?.message || 'Login failed');
+      const msg =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        err?.message ||
+        'Login failed';
+      setError(msg);
     } finally {
       setLoading(false);
     }

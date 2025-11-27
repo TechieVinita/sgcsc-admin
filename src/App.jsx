@@ -1,23 +1,32 @@
 // src/App.jsx
 import React, { Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from 'react-router-dom';
 import PrivateRoute from './components/PrivateRoute';
 
-// Lazy-loaded pages (improves initial bundle size)
+// Lazy-loaded pages
 const Login = lazy(() => import('./pages/Login'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Students = lazy(() => import('./pages/Students'));
-const StudentDetail = lazy(() => import('./pages/StudentDetail')); // optional: create if not present
+const StudentDetail = lazy(() => import('./pages/StudentDetail'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const AddResults = lazy(() => import('./pages/AddResults'));
-const ResultsList = lazy(() => import('./pages/ResultsList')); // optional: create if not present
+const ResultsList = lazy(() => import('./pages/ResultsList'));
 const GalleryPage = lazy(() => import('./pages/GalleryPage'));
 const Courses = lazy(() => import('./pages/Courses'));
 const Franchise = lazy(() => import('./pages/Franchise'));
 const MarksheetTemplates = lazy(() => import('./pages/MarksheetTemplates'));
 
-// Dev sample image - you can replace with a cloud URL in production
-export const DEV_SAMPLE_IMAGE = '/mnt/data/58e83842-f724-41ef-b678-0d3ad1e30ed8.png';
+// Admin upload/create affiliation page (no separate admin folder)
+const UploadAffiliation = lazy(() => import('./components/UploadAffiliation'));
+
+// Dev sample image (if you still need it elsewhere)
+export const DEV_SAMPLE_IMAGE =
+  '/mnt/data/58e83842-f724-41ef-b678-0d3ad1e30ed8.png';
 
 function LoadingFallback() {
   return (
@@ -31,7 +40,14 @@ function LoadingFallback() {
 }
 
 export default function App() {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  // check both token keys that might be used by different parts of your app
+  const adminToken =
+    typeof window !== 'undefined'
+      ? localStorage.getItem('admin_token')
+      : null;
+  const userToken =
+    typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  const isAuthenticated = Boolean(adminToken || userToken);
 
   return (
     <Router>
@@ -41,7 +57,7 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/reset-password" element={<ResetPassword />} />
 
-          {/* Protected routes */}
+          {/* Protected admin routes */}
           <Route
             path="/dashboard"
             element={
@@ -60,7 +76,6 @@ export default function App() {
             }
           />
 
-          {/* Student details (view / add result from student profile) */}
           <Route
             path="/students/:id"
             element={
@@ -124,6 +139,16 @@ export default function App() {
             }
           />
 
+          {/* Admin: Upload / manage affiliations */}
+          <Route
+            path="/affiliations"
+            element={
+              <PrivateRoute>
+                <UploadAffiliation />
+              </PrivateRoute>
+            }
+          />
+
           {/* Logout route: clears auth and redirects to login */}
           <Route
             path="/logout"
@@ -132,15 +157,25 @@ export default function App() {
                 if (typeof window !== 'undefined') {
                   localStorage.removeItem('token');
                   localStorage.removeItem('user');
-                  // optionally clear other stored UI state here
+                  localStorage.removeItem('admin_token');
+                  localStorage.removeItem('admin_user');
                 }
                 return <Navigate to="/login" replace />;
               })()
             }
           />
 
-          {/* Root redirect - if token exists send to dashboard otherwise to login */}
-          <Route path="/" element={token ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />} />
+          {/* Root redirect - if authenticated send to dashboard otherwise to login */}
+          <Route
+            path="/"
+            element={
+              isAuthenticated ? (
+                <Navigate to="/dashboard" replace />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
 
           {/* 404 */}
           <Route
@@ -148,7 +183,9 @@ export default function App() {
             element={
               <div className="text-center mt-20">
                 <h2 className="text-2xl font-bold">404 - Page Not Found</h2>
-                <p className="text-muted">The page you requested doesn't exist.</p>
+                <p className="text-muted">
+                  The page you requested doesn&apos;t exist.
+                </p>
               </div>
             }
           />
