@@ -13,6 +13,7 @@ export default function Students() {
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
+  const [editingStudent, setEditingStudent] = useState(null);
   const navigate = useNavigate();
 
   const fetchStudents = async () => {
@@ -20,12 +21,12 @@ export default function Students() {
     setError('');
     try {
       const data = await API.unwrap(API.get('/students'));
-      setStudents(Array.isArray(data) ? data : []);
+      const arr = Array.isArray(data) ? data : Array.isArray(data.data) ? data.data : [];
+      setStudents(arr);
     } catch (err) {
       console.error('fetchStudents:', err);
       setError(err.userMessage || 'Failed to fetch students');
 
-      // if unauthorized, navigate to login
       if (err?.response?.status === 401) {
         try {
           localStorage.removeItem('token');
@@ -49,7 +50,7 @@ export default function Students() {
     if (!window.confirm('Are you sure you want to delete this student?')) return;
     try {
       await API.delete(`/students/${id}`);
-      setStudents((prev) => prev.filter((s) => s._id !== id));
+      setStudents((prev) => prev.filter((s) => (s._id || s.id) !== id));
     } catch (err) {
       console.error('delete student:', err);
       setError(err.userMessage || 'Failed to delete student');
@@ -57,14 +58,26 @@ export default function Students() {
   };
 
   const handleEdit = (student) => {
-    // you can later replace this with a dedicated edit page
-    // navigate(`/students/${student._id}`);
-    alert(`Edit student: ${student.name}`);
+    setEditingStudent(student);
+    setShowModal(true);
   };
 
-  const handleAdd = (newStudent) => {
-    setStudents((prev) => [newStudent, ...prev]);
-    setShowModal(false);
+  const handleAddClick = () => {
+    setEditingStudent(null);
+    setShowModal(true);
+  };
+
+  const handleSaved = (saved) => {
+    setStudents((prev) => {
+      const id = saved._id || saved.id;
+      const idx = prev.findIndex((s) => (s._id || s.id) === id);
+      if (idx === -1) {
+        return [saved, ...prev];
+      }
+      const copy = [...prev];
+      copy[idx] = saved;
+      return copy;
+    });
   };
 
   const filteredStudents = useMemo(() => {
@@ -104,10 +117,7 @@ export default function Students() {
               >
                 {loading ? 'Refreshing…' : 'Refresh'}
               </button>
-              <button
-                className="btn btn-primary"
-                onClick={() => setShowModal(true)}
-              >
+              <button className="btn btn-primary" onClick={handleAddClick}>
                 Add Student
               </button>
             </div>
@@ -143,7 +153,8 @@ export default function Students() {
         <AddStudentModal
           show={showModal}
           onClose={() => setShowModal(false)}
-          onAdded={handleAdd}
+          onSaved={handleSaved}
+          editingStudent={editingStudent}
         />
       )}
     </div>

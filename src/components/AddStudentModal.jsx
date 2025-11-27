@@ -1,41 +1,153 @@
-import React, { useState } from "react";
-import API from "../api/api";
+// src/components/AddStudentModal.jsx
+import { useEffect, useState } from 'react';
+import API from '../api/api';
 
-export default function AddStudentModal({ show, onClose, onStudentAdded }) {
-  const [formData, setFormData] = useState({
-    rollNo: "",
-    name: "",
-    email: "",
-    password: "",
-    dob: "",
-    course: "",
-    semester: "",
-    contact: "",
-    address: "",
-  });
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+const emptyForm = {
+  rollNo: '',
+  name: '',
+  email: '',
+  courseId: '',
+  semester: 1,
+  joinDate: '',
+  dob: '',
+  contact: '',
+  address: '',
+  isCertified: false,
+};
+
+export default function AddStudentModal({
+  show,
+  onClose,
+  onSaved,
+  editingStudent,
+}) {
+  const [form, setForm] = useState(emptyForm);
+  const [courses, setCourses] = useState([]);
+  const [loadingCourses, setLoadingCourses] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  // load courses from /courses endpoint
+  useEffect(() => {
+    if (!show) return;
+    const fetchCourses = async () => {
+      setLoadingCourses(true);
+      setError('');
+      try {
+        const data = await API.unwrap(API.get('/courses'));
+        const arr = Array.isArray(data) ? data : Array.isArray(data.data) ? data.data : [];
+        setCourses(arr);
+      } catch (err) {
+        console.error('fetchCourses error:', err);
+        setError(err.userMessage || 'Failed to fetch courses');
+      } finally {
+        setLoadingCourses(false);
+      }
+    };
+    fetchCourses();
+  }, [show]);
+
+  // when editingStudent changes, populate form
+  useEffect(() => {
+    if (!show) return;
+
+    if (editingStudent) {
+      setForm({
+        rollNo: editingStudent.rollNo || '',
+        name: editingStudent.name || '',
+        email: editingStudent.email || '',
+        courseId:
+          editingStudent.course?._id ||
+          editingStudent.courseId ||
+          editingStudent.course ||
+          '',
+        semester: editingStudent.semester || 1,
+        joinDate: editingStudent.joinDate
+          ? new Date(editingStudent.joinDate).toISOString().substring(0, 10)
+          : '',
+        dob: editingStudent.dob
+          ? new Date(editingStudent.dob).toISOString().substring(0, 10)
+          : '',
+        contact: editingStudent.contact || '',
+        address: editingStudent.address || '',
+        isCertified: !!editingStudent.isCertified,
+      });
+    } else {
+      setForm(emptyForm);
+    }
+  }, [editingStudent, show]);
+
+  const closeModal = () => {
+    if (saving) return;
+    setError('');
+    setForm(emptyForm);
+    onClose();
+  };
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value, type, checked } = e.target;
+    setForm((prev) => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value,
+    }));
+  };
+
+  const validate = () => {
+    if (!form.rollNo.trim() || !form.name.trim()) {
+      setError('Roll No and Name are required.');
+      return false;
+    }
+    if (!form.courseId) {
+      setError('Please select a course.');
+      return false;
+    }
+    if (!form.joinDate) {
+      setError('Please select a joining date.');
+      return false;
+    }
+    if (form.contact && !/^\d{10}$/.test(form.contact)) {
+      setError('Contact must be a 10-digit phone number.');
+      return false;
+    }
+    return true;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError("");
+    if (!validate()) return;
+
+    setSaving(true);
+    setError('');
+
+    const payload = {
+      rollNo: form.rollNo.trim(),
+      name: form.name.trim(),
+      email: form.email.trim() || undefined,
+      courseId: form.courseId,
+      semester: Number(form.semester) || 1,
+      joinDate: form.joinDate,
+      dob: form.dob || undefined,
+      contact: form.contact || undefined,
+      address: form.address || undefined,
+      isCertified: !!form.isCertified,
+    };
+
     try {
-      const token = localStorage.getItem("token");
-      const res = await API.post("/students", formData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      onStudentAdded(res.data); // add new student to parent state
-      onClose(); // close modal
+      let saved;
+      if (editingStudent) {
+        saved = await API.unwrap(
+          API.put(`/students/${editingStudent._id || editingStudent.id}`, payload)
+        );
+      } else {
+        saved = await API.unwrap(API.post('/students', payload));
+      }
+      onSaved(saved);
+      closeModal();
     } catch (err) {
-      console.error(err);
-      setError(err.response?.data?.message || "Failed to add student");
+      console.error('save student error:', err);
+      setError(err.userMessage || err.response?.data?.message || 'Failed to save student');
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
@@ -43,130 +155,180 @@ export default function AddStudentModal({ show, onClose, onStudentAdded }) {
 
   return (
     <div
-      className="modal show fade"
-      style={{
-        display: "block",
-        backgroundColor: "rgba(0,0,0,0.5)",
-        zIndex: 1050,
-      }}
+      className="modal d-block"
+      tabIndex="-1"
+      role="dialog"
+      style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}
     >
-      <div
-        className="modal-dialog modal-dialog-centered"
-        style={{ maxWidth: "600px" }}
-      >
-        <div
-          className="modal-content p-4"
-          style={{ backgroundColor: "#ffffff", borderRadius: "0.5rem" }}
-        >
-          <div className="modal-header">
-            <h5 className="modal-title">Add Student</h5>
-            <button type="button" className="btn-close" onClick={onClose}></button>
-          </div>
-
-          {error && <div className="alert alert-danger">{error}</div>}
-
-          <form onSubmit={handleSubmit} className="modal-body">
-            <div className="mb-2">
-              <label>Roll No</label>
-              <input
-                type="text"
-                name="rollNo"
-                value={formData.rollNo}
-                onChange={handleChange}
-                className="form-control"
-                required
-              />
-            </div>
-            <div className="mb-2">
-              <label>Name</label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                className="form-control"
-                required
-              />
-            </div>
-            <div className="mb-2">
-              <label>Email</label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                className="form-control"
-                required
-              />
-            </div>
-            <div className="mb-2">
-              <label>Password</label>
-              <input
-                type="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                className="form-control"
-                required
-              />
-            </div>
-            <div className="mb-2">
-              <label>DOB</label>
-              <input
-                type="date"
-                name="dob"
-                value={formData.dob}
-                onChange={handleChange}
-                className="form-control"
-              />
-            </div>
-            <div className="mb-2">
-              <label>Course</label>
-              <input
-                type="text"
-                name="course"
-                value={formData.course}
-                onChange={handleChange}
-                className="form-control"
-              />
-            </div>
-            <div className="mb-2">
-              <label>Semester</label>
-              <input
-                type="text"
-                name="semester"
-                value={formData.semester}
-                onChange={handleChange}
-                className="form-control"
-              />
-            </div>
-            <div className="mb-2">
-              <label>Contact</label>
-              <input
-                type="text"
-                name="contact"
-                value={formData.contact}
-                onChange={handleChange}
-                className="form-control"
-              />
-            </div>
-            <div className="mb-3">
-              <label>Address</label>
-              <textarea
-                name="address"
-                value={formData.address}
-                onChange={handleChange}
-                className="form-control"
+      <div className="modal-dialog modal-lg" role="document">
+        <div className="modal-content">
+          <form onSubmit={handleSubmit}>
+            <div className="modal-header">
+              <h5 className="modal-title">
+                {editingStudent ? 'Edit Student' : 'Add Student'}
+              </h5>
+              <button
+                type="button"
+                className="btn-close"
+                onClick={closeModal}
+                disabled={saving}
               />
             </div>
 
-            <button
-              type="submit"
-              className="btn btn-primary w-100"
-              disabled={loading}
-            >
-              {loading ? "Adding..." : "Add Student"}
-            </button>
+            <div className="modal-body">
+              {error && (
+                <div className="alert alert-danger py-2" role="alert">
+                  {error}
+                </div>
+              )}
+
+              <div className="row g-3">
+                <div className="col-md-4">
+                  <label className="form-label">Roll No *</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    name="rollNo"
+                    value={form.rollNo}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+
+                <div className="col-md-4">
+                  <label className="form-label">Name *</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    name="name"
+                    value={form.name}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+
+                <div className="col-md-4">
+                  <label className="form-label">Email</label>
+                  <input
+                    type="email"
+                    className="form-control"
+                    name="email"
+                    value={form.email}
+                    onChange={handleChange}
+                  />
+                </div>
+
+                <div className="col-md-6">
+                  <label className="form-label">Course *</label>
+                  <select
+                    className="form-select"
+                    name="courseId"
+                    value={form.courseId}
+                    onChange={handleChange}
+                    required
+                    disabled={loadingCourses}
+                  >
+                    <option value="">
+                      {loadingCourses ? 'Loading courses…' : 'Select course'}
+                    </option>
+                    {courses.map((c) => (
+                      <option key={c._id || c.id} value={c._id || c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="col-md-3">
+                  <label className="form-label">Semester</label>
+                  <input
+                    type="number"
+                    className="form-control"
+                    name="semester"
+                    value={form.semester}
+                    min="1"
+                    onChange={handleChange}
+                  />
+                </div>
+
+                <div className="col-md-3">
+                  <label className="form-label">Join Date *</label>
+                  <input
+                    type="date"
+                    className="form-control"
+                    name="joinDate"
+                    value={form.joinDate}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+
+                <div className="col-md-4">
+                  <label className="form-label">DOB</label>
+                  <input
+                    type="date"
+                    className="form-control"
+                    name="dob"
+                    value={form.dob}
+                    onChange={handleChange}
+                  />
+                </div>
+
+                <div className="col-md-4">
+                  <label className="form-label">Contact (10-digit)</label>
+                  <input
+                    type="tel"
+                    className="form-control"
+                    name="contact"
+                    value={form.contact}
+                    onChange={handleChange}
+                    placeholder="9876543210"
+                  />
+                </div>
+
+                <div className="col-md-4">
+                  <label className="form-label">Certified Student</label>
+                  <div className="form-check mt-2">
+                    <input
+                      className="form-check-input"
+                      type="checkbox"
+                      id="isCertified"
+                      name="isCertified"
+                      checked={form.isCertified}
+                      onChange={handleChange}
+                    />
+                    <label className="form-check-label" htmlFor="isCertified">
+                      Show in "Certified Students" list
+                    </label>
+                  </div>
+                </div>
+
+                <div className="col-md-12">
+                  <label className="form-label">Address</label>
+                  <textarea
+                    className="form-control"
+                    rows="2"
+                    name="address"
+                    value={form.address}
+                    onChange={handleChange}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={closeModal}
+                disabled={saving}
+              >
+                Cancel
+              </button>
+              <button type="submit" className="btn btn-primary" disabled={saving}>
+                {saving ? 'Saving…' : editingStudent ? 'Update Student' : 'Add Student'}
+              </button>
+            </div>
           </form>
         </div>
       </div>

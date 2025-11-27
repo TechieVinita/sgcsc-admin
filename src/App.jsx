@@ -21,8 +21,9 @@ const Courses = lazy(() => import('./pages/Courses'));
 const Franchise = lazy(() => import('./pages/Franchise'));
 const MarksheetTemplates = lazy(() => import('./pages/MarksheetTemplates'));
 
-// Admin upload/create affiliation page (no separate admin folder)
-const UploadAffiliation = lazy(() => import('./components/UploadAffiliation'));
+// Website content management pages
+const Affiliations = lazy(() => import('./pages/Affiliations'));
+const Members = lazy(() => import('./pages/Members'));
 
 // Dev sample image (if you still need it elsewhere)
 export const DEV_SAMPLE_IMAGE =
@@ -139,12 +140,21 @@ export default function App() {
             }
           />
 
-          {/* Admin: Upload / manage affiliations */}
+          {/* Website content management (with Sidebar + Navbar in the page components) */}
           <Route
             path="/affiliations"
             element={
               <PrivateRoute>
-                <UploadAffiliation />
+                <Affiliations />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/members"
+            element={
+              <PrivateRoute>
+                <Members />
               </PrivateRoute>
             }
           />

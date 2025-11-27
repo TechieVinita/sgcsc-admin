@@ -1,3 +1,4 @@
+// src/components/Sidebar.jsx
 import { NavLink } from "react-router-dom";
 import { useState } from "react";
 import {
@@ -9,12 +10,13 @@ import {
   FaBuilding,
   FaFilePdf,
   FaChevronDown,
-  FaChevronRight
+  FaChevronRight,
+  FaUsers,
+  FaHandshake,
 } from "react-icons/fa";
 
 export default function Sidebar() {
   const [openMenu, setOpenMenu] = useState(null);
-
   const toggleMenu = (menu) => {
     setOpenMenu(openMenu === menu ? null : menu);
   };
@@ -27,7 +29,6 @@ export default function Sidebar() {
       <h2 className="fs-4 fw-bold mb-4 text-primary">Admin Panel</h2>
 
       <ul className="nav nav-pills flex-column mb-auto">
-
         {/* Dashboard */}
         <li className="nav-item mb-2">
           <NavLink
@@ -42,7 +43,7 @@ export default function Sidebar() {
           </NavLink>
         </li>
 
-        {/* Students (Expandable) */}
+        {/* Students */}
         <li className="nav-item mb-2">
           <button
             className="btn btn-toggle align-items-center rounded text-start w-100 d-flex justify-content-between text-dark"
@@ -72,7 +73,7 @@ export default function Sidebar() {
           )}
         </li>
 
-        {/* Results Section */}
+        {/* Results */}
         <li className="nav-item mb-2">
           <button
             className="btn btn-toggle w-100 text-start d-flex justify-content-between text-dark"
@@ -102,7 +103,7 @@ export default function Sidebar() {
           )}
         </li>
 
-        {/* Courses Section */}
+        {/* Courses */}
         <li className="nav-item mb-2">
           <button
             className="btn btn-toggle w-100 text-start d-flex justify-content-between text-dark"
@@ -132,7 +133,7 @@ export default function Sidebar() {
           )}
         </li>
 
-        {/* Franchise Section */}
+        {/* Franchise */}
         <li className="nav-item mb-2">
           <button
             className="btn btn-toggle w-100 text-start d-flex justify-content-between text-dark"
@@ -190,6 +191,47 @@ export default function Sidebar() {
           </NavLink>
         </li>
 
+        {/* Website content: Members + Affiliations */}
+        <li className="nav-item mb-2">
+          <button
+            className="btn btn-toggle w-100 text-start d-flex justify-content-between text-dark"
+            onClick={() => toggleMenu("website")}
+          >
+            <span className="d-flex align-items-center gap-2">
+              <FaUsers /> Website Content
+            </span>
+            {openMenu === "website" ? <FaChevronDown /> : <FaChevronRight />}
+          </button>
+
+          {openMenu === "website" && (
+            <ul className="btn-toggle-nav list-unstyled pb-1 ps-4 pt-2">
+              <li className="mb-2">
+                <NavLink
+                  to="/members"
+                  className={({ isActive }) =>
+                    `nav-link small ${
+                      isActive ? "active text-primary fw-bold" : "text-dark"
+                    }`
+                  }
+                >
+                  Institute Members
+                </NavLink>
+              </li>
+              <li className="mb-2">
+                <NavLink
+                  to="/affiliations"
+                  className={({ isActive }) =>
+                    `nav-link small ${
+                      isActive ? "active text-primary fw-bold" : "text-dark"
+                    }`
+                  }
+                >
+                  <FaHandshake className="me-1" /> Affiliations
+                </NavLink>
+              </li>
+            </ul>
+          )}
+        </li>
       </ul>
     </div>
   );
