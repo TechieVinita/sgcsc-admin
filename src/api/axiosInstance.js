@@ -3,6 +3,9 @@ import axios from 'axios';
 
 const API_BASE = process.env.REACT_APP_API_URL || 'https://sgcsc-backend.onrender.com/api';
 
+// DEBUG: this will show up in browser console (both local & Vercel)
+console.log('[axios] API_BASE =', API_BASE);
+
 const api = axios.create({
   baseURL: API_BASE,
   withCredentials: false,
@@ -13,12 +16,17 @@ const api = axios.create({
 });
 
 // inject token if present
-api.interceptors.request.use((config) => {
-  try {
-    const token = localStorage.getItem('admin_token') || localStorage.getItem('token');
-    if (token) config.headers.Authorization = `Bearer ${token}`;
-  } catch (e) { /* ignore */ }
-  return config;
-}, (err) => Promise.reject(err));
+api.interceptors.request.use(
+  (config) => {
+    try {
+      const token = localStorage.getItem('admin_token') || localStorage.getItem('token');
+      if (token) config.headers.Authorization = `Bearer ${token}`;
+    } catch (e) {
+      // ignore
+    }
+    return config;
+  },
+  (err) => Promise.reject(err)
+);
 
 export default api;
