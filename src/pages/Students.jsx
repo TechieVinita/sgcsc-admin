@@ -21,7 +21,11 @@ export default function Students() {
     setError('');
     try {
       const data = await API.unwrap(API.get('/students'));
-      const arr = Array.isArray(data) ? data : Array.isArray(data.data) ? data.data : [];
+      const arr = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.data)
+        ? data.data
+        : [];
       setStudents(arr);
     } catch (err) {
       console.error('fetchStudents:', err);
@@ -80,16 +84,51 @@ export default function Students() {
     });
   };
 
+  // Global search across *all* visible columns
   const filteredStudents = useMemo(() => {
-    if (!search.trim()) return students;
-    const term = search.trim().toLowerCase();
-    return students.filter((s) => {
-      return (
-        (s.name && s.name.toLowerCase().includes(term)) ||
-        (s.rollNo && s.rollNo.toLowerCase().includes(term)) ||
-        (s.email && s.email.toLowerCase().includes(term))
-      );
-    });
+    const raw = search.trim();
+    if (!raw) return students;
+
+    // split into tokens so "web 1" can match "Web Designing" + "Semester 1"
+    const tokens = raw.toLowerCase().split(/\s+/).filter(Boolean);
+    if (tokens.length === 0) return students;
+
+    const matchesTokens = (s) => {
+      const courseName =
+        s.courseName ||
+        s.course?.name ||
+        (typeof s.course === 'string' ? s.course : '');
+
+      const joinDateStr = s.joinDate
+        ? new Date(s.joinDate).toLocaleDateString('en-IN')
+        : '';
+
+      const certifiedText = s.isCertified
+        ? 'yes certified true'
+        : 'no not certified false';
+
+      // one big haystack string in lower-case
+      const haystack = [
+        s.name,
+        s.rollNo,
+        s.email,
+        courseName,
+        s.semester != null ? String(s.semester) : '',
+        joinDateStr,
+        s.joinDate || '',
+        s.contact,
+        s.address,
+        certifiedText,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+
+      // every token must appear somewhere
+      return tokens.every((t) => haystack.includes(t));
+    };
+
+    return students.filter(matchesTokens);
   }, [students, search]);
 
   return (
@@ -105,8 +144,8 @@ export default function Students() {
               <input
                 type="text"
                 className="form-control form-control-sm"
-                placeholder="Search by name, roll no, or email"
-                style={{ minWidth: 220 }}
+                placeholder="Search by any field (name, roll no, course, contact, address, etc.)"
+                style={{ minWidth: 260 }}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />

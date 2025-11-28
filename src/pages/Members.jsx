@@ -13,6 +13,29 @@ const emptyMember = {
   isActive: true,
 };
 
+// Try to derive API origin (http://localhost:5000) from axios baseURL
+let API_ORIGIN = '';
+try {
+  const base = API?.defaults?.baseURL || '';
+  API_ORIGIN = base ? new URL(base).origin : window.location.origin;
+} catch {
+  API_ORIGIN = window.location.origin;
+}
+
+// Turn whatever is stored in `img` into a full URL
+function getPhotoUrl(img) {
+  if (!img) return '';
+
+  // already full URL
+  if (img.startsWith('http://') || img.startsWith('https://')) return img;
+
+  // backend usually stores just filename (e.g. "abc.jpg") or "/uploads/abc.jpg"
+  if (!img.startsWith('/')) {
+    return `${API_ORIGIN}/uploads/${img}`;
+  }
+  return `${API_ORIGIN}${img}`;
+}
+
 export default function Members() {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -26,13 +49,25 @@ export default function Members() {
     setLoading(true);
     setError('');
     try {
-      // Expecting GET /members to return an array
+      // Expecting GET /api/members to return { success, data: [...] }
       const data = await API.unwrap(API.get('/members'));
-      const arr = Array.isArray(data) ? data : Array.isArray(data.data) ? data.data : [];
+      const arr = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.data)
+        ? data.data
+        : [];
       setMembers(arr);
     } catch (err) {
       console.error('fetchMembers error:', err);
-      setError(err.userMessage || 'Failed to fetch members');
+
+      const status = err?.response?.status;
+      if (status === 404) {
+        setError(
+          'Members API endpoint (/api/members) not found. Make sure the backend route is created and mounted.'
+        );
+      } else {
+        setError(err.userMessage || 'Failed to fetch members');
+      }
     } finally {
       setLoading(false);
     }
@@ -65,7 +100,7 @@ export default function Members() {
     if (!window.confirm('Delete this member?')) return;
     try {
       await API.delete(`/members/${id}`);
-      setMembers((prev) => prev.filter((m) => m._id !== id && m.id !== id));
+      setMembers((prev) => prev.filter((m) => (m._id || m.id) !== id));
     } catch (err) {
       console.error('delete member error:', err);
       setError(err.userMessage || 'Failed to delete member');
@@ -98,13 +133,10 @@ export default function Members() {
       let saved;
       if (editing) {
         // update
-        saved = await API.unwrap(
-          API.put(`/members/${editing._id || editing.id}`, payload)
-        );
+        const id = editing._id || editing.id;
+        saved = await API.unwrap(API.put(`/members/${id}`, payload));
         setMembers((prev) =>
-          prev.map((m) =>
-            (m._id || m.id) === (editing._id || editing.id) ? saved : m
-          )
+          prev.map((m) => ((m._id || m.id) === id ? saved : m))
         );
       } else {
         // create
@@ -116,7 +148,14 @@ export default function Members() {
       setForm(emptyMember);
     } catch (err) {
       console.error('save member error:', err);
-      setError(err.userMessage || 'Failed to save member');
+      const status = err?.response?.status;
+      if (status === 404) {
+        setError(
+          'Members API endpoint (/api/members) not found. Make sure the backend route is created and mounted.'
+        );
+      } else {
+        setError(err.userMessage || 'Failed to save member');
+      }
     } finally {
       setSaving(false);
     }
@@ -187,7 +226,7 @@ export default function Members() {
                           <td>
                             {m.img ? (
                               <img
-                                src={m.img}
+                                src={getPhotoUrl(m.img)}
                                 alt={m.name}
                                 style={{
                                   width: 40,
@@ -197,16 +236,22 @@ export default function Members() {
                                 }}
                               />
                             ) : (
-                              <span className="text-muted small">No image</span>
+                              <span className="text-muted small">
+                                No image
+                              </span>
                             )}
                           </td>
                           <td>{m.name}</td>
                           <td>{m.role || '-'}</td>
                           <td>
                             {m.isActive === false ? (
-                              <span className="badge bg-secondary">Hidden</span>
+                              <span className="badge bg-secondary">
+                                Hidden
+                              </span>
                             ) : (
-                              <span className="badge bg-success">Active</span>
+                              <span className="badge bg-success">
+                                Active
+                              </span>
                             )}
                           </td>
                           <td>
@@ -223,7 +268,9 @@ export default function Members() {
                             </button>
                             <button
                               className="btn btn-sm btn-outline-danger"
-                              onClick={() => handleDelete(m._id || m.id)}
+                              onClick={() =>
+                                handleDelete(m._id || m.id)
+                              }
                             >
                               Delete
                             </button>
@@ -262,6 +309,7 @@ export default function Members() {
                       setEditing(null);
                       setForm(emptyMember);
                     }}
+                    disabled={saving}
                   />
                 </div>
 
@@ -279,7 +327,9 @@ export default function Members() {
                       />
                     </div>
                     <div className="col-md-6">
-                      <label className="form-label">Role / Designation</label>
+                      <label className="form-label">
+                        Role / Designation
+                      </label>
                       <input
                         type="text"
                         className="form-control"
@@ -289,7 +339,9 @@ export default function Members() {
                       />
                     </div>
                     <div className="col-md-12">
-                      <label className="form-label">Bio / Description</label>
+                      <label className="form-label">
+                        Bio / Description
+                      </label>
                       <textarea
                         className="form-control"
                         rows="3"
@@ -300,18 +352,19 @@ export default function Members() {
                     </div>
                     <div className="col-md-8">
                       <label className="form-label">
-                        Photo URL (will be used on public site)
+                        Photo URL (or uploaded filename)
                       </label>
                       <input
-                        type="url"
+                        type="text"
                         className="form-control"
                         name="img"
                         value={form.img}
                         onChange={handleChange}
                       />
                       <small className="text-muted">
-                        You can paste a direct image URL from your uploads or
-                        any CDN.
+                        If you store just filenames on the server
+                        (e.g. "abc.jpg"), they will be resolved from
+                        /uploads/abc.jpg.
                       </small>
                     </div>
                     <div className="col-md-2">

@@ -20,7 +20,25 @@ export default function StudentTable({ students, onEdit, onDelete }) {
     if (!d) return '-';
     const dt = new Date(d);
     if (Number.isNaN(dt.getTime())) return '-';
-    return dt.toLocaleDateString();
+    return dt.toLocaleDateString('en-IN');
+  };
+
+  const renderCourse = (s) => {
+    return (
+      s.courseName ||              // normalized field from backend
+      s.course?.title ||           // Course.title (your schema)
+      s.course?.name ||            // just in case some code sets name
+      (typeof s.course === 'string' ? s.course : '') ||
+      '-'                          // fallback
+    );
+  };
+
+  const renderCertified = (flag) => {
+    return flag ? (
+      <span className="badge bg-success">Yes</span>
+    ) : (
+      <span className="badge bg-secondary">No</span>
+    );
   };
 
   return (
@@ -33,6 +51,7 @@ export default function StudentTable({ students, onEdit, onDelete }) {
               scope="col"
               style={{ cursor: 'pointer' }}
               onClick={toggleSort}
+              title="Sort by name"
             >
               Name {sortOrder === 'asc' ? '▲' : '▼'}
             </th>
@@ -41,7 +60,8 @@ export default function StudentTable({ students, onEdit, onDelete }) {
             <th scope="col">Semester</th>
             <th scope="col">Join Date</th>
             <th scope="col">Contact</th>
-            <th scope="col">DOB</th>
+            <th scope="col">Address</th>
+            <th scope="col">Certified</th>
             <th scope="col" className="text-center">
               Actions
             </th>
@@ -51,7 +71,7 @@ export default function StudentTable({ students, onEdit, onDelete }) {
         <tbody>
           {sortedStudents.length === 0 ? (
             <tr>
-              <td colSpan="9" className="text-center py-4 text-muted">
+              <td colSpan="10" className="text-center py-4 text-muted">
                 No students found.
               </td>
             </tr>
@@ -61,11 +81,21 @@ export default function StudentTable({ students, onEdit, onDelete }) {
                 <td>{s.rollNo || '-'}</td>
                 <td>{s.name}</td>
                 <td>{s.email || '-'}</td>
-                <td>{s.courseName || s.course?.name || '-'}</td>
+                <td>{renderCourse(s)}</td>
                 <td>{s.semester || '-'}</td>
                 <td>{formatDate(s.joinDate)}</td>
                 <td>{s.contact || '-'}</td>
-                <td>{formatDate(s.dob)}</td>
+
+                <td title={s.address || '-'}>
+                  {s.address
+                    ? s.address.length > 35
+                      ? s.address.slice(0, 35) + '…'
+                      : s.address
+                    : '-'}
+                </td>
+
+                <td>{renderCertified(s.isCertified)}</td>
+
                 <td className="text-center">
                   <button
                     onClick={() => onEdit(s)}

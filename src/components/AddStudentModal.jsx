@@ -1,4 +1,4 @@
-// src/components/AddStudentModal.jsx
+// admin-panel/src/components/AddStudentModal.jsx
 import { useEffect, useState } from 'react';
 import API from '../api/api';
 
@@ -27,15 +27,20 @@ export default function AddStudentModal({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
-  // load courses from /courses endpoint
+  // Load courses from /courses endpoint
   useEffect(() => {
     if (!show) return;
+
     const fetchCourses = async () => {
       setLoadingCourses(true);
       setError('');
       try {
         const data = await API.unwrap(API.get('/courses'));
-        const arr = Array.isArray(data) ? data : Array.isArray(data.data) ? data.data : [];
+        const arr = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.data)
+          ? data.data
+          : [];
         setCourses(arr);
       } catch (err) {
         console.error('fetchCourses error:', err);
@@ -44,10 +49,11 @@ export default function AddStudentModal({
         setLoadingCourses(false);
       }
     };
+
     fetchCourses();
   }, [show]);
 
-  // when editingStudent changes, populate form
+  // Populate form when editing
   useEffect(() => {
     if (!show) return;
 
@@ -135,9 +141,8 @@ export default function AddStudentModal({
     try {
       let saved;
       if (editingStudent) {
-        saved = await API.unwrap(
-          API.put(`/students/${editingStudent._id || editingStudent.id}`, payload)
-        );
+        const id = editingStudent._id || editingStudent.id;
+        saved = await API.unwrap(API.put(`/students/${id}`, payload));
       } else {
         saved = await API.unwrap(API.post('/students', payload));
       }
@@ -145,7 +150,11 @@ export default function AddStudentModal({
       closeModal();
     } catch (err) {
       console.error('save student error:', err);
-      setError(err.userMessage || err.response?.data?.message || 'Failed to save student');
+      setError(
+        err.userMessage ||
+          err.response?.data?.message ||
+          'Failed to save student'
+      );
     } finally {
       setSaving(false);
     }
@@ -233,7 +242,7 @@ export default function AddStudentModal({
                     </option>
                     {courses.map((c) => (
                       <option key={c._id || c.id} value={c._id || c.id}>
-                        {c.name}
+                        {c.name || c.title || 'Unnamed course'}
                       </option>
                     ))}
                   </select>
@@ -326,7 +335,11 @@ export default function AddStudentModal({
                 Cancel
               </button>
               <button type="submit" className="btn btn-primary" disabled={saving}>
-                {saving ? 'Saving…' : editingStudent ? 'Update Student' : 'Add Student'}
+                {saving
+                  ? 'Saving…'
+                  : editingStudent
+                  ? 'Update Student'
+                  : 'Add Student'}
               </button>
             </div>
           </form>

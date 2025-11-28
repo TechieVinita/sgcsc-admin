@@ -1,40 +1,56 @@
-import { useEffect, useMemo, useState } from 'react';
+// src/pages/Dashboard.jsx
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import Navbar from '../components/Navbar';
 import API from '../api/api';
 
-// DEV logo / sample image you uploaded (replace with real asset url in production)
-const DEV_LOGO = '/mnt/data/58e83842-f724-41ef-b678-0d3ad1e30ed8.png';
-
-// small helper: format date
+// Format date exactly like StudentTable
 function fmtDate(d) {
   if (!d) return '-';
   const dt = new Date(d);
-  return dt.toLocaleDateString();
+  if (Number.isNaN(dt.getTime())) return '-';
+  return dt.toLocaleDateString('en-IN');
 }
 
-// tiny SVG sparkline (no external deps)
-function Sparkline({ values = [], width = 120, height = 36 }) {
-  if (!values || values.length === 0) {
-    return <svg width={width} height={height}><text x="6" y={height / 2} fontSize="9" fill="#999">no data</text></svg>;
+// Safe date → timestamp for sorting
+function toTime(d) {
+  if (!d) return 0;
+  const t = new Date(d).getTime();
+  return Number.isNaN(t) ? 0 : t;
+}
+
+// Derive base URL from axios instance, fall back to /api
+const API_BASE =
+  (API && API.defaults && API.defaults.baseURL) || '/api';
+
+// Small helper to call backend WITHOUT using axios interceptors
+async function fetchJSON(path, token) {
+  const res = await fetch(`${API_BASE}${path}`, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    const err = new Error(
+      `Request failed: ${res.status} ${res.statusText || ''}`.trim()
+    );
+    err.status = res.status;
+    err.body = text;
+    throw err;
   }
-  const max = Math.max(...values);
-  const min = Math.min(...values);
-  const range = max - min || 1;
-  const step = width / Math.max(1, values.length - 1);
-  const points = values.map((v, i) => {
-    const x = i * step;
-    const y = height - ((v - min) / range) * height;
-    return `${x},${y}`;
-  }).join(' ');
-  return (
-    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
-      <polyline fill="none" stroke="#1e7be7" strokeWidth="2" points={points} strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
+
+  const json = await res.json().catch(() => ({}));
+  // mimic API.unwrap behaviour (your backend returns {success, data})
+  return json?.data ?? json;
 }
 
 export default function Dashboard() {
+  const navigate = useNavigate();
+
   const [loading, setLoading] = useState(true);
   const [counts, setCounts] = useState({
     students: 0,
@@ -43,120 +59,99 @@ export default function Dashboard() {
     franchises: 0,
   });
   const [recentStudents, setRecentStudents] = useState([]);
-  const [recentResults, setRecentResults] = useState([]);
   const [error, setError] = useState('');
 
-  // lightweight in-memory trend data so sparklines can show something
-  const [trends, setTrends] = useState({
-    students: [3, 6, 9, 12, 18, 20, 24],
-    results: [2, 5, 7, 9, 8, 10, 12],
-  });
+  // Central data loader – reused on mount + Refresh button
+  const loadAll = useCallback(async () => {
+    setLoading(true);
+    setError('');
 
-  useEffect(() => {
-    let mounted = true;
-    const token = localStorage.getItem('token'); // Private API is protected
+    const token =
+      localStorage.getItem('token') ||
+      localStorage.getItem('admin_token') ||
+      '';
 
-    async function loadAll() {
-      setLoading(true);
-      setError('');
+    try {
+      const [studentsRes, coursesRes, resultsRes, franchisesRes] =
+        await Promise.allSettled([
+          fetchJSON('/students', token),
+          fetchJSON('/courses', token),
+          fetchJSON('/results', token),
+          fetchJSON('/franchises', token),
+        ]);
 
-      try {
-        // Attempt to fetch multiple resources in parallel.
-        // Use API.unwrap when possible to normalize result shapes.
-        const calls = [
-          API.unwrap(API.get('/students')).catch((e) => { throw { source: 'students', e }; }),
-          API.unwrap(API.get('/courses')).catch((e) => { throw { source: 'courses', e }; }),
-          API.unwrap(API.get('/results')).catch((e) => { throw { source: 'results', e }; }),
-          API.unwrap(API.get('/franchises')).catch((e) => { throw { source: 'franchises', e }; }),
-        ];
+      const newCounts = {
+        students: 0,
+        courses: 0,
+        results: 0,
+        franchises: 0,
+      };
 
-        // run in parallel and do resilient handling
-        const results = await Promise.allSettled(calls);
-
-        const newCounts = { students: 0, courses: 0, results: 0, franchises: 0 };
-
-        // students
-        if (results[0].status === 'fulfilled' && Array.isArray(results[0].value)) {
-          newCounts.students = results[0].value.length;
-          if (mounted) setRecentStudents(results[0].value.slice(0, 6));
-        } else {
-          // try to extract if API returned object with data array
-          try {
-            const val = results[0].status === 'fulfilled' ? results[0].value : null;
-            if (val && val.data && Array.isArray(val.data)) {
-              newCounts.students = val.data.length;
-            }
-          } catch (e) {}
-        }
-
-        // courses
-        if (results[1].status === 'fulfilled' && Array.isArray(results[1].value)) {
-          newCounts.courses = results[1].value.length;
-        }
-
-        // results
-        if (results[2].status === 'fulfilled' && Array.isArray(results[2].value)) {
-          newCounts.results = results[2].value.length;
-          if (mounted) setRecentResults(results[2].value.slice(0, 6));
-        }
-
-        // franchises
-        if (results[3].status === 'fulfilled' && Array.isArray(results[3].value)) {
-          newCounts.franchises = results[3].value.length;
-        }
-
-        if (mounted) setCounts(newCounts);
-
-        // optional: update sparkline sample data from live counts if available
-        if (mounted) {
-          setTrends((t) => ({
-            students: [...t.students.slice(-6), newCounts.students],
-            results: [...t.results.slice(-6), newCounts.results],
-          }));
-        }
-      } catch (err) {
-        // If any single fetch threw a structured error
-        console.warn('partial load error', err);
-        if (mounted) setError('Some data could not be loaded (check server endpoints).');
-      } finally {
-        if (mounted) setLoading(false);
+      // ---- Students ----
+      if (studentsRes.status === 'fulfilled') {
+        const list = Array.isArray(studentsRes.value)
+          ? studentsRes.value
+          : [];
+        newCounts.students = list.length;
+        setRecentStudents(list);
       }
-    }
 
-    // if no token we can still try to call public endpoints — but keep message
-    if (!token) {
-      setError('You are not logged in. Some admin-only stats may be unavailable.');
-      // still attempt public endpoints
-    }
+      // ---- Courses ----
+      if (coursesRes.status === 'fulfilled') {
+        const list = Array.isArray(coursesRes.value)
+          ? coursesRes.value
+          : [];
+        newCounts.courses = list.length;
+      }
 
-    loadAll();
-    return () => { mounted = false; };
+      // ---- Results (count only) ----
+      if (resultsRes.status === 'fulfilled') {
+        const list = Array.isArray(resultsRes.value)
+          ? resultsRes.value
+          : [];
+        newCounts.results = list.length;
+      }
+
+      // ---- Franchises ----
+      if (franchisesRes.status === 'fulfilled') {
+        const list = Array.isArray(franchisesRes.value)
+          ? franchisesRes.value
+          : [];
+        newCounts.franchises = list.length;
+      }
+
+      setCounts(newCounts);
+    } catch (err) {
+      console.warn('dashboard loadAll error:', err);
+      setError(
+        'Some data could not be loaded. Check your backend endpoints and authentication.'
+      );
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  // convert recent students to a simple table row shape
+  useEffect(() => {
+    loadAll();
+  }, [loadAll]);
+
+  // Recent students: sort by joinDate/createdAt DESC, then top 6
   const formattedRecentStudents = useMemo(() => {
-    return (recentStudents || []).map((s) => ({
+    const mapped = (recentStudents || []).map((s) => ({
       id: s._id || s.id || Math.random().toString(36).slice(2, 8),
       name: s.name || s.fullName || s.rollNo || 'Unknown',
       rollNo: s.rollNo || s.registrationNumber || '-',
       email: s.email || '-',
-      createdAt: s.createdAt || s.created || '',
+      joinedAt: s.joinDate || s.createdAt || s.created || '',
     }));
+
+    mapped.sort((a, b) => toTime(b.joinedAt) - toTime(a.joinedAt));
+    return mapped.slice(0, 6);
   }, [recentStudents]);
 
-  const formattedRecentResults = useMemo(() => {
-    return (recentResults || []).map((r) => ({
-      id: r._id || Math.random().toString(36).slice(2, 8),
-      studentName: (r.studentId && (r.studentId.name || r.studentId)) || r.studentName || 'Student',
-      course: r.course || r.exam || '-',
-      marks: r.marks ?? r.marksObtained ?? '-',
-      date: r.date || r.createdAt || '',
-    }));
-  }, [recentResults]);
-
-  // quick navigation actions (route names depend on your admin app routes)
   const handleNavigate = (path) => {
-    window.location.href = path; // simple - will load admin panel route
+    // Use React Router navigation (no full reload)
+    navigate(path);
   };
 
   return (
@@ -167,101 +162,77 @@ export default function Dashboard() {
         <Navbar />
 
         <div className="container-fluid p-4">
+          {/* Header + actions */}
           <div className="d-flex justify-content-between align-items-start mb-3">
             <div>
               <h1 className="mb-0 h3">Admin Dashboard</h1>
-              <div className="small text-muted">Overview — quick actions and recent activity</div>
+              <div className="small text-muted">
+                Overview — quick actions and recent activity
+              </div>
             </div>
 
             <div className="d-flex gap-2">
-              <button className="btn btn-outline-secondary" onClick={() => window.location.reload()}>Refresh</button>
-              <button className="btn btn-outline-primary" onClick={() => handleNavigate('/students')}>Manage Students</button>
-              <button className="btn btn-outline-success" onClick={() => handleNavigate('/add-result')}>Add Result</button>
+              <button
+                className="btn btn-outline-secondary"
+                onClick={loadAll}
+                disabled={loading}
+              >
+                {loading ? 'Refreshing…' : 'Refresh'}
+              </button>
+              <button
+                className="btn btn-outline-primary"
+                onClick={() => handleNavigate('/students')}
+              >
+                Manage Students
+              </button>
+              {/* Add Result button removed */}
             </div>
           </div>
 
           {error && <div className="alert alert-warning">{error}</div>}
 
+          {/* Summary cards – all four same style, no icons/squares */}
           <div className="row gx-3 gy-3">
-            {/* Summary cards */}
-            <div className="col-12 col-md-6 col-lg-3">
-              <div className="card h-100 shadow-sm border-0">
-                <div className="card-body d-flex align-items-center gap-3">
-                  <div style={{ width: 64, height: 64, borderRadius: 10, background: '#f0f7ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <img src={DEV_LOGO} alt="logo" style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 6 }} />
-                  </div>
-                  <div>
-                    <div className="small text-muted">Students</div>
-                    <div className="h4 mb-0">{loading ? '—' : counts.students}</div>
-                    <div className="small text-muted mt-1 d-flex align-items-center">
-                      <Sparkline values={trends.students} />
-                      <span className="ms-2">trend</span>
+            {[
+              { key: 'students', label: 'Students' },
+              { key: 'courses', label: 'Courses' },
+              { key: 'results', label: 'Results' },
+              { key: 'franchises', label: 'Franchises' },
+            ].map((item) => (
+              <div
+                key={item.key}
+                className="col-12 col-md-6 col-lg-3"
+              >
+                <div className="card h-100 shadow-sm border-0">
+                  <div className="card-body d-flex flex-column justify-content-center">
+                    <div className="small text-muted">
+                      {item.label}
+                    </div>
+                    <div className="display-6 fw-semibold">
+                      {loading ? '—' : counts[item.key]}
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-
-            <div className="col-12 col-md-6 col-lg-3">
-              <div className="card h-100 shadow-sm border-0">
-                <div className="card-body d-flex align-items-center gap-3">
-                  <div style={{ width: 64, height: 64, borderRadius: 10, background: '#fff7ed', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <i className="bi bi-book-half fs-3 text-warning"></i>
-                  </div>
-                  <div>
-                    <div className="small text-muted">Courses</div>
-                    <div className="h4 mb-0">{loading ? '—' : counts.courses}</div>
-                    <div className="small text-muted mt-1">Manage course catalog</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="col-12 col-md-6 col-lg-3">
-              <div className="card h-100 shadow-sm border-0">
-                <div className="card-body d-flex align-items-center gap-3">
-                  <div style={{ width: 64, height: 64, borderRadius: 10, background: '#f6ffed', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <i className="bi bi-file-earmark-text-fill fs-3 text-success"></i>
-                  </div>
-                  <div>
-                    <div className="small text-muted">Results</div>
-                    <div className="h4 mb-0">{loading ? '—' : counts.results}</div>
-                    <div className="small text-muted mt-1">
-                      <Sparkline values={trends.results} />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="col-12 col-md-6 col-lg-3">
-              <div className="card h-100 shadow-sm border-0">
-                <div className="card-body d-flex align-items-center gap-3">
-                  <div style={{ width: 64, height: 64, borderRadius: 10, background: '#fff0f6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <i className="bi bi-people-fill fs-3 text-danger"></i>
-                  </div>
-                  <div>
-                    <div className="small text-muted">Franchises</div>
-                    <div className="h4 mb-0">{loading ? '—' : counts.franchises}</div>
-                    <div className="small text-muted mt-1">pending approvals</div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
 
-          {/* Recent activity */}
+          {/* Recent Students only */}
           <div className="row mt-4 gx-3 gy-3">
-            <div className="col-12 col-lg-7">
+            <div className="col-12">
               <div className="card shadow-sm h-100">
                 <div className="card-body">
                   <div className="d-flex justify-content-between align-items-center mb-3">
                     <h5 className="mb-0">Recent Students</h5>
-                    <small className="text-muted">Latest registered</small>
+                    <small className="text-muted">
+                      Latest registered
+                    </small>
                   </div>
 
                   {formattedRecentStudents.length === 0 ? (
-                    <div className="text-muted">No recent students to show.</div>
+                    <div className="text-muted">
+                      No recent students to show.
+                    </div>
                   ) : (
                     <div className="table-responsive">
                       <table className="table table-borderless table-hover align-middle mb-0">
@@ -279,7 +250,9 @@ export default function Dashboard() {
                               <td className="fw-semibold">{s.name}</td>
                               <td className="text-muted">{s.rollNo}</td>
                               <td className="text-muted">{s.email}</td>
-                              <td className="text-muted">{fmtDate(s.createdAt)}</td>
+                              <td className="text-muted">
+                                {fmtDate(s.joinedAt)}
+                              </td>
                             </tr>
                           ))}
                         </tbody>
@@ -289,42 +262,14 @@ export default function Dashboard() {
                 </div>
               </div>
             </div>
-
-            <div className="col-12 col-lg-5">
-              <div className="card shadow-sm h-100">
-                <div className="card-body">
-                  <div className="d-flex justify-content-between align-items-center mb-3">
-                    <h5 className="mb-0">Recent Results</h5>
-                    <small className="text-muted">Latest entries</small>
-                  </div>
-
-                  {formattedRecentResults.length === 0 ? (
-                    <div className="text-muted">No recent results to show.</div>
-                  ) : (
-                    <ul className="list-group list-group-flush">
-                      {formattedRecentResults.map((r) => (
-                        <li className="list-group-item d-flex justify-content-between align-items-start" key={r.id}>
-                          <div>
-                            <div className="fw-semibold">{r.studentName}</div>
-                            <div className="small text-muted">{r.course}</div>
-                          </div>
-                          <div className="text-end">
-                            <div className="fw-semibold">{r.marks}</div>
-                            <div className="small text-muted">{fmtDate(r.date)}</div>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              </div>
-            </div>
           </div>
 
           {/* footer quick tips */}
           <div className="mt-4 text-muted small">
-            Tip: use the buttons at the top to quickly reach management screens. If an endpoint fails to respond,
-            check your backend routes (/students, /courses, /results, /franchises) and ensure the API server is running.
+            Tip: use the buttons at the top to quickly reach management
+            screens. If an endpoint fails to respond, check your backend
+            routes (/students, /courses, /results, /franchises) and ensure
+            the API server is running.
           </div>
         </div>
       </div>

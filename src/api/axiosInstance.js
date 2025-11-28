@@ -1,13 +1,19 @@
-// src/api/axiosInstance.js
+// admin-panel/src/api/axiosInstance.js
 import axios from 'axios';
 
-const API_BASE = process.env.REACT_APP_API_URL || 'https://sgcsc-backend.onrender.com/api';
+// In dev: always talk to local server with /api prefix
+// In prod: use env var (set on Vercel) or fall back to Render
+const API_BASE_URL =
+  (process.env.REACT_APP_API_URL || '').trim() ||
+  (process.env.NODE_ENV === 'development'
+    ? 'http://localhost:5000/api'
+    : 'https://sgcsc-backend.onrender.com/api');
 
-// DEBUG: this will show up in browser console (both local & Vercel)
-console.log('[axios] API_BASE =', API_BASE);
+// DEBUG: see what base URL the app is actually using
+console.log('[ADMIN API] baseURL =', API_BASE_URL);
 
 const api = axios.create({
-  baseURL: API_BASE,
+  baseURL: API_BASE_URL,
   withCredentials: false,
   headers: {
     Accept: 'application/json',
@@ -15,14 +21,17 @@ const api = axios.create({
   },
 });
 
-// inject token if present
 api.interceptors.request.use(
   (config) => {
     try {
-      const token = localStorage.getItem('admin_token') || localStorage.getItem('token');
-      if (token) config.headers.Authorization = `Bearer ${token}`;
-    } catch (e) {
-      // ignore
+      const token =
+        localStorage.getItem('admin_token') || localStorage.getItem('token');
+      if (token) {
+        config.headers = config.headers || {};
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    } catch {
+      // ignore localStorage errors
     }
     return config;
   },
