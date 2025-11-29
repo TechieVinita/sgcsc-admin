@@ -1,8 +1,6 @@
 // src/pages/MarksheetTemplates.jsx
 import React, { useEffect, useState } from 'react';
 import API from '../api/api';
-import Navbar from '../components/Navbar';
-import Sidebar from '../components/Sidebar';
 
 export default function MarksheetTemplates() {
   const [templates, setTemplates] = useState([]);
@@ -25,9 +23,7 @@ export default function MarksheetTemplates() {
 
   return (
     <div className="d-flex">
-      <Sidebar />
       <div className="flex-grow-1">
-        <Navbar />
         <div className="p-4">
           <h2>Marksheet Templates</h2>
           <p className="text-muted">Create and manage PDF templates for marksheets</p>

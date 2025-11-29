@@ -1,99 +1,32 @@
 // src/pages/AddResults.jsx
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import API from '../api/api';
-import Navbar from '../components/Navbar';
-import Sidebar from '../components/Sidebar';
 
 export default function AddResults() {
-  const [students, setStudents] = useState([]);
-  const [courses, setCourses] = useState([]);
+  const [enrollmentNumber, setEnrollmentNumber] = useState('');
+  const [rollNo, setRollNo] = useState('');
+  const [course, setCourse] = useState('');
 
-  const [studentId, setStudentId] = useState('');
-  const [courseId, setCourseId] = useState('');
-  const [semester, setSemester] = useState('');
-  const [marks, setMarks] = useState('');
-
-  const [loadingLists, setLoadingLists] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('info'); // 'info' | 'success' | 'danger'
 
-  // Load students + courses on mount
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoadingLists(true);
-      setMessage('');
-
-      try {
-        const [studentsData, coursesData] = await Promise.all([
-          API.unwrap(API.get('/students')),
-          API.unwrap(API.get('/courses')),
-        ]);
-
-        const stuArr = Array.isArray(studentsData)
-          ? studentsData
-          : Array.isArray(studentsData?.data)
-          ? studentsData.data
-          : [];
-
-        const courseArr = Array.isArray(coursesData)
-          ? coursesData
-          : Array.isArray(coursesData?.data)
-          ? coursesData.data
-          : [];
-
-        setStudents(stuArr);
-        setCourses(courseArr);
-      } catch (err) {
-        console.error('load students/courses error:', err);
-        setMessageType('danger');
-        setMessage(
-          err.userMessage || 'Failed to load students or courses. Check API.'
-        );
-      } finally {
-        setLoadingLists(false);
-      }
-    };
-
-    fetchData();
-  }, []);
-
   const validate = () => {
-    if (!studentId) {
+    if (!enrollmentNumber.trim()) {
       setMessageType('danger');
-      setMessage('Please select a student.');
+      setMessage('Enrollment Number is required.');
       return false;
     }
-    if (!courseId) {
+    if (!rollNo.trim()) {
       setMessageType('danger');
-      setMessage('Please select a course.');
+      setMessage('Roll No is required.');
       return false;
     }
-    if (!semester) {
+    if (!course.trim()) {
       setMessageType('danger');
-      setMessage('Please enter semester.');
+      setMessage('Course is required.');
       return false;
     }
-    if (marks === '') {
-      setMessageType('danger');
-      setMessage('Please enter marks.');
-      return false;
-    }
-
-    const semNum = Number(semester);
-    if (!Number.isFinite(semNum) || semNum < 1) {
-      setMessageType('danger');
-      setMessage('Semester must be a positive number.');
-      return false;
-    }
-
-    const marksNum = Number(marks);
-    if (!Number.isFinite(marksNum) || marksNum < 0 || marksNum > 100) {
-      setMessageType('danger');
-      setMessage('Marks must be between 0 and 100.');
-      return false;
-    }
-
     return true;
   };
 
@@ -104,23 +37,11 @@ export default function AddResults() {
     if (!validate()) return;
 
     setSaving(true);
-
     try {
-      // Find selected course for its name/title
-      const selectedCourse = courses.find(
-        (c) => (c._id || c.id) === courseId
-      );
-
       const payload = {
-        studentId,
-        courseId,
-        // send a human-readable course name too (backend can store it or ignore it)
-        course:
-          selectedCourse?.name ||
-          selectedCourse?.title ||
-          '',
-        semester: Number(semester),
-        marks: Number(marks),
+        enrollmentNumber: enrollmentNumber.trim(),
+        rollNo: rollNo.trim(),
+        course: course.trim(),
       };
 
       await API.unwrap(API.post('/results', payload));
@@ -128,11 +49,9 @@ export default function AddResults() {
       setMessageType('success');
       setMessage('Result added successfully!');
 
-      // Reset form
-      setStudentId('');
-      setCourseId('');
-      setSemester('');
-      setMarks('');
+      setEnrollmentNumber('');
+      setRollNo('');
+      setCourse('');
     } catch (err) {
       console.error('add result error:', err);
       setMessageType('danger');
@@ -144,12 +63,9 @@ export default function AddResults() {
 
   return (
     <div className="d-flex min-vh-100 bg-light">
-      <Sidebar />
       <div className="flex-grow-1">
-        <Navbar />
-
         <div className="container-fluid p-4">
-          <h2 className="mb-4 fw-bold">Add Result</h2>
+          <h2 className="mb-4 fw-bold">Create Result</h2>
 
           {message && (
             <div
@@ -168,94 +84,56 @@ export default function AddResults() {
 
           <div className="card shadow-sm" style={{ maxWidth: 520 }}>
             <div className="card-body">
-              {loadingLists ? (
-                <div className="text-muted">Loading students and courses…</div>
-              ) : (
-                <form onSubmit={handleSubmit}>
-                  {/* Student */}
-                  <div className="mb-3">
-                    <label className="form-label">Student</label>
-                    <select
-                      className="form-select"
-                      value={studentId}
-                      onChange={(e) => setStudentId(e.target.value)}
-                      required
-                    >
-                      <option value="">Select Student</option>
-                      {students.map((s) => (
-                        <option key={s._id || s.id} value={s._id || s.id}>
-                          {s.name} {s.rollNo ? `(${s.rollNo})` : ''}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+              <form onSubmit={handleSubmit}>
+                <div className="mb-3">
+                  <label className="form-label">Enrollment Number</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={enrollmentNumber}
+                    onChange={(e) => setEnrollmentNumber(e.target.value)}
+                    required
+                  />
+                </div>
 
-                  {/* Course (from /courses) */}
-                  <div className="mb-3">
-                    <label className="form-label">Course</label>
-                    <select
-                      className="form-select"
-                      value={courseId}
-                      onChange={(e) => setCourseId(e.target.value)}
-                      required
-                    >
-                      <option value="">Select Course</option>
-                      {courses.map((c) => (
-                        <option key={c._id || c.id} value={c._id || c.id}>
-                          {c.name || c.title}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                <div className="mb-3">
+                  <label className="form-label">Roll No.</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={rollNo}
+                    onChange={(e) => setRollNo(e.target.value)}
+                    required
+                  />
+                </div>
 
-                  {/* Semester */}
-                  <div className="mb-3">
-                    <label className="form-label">Semester</label>
-                    <input
-                      type="number"
-                      className="form-control"
-                      value={semester}
-                      onChange={(e) => setSemester(e.target.value)}
-                      min="1"
-                      required
-                    />
-                  </div>
+                <div className="mb-3">
+                  <label className="form-label">Course</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={course}
+                    onChange={(e) => setCourse(e.target.value)}
+                    required
+                  />
+                </div>
 
-                  {/* Marks */}
-                  <div className="mb-3">
-                    <label className="form-label">Marks</label>
-                    <input
-                      type="number"
-                      className="form-control"
-                      value={marks}
-                      onChange={(e) => setMarks(e.target.value)}
-                      min="0"
-                      max="100"
-                      required
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="btn btn-primary w-100"
-                    disabled={saving || loadingLists}
-                  >
-                    {saving ? 'Saving…' : 'Add Result'}
-                  </button>
-                </form>
-              )}
+                <button
+                  type="submit"
+                  className="btn btn-primary w-100"
+                  disabled={saving}
+                >
+                  {saving ? 'Saving…' : 'Save Result'}
+                </button>
+              </form>
             </div>
           </div>
 
           <div className="mt-3 small text-muted">
-            This form sends <code>studentId</code>, <code>courseId</code>,{' '}
-            <code>course</code> (name), <code>semester</code> and{' '}
-            <code>marks</code> to <code>POST /results</code>. To make results
-            appear on the Students page, your backend needs to:
-            <ul className="mt-2 mb-0">
-              <li>store results linked to the student and course, and</li>
-              <li>expose them via <code>/students</code> or a dedicated endpoint.</li>
-            </ul>
+            This form sends <code>enrollmentNumber</code>, <code>rollNo</code>{' '}
+            and <code>course</code> to <code>POST /results</code>. Listing,
+            editing and deleting are handled in the <strong>Results</strong>{' '}
+            page.
           </div>
         </div>
       </div>

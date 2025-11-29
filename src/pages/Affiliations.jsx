@@ -1,7 +1,5 @@
 // src/pages/Affiliations.jsx
 import React from 'react';
-import Sidebar from '../components/Sidebar';
-import Navbar from '../components/Navbar';
 import UploadAffiliation from '../components/UploadAffiliation';
 
 export default function Affiliations() {

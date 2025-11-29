@@ -1,185 +1,418 @@
 // src/App.jsx
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy } from "react";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
-} from 'react-router-dom';
-import PrivateRoute from './components/PrivateRoute';
+} from "react-router-dom";
 
-// Lazy-loaded pages
-const Login = lazy(() => import('./pages/Login'));
-const Dashboard = lazy(() => import('./pages/Dashboard'));
-const Students = lazy(() => import('./pages/Students'));
-const StudentDetail = lazy(() => import('./pages/StudentDetail'));
-const ResetPassword = lazy(() => import('./pages/ResetPassword'));
-const AddResults = lazy(() => import('./pages/AddResults'));
-const ResultsList = lazy(() => import('./pages/ResultsList'));
-const GalleryPage = lazy(() => import('./pages/GalleryPage'));
-const Courses = lazy(() => import('./pages/Courses'));
-const Franchise = lazy(() => import('./pages/Franchise'));
-const MarksheetTemplates = lazy(() => import('./pages/MarksheetTemplates'));
+import PrivateRoute from "./components/PrivateRoute";
+import Sidebar from "./components/Sidebar";
+import Navbar from "./components/Navbar";
 
-// Website content management pages
-const Affiliations = lazy(() => import('./pages/Affiliations'));
-const Members = lazy(() => import('./pages/Members'));
+/* ------------------- Lazy Imports ------------------- */
+const Login = lazy(() => import("./pages/Login"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
 
-// Dev sample image (if you still need it elsewhere)
-export const DEV_SAMPLE_IMAGE =
-  '/mnt/data/58e83842-f724-41ef-b678-0d3ad1e30ed8.png';
+/* Franchise */
+const FranchiseCreate = lazy(() => import("./pages/FranchiseCreate"));
+const FranchiseList = lazy(() => import("./pages/FranchiseList"));
+
+/* Students */
+const Students = lazy(() => import("./pages/Students"));
+const AddStudent = lazy(() => import("./pages/AddStudent"));
+const StudentDetail = lazy(() => import("./pages/StudentDetail"));
+
+/* Courses + Subjects */
+const Courses = lazy(() => import("./pages/Courses"));
+const CreateCourse = lazy(() => import("./pages/CreateCourse"));
+const CreateSubject = lazy(() => import("./pages/CreateSubject"));
+const SubjectList = lazy(() => import("./pages/SubjectList"));
+
+/* Gallery */
+const GalleryPage = lazy(() => import("./pages/GalleryPage"));
+const AddGalleryCategory = lazy(() => import("./pages/AddGalleryCategory"));
+
+/* Members */
+const Members = lazy(() => import("./pages/Members"));
+const AddMember = lazy(() => import("./pages/AddMember"));
+
+/* Results */
+const AddResults = lazy(() => import("./pages/AddResults"));
+const ResultsList = lazy(() => import("./pages/ResultsList"));
+
+/* Admit Card */
+const AdmitCardCreate = lazy(() => import("./pages/AdmitCardCreate"));
+const AdmitCardList = lazy(() => import("./pages/AdmitCardList"));
+
+/* Certificate */
+const CertificateCreate = lazy(() => import("./pages/CertificateCreate"));
+const CertificateList = lazy(() => import("./pages/CertificateList"));
+
+/* Study Material */
+const StudyUpload = lazy(() => import("./pages/StudyUpload"));
+const StudyList = lazy(() => import("./pages/StudyList"));
+
+/* Assignments */
+const AssignmentUpload = lazy(() => import("./pages/AssignmentUpload"));
+const AssignmentList = lazy(() => import("./pages/AssignmentList"));
+
+/* Settings (future expansion) */
+const SettingsHeader = lazy(() => import("./pages/SettingsHeader"));
+const SettingsFooter = lazy(() => import("./pages/SettingsFooter"));
+const SettingsSocial = lazy(() => import("./pages/SettingsSocial"));
+const SettingsBranding = lazy(() => import("./pages/SettingsBranding"));
+
+/* ----------------------------------------------------- */
 
 function LoadingFallback() {
   return (
     <div className="d-flex align-items-center justify-content-center vh-100">
       <div className="text-center">
-        <div className="spinner-border" role="status" aria-hidden="true" />
+        <div className="spinner-border" role="status" />
         <div className="mt-2">Loading...</div>
       </div>
     </div>
   );
 }
 
+/* Layout wrapper for all authenticated pages */
+function ProtectedLayout({ children }) {
+  return (
+    <div className="d-flex">
+      <Sidebar />
+      <div className="flex-grow-1">
+        <Navbar />
+        {children}
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
-  // check both token keys that might be used by different parts of your app
-  const adminToken =
-    typeof window !== 'undefined'
-      ? localStorage.getItem('admin_token')
-      : null;
-  const userToken =
-    typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-  const isAuthenticated = Boolean(adminToken || userToken);
+  const authed =
+    typeof window !== "undefined" &&
+    (localStorage.getItem("admin_token") || localStorage.getItem("token"));
 
   return (
     <Router>
       <Suspense fallback={<LoadingFallback />}>
         <Routes>
-          {/* Public routes */}
+          {/* Public */}
           <Route path="/login" element={<Login />} />
           <Route path="/reset-password" element={<ResetPassword />} />
 
-          {/* Protected admin routes */}
+          {/* Protected */}
           <Route
             path="/dashboard"
             element={
               <PrivateRoute>
-                <Dashboard />
+                <ProtectedLayout>
+                  <Dashboard />
+                </ProtectedLayout>
               </PrivateRoute>
             }
           />
 
+          {/* Franchise */}
+          <Route
+            path="/franchise/create"
+            element={
+              <PrivateRoute>
+                <ProtectedLayout>
+                  <FranchiseCreate />
+                </ProtectedLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/franchise/list"
+            element={
+              <PrivateRoute>
+                <ProtectedLayout>
+                  <FranchiseList />
+                </ProtectedLayout>
+              </PrivateRoute>
+            }
+          />
+
+          {/* Students */}
           <Route
             path="/students"
             element={
               <PrivateRoute>
-                <Students />
+                <ProtectedLayout>
+                  <Students />
+                </ProtectedLayout>
               </PrivateRoute>
             }
           />
-
+          <Route
+            path="/students/add"
+            element={
+              <PrivateRoute>
+                <ProtectedLayout>
+                  <AddStudent />
+                </ProtectedLayout>
+              </PrivateRoute>
+            }
+          />
           <Route
             path="/students/:id"
             element={
               <PrivateRoute>
-                <StudentDetail />
+                <ProtectedLayout>
+                  <StudentDetail />
+                </ProtectedLayout>
               </PrivateRoute>
             }
           />
 
-          <Route
-            path="/results"
-            element={
-              <PrivateRoute>
-                <ResultsList />
-              </PrivateRoute>
-            }
-          />
-
-          <Route
-            path="/add-result"
-            element={
-              <PrivateRoute>
-                <AddResults />
-              </PrivateRoute>
-            }
-          />
-
-          <Route
-            path="/gallery"
-            element={
-              <PrivateRoute>
-                <GalleryPage />
-              </PrivateRoute>
-            }
-          />
-
+          {/* Courses & Subjects */}
           <Route
             path="/courses"
             element={
               <PrivateRoute>
-                <Courses />
+                <ProtectedLayout>
+                  <Courses />
+                </ProtectedLayout>
               </PrivateRoute>
             }
           />
-
           <Route
-            path="/franchise"
+            path="/courses/create"
             element={
               <PrivateRoute>
-                <Franchise />
+                <ProtectedLayout>
+                  <CreateCourse />
+                </ProtectedLayout>
               </PrivateRoute>
             }
           />
-
           <Route
-            path="/marksheet-templates"
+            path="/subjects/create"
             element={
               <PrivateRoute>
-                <MarksheetTemplates />
+                <ProtectedLayout>
+                  <CreateSubject />
+                </ProtectedLayout>
               </PrivateRoute>
             }
           />
-
-          {/* Website content management (with Sidebar + Navbar in the page components) */}
           <Route
-            path="/affiliations"
+            path="/subjects"
             element={
               <PrivateRoute>
-                <Affiliations />
+                <ProtectedLayout>
+                  <SubjectList />
+                </ProtectedLayout>
               </PrivateRoute>
             }
           />
 
+          {/* Gallery */}
+          <Route
+            path="/gallery"
+            element={
+              <PrivateRoute>
+                <ProtectedLayout>
+                  <GalleryPage />
+                </ProtectedLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/gallery/categories/create"
+            element={
+              <PrivateRoute>
+                <ProtectedLayout>
+                  <AddGalleryCategory />
+                </ProtectedLayout>
+              </PrivateRoute>
+            }
+          />
+
+          {/* Members */}
           <Route
             path="/members"
             element={
               <PrivateRoute>
-                <Members />
+                <ProtectedLayout>
+                  <Members />
+                </ProtectedLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/members/add"
+            element={
+              <PrivateRoute>
+                <ProtectedLayout>
+                  <AddMember />
+                </ProtectedLayout>
               </PrivateRoute>
             }
           />
 
-          {/* Logout route: clears auth and redirects to login */}
+          {/* Results */}
           <Route
-            path="/logout"
+            path="/results"
             element={
-              (() => {
-                if (typeof window !== 'undefined') {
-                  localStorage.removeItem('token');
-                  localStorage.removeItem('user');
-                  localStorage.removeItem('admin_token');
-                  localStorage.removeItem('admin_user');
-                }
-                return <Navigate to="/login" replace />;
-              })()
+              <PrivateRoute>
+                <ProtectedLayout>
+                  <ResultsList />
+                </ProtectedLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/results/create"
+            element={
+              <PrivateRoute>
+                <ProtectedLayout>
+                  <AddResults />
+                </ProtectedLayout>
+              </PrivateRoute>
             }
           />
 
-          {/* Root redirect - if authenticated send to dashboard otherwise to login */}
+          {/* Admit Card */}
+          <Route
+            path="/admit-cards"
+            element={
+              <PrivateRoute>
+                <ProtectedLayout>
+                  <AdmitCardList />
+                </ProtectedLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admit-cards/create"
+            element={
+              <PrivateRoute>
+                <ProtectedLayout>
+                  <AdmitCardCreate />
+                </ProtectedLayout>
+              </PrivateRoute>
+            }
+          />
+
+          {/* Certificate */}
+          <Route
+            path="/certificates"
+            element={
+              <PrivateRoute>
+                <ProtectedLayout>
+                  <CertificateList />
+                </ProtectedLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/certificates/create"
+            element={
+              <PrivateRoute>
+                <ProtectedLayout>
+                  <CertificateCreate />
+                </ProtectedLayout>
+              </PrivateRoute>
+            }
+          />
+
+          {/* Study Material */}
+          <Route
+            path="/study-material"
+            element={
+              <PrivateRoute>
+                <ProtectedLayout>
+                  <StudyList />
+                </ProtectedLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/study-material/upload"
+            element={
+              <PrivateRoute>
+                <ProtectedLayout>
+                  <StudyUpload />
+                </ProtectedLayout>
+              </PrivateRoute>
+            }
+          />
+
+          {/* Assignments */}
+          <Route
+            path="/assignments"
+            element={
+              <PrivateRoute>
+                <ProtectedLayout>
+                  <AssignmentList />
+                </ProtectedLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/assignments/upload"
+            element={
+              <PrivateRoute>
+                <ProtectedLayout>
+                  <AssignmentUpload />
+                </ProtectedLayout>
+              </PrivateRoute>
+            }
+          />
+
+          {/* Settings */}
+          <Route
+            path="/settings/header"
+            element={
+              <PrivateRoute>
+                <ProtectedLayout>
+                  <SettingsHeader />
+                </ProtectedLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/settings/footer"
+            element={
+              <PrivateRoute>
+                <ProtectedLayout>
+                  <SettingsFooter />
+                </ProtectedLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/settings/social"
+            element={
+              <PrivateRoute>
+                <ProtectedLayout>
+                  <SettingsSocial />
+                </ProtectedLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/settings/branding"
+            element={
+              <PrivateRoute>
+                <ProtectedLayout>
+                  <SettingsBranding />
+                </ProtectedLayout>
+              </PrivateRoute>
+            }
+          />
+
+          {/* Root redirect */}
           <Route
             path="/"
             element={
-              isAuthenticated ? (
+              authed ? (
                 <Navigate to="/dashboard" replace />
               ) : (
                 <Navigate to="/login" replace />
@@ -187,14 +420,25 @@ export default function App() {
             }
           />
 
+          {/* Logout */}
+          <Route
+            path="/logout"
+            element={
+              (() => {
+                localStorage.clear();
+                return <Navigate to="/login" replace />;
+              })()
+            }
+          />
+
           {/* 404 */}
           <Route
             path="*"
             element={
-              <div className="text-center mt-20">
-                <h2 className="text-2xl font-bold">404 - Page Not Found</h2>
+              <div className="text-center mt-5">
+                <h2>404 - Page Not Found</h2>
                 <p className="text-muted">
-                  The page you requested doesn&apos;t exist.
+                  The page you requested does not exist.
                 </p>
               </div>
             }

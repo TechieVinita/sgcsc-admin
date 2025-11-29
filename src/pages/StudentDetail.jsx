@@ -2,8 +2,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import API from '../api/api';
-import Navbar from '../components/Navbar';
-import Sidebar from '../components/Sidebar';
 
 export default function StudentDetail() {
   const { id } = useParams();
@@ -52,9 +50,7 @@ export default function StudentDetail() {
 
   return (
     <div className="d-flex">
-      <Sidebar />
       <div className="flex-grow-1">
-        <Navbar />
         <div className="p-4">
           <h2>Student details</h2>
           {msg && <div className="alert alert-info">{msg}</div>}
