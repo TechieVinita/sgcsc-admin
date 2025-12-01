@@ -2,16 +2,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api/api";
 
-// Safe unwrap helper – will use API.unwrap if it exists,
-// otherwise falls back to axios-style response.data
-async function unwrap(promise) {
-  if (typeof API.unwrap === "function") {
-    return API.unwrap(promise);
-  }
-  const res = await promise;
-  return res?.data?.data ?? res?.data;
-}
-
 export default function AddMember() {
   const navigate = useNavigate();
 
@@ -38,44 +28,23 @@ export default function AddMember() {
     setError("");
     setMessage("");
 
-    const name = form.name.trim();
-    const designation = form.designation.trim();
-
-    if (!name) {
-      setError("Name is required.");
-      setSaving(false);
-      return;
-    }
-
     const payload = {
-      name,
-      designation,
+      name: form.name.trim(),
+      designation: form.designation.trim(),
       isActive: !!form.isActive,
     };
 
     try {
-      // This will work even if API.unwrap is broken/missing
-      const created = await unwrap(API.post("/members", payload));
-      console.log("member created:", created);
-
+      await API.unwrap(API.post("/members", payload));
       setMessage("Member added successfully");
-
-      // Short delay for the success alert to be visible
-      setTimeout(() => {
-        navigate("/members", {
-          state: { flash: "Member added successfully" },
-        });
-      }, 400);
+      setTimeout(() => navigate("/members"), 400);
     } catch (err) {
       console.error("add member error:", err);
-
-      const msg =
+      setError(
         err?.response?.data?.message ||
-        err?.response?.data?.error ||
-        err?.message ||
-        "Failed to add member";
-
-      setError(msg);
+          err.userMessage ||
+          "Failed to add member"
+      );
     } finally {
       setSaving(false);
     }
@@ -89,7 +58,6 @@ export default function AddMember() {
           type="button"
           className="btn btn-outline-secondary"
           onClick={() => navigate("/members")}
-          disabled={saving}
         >
           ← Back to Members
         </button>
@@ -143,7 +111,10 @@ export default function AddMember() {
                   checked={form.isActive}
                   onChange={handleChange}
                 />
-                <label className="form-check-label" htmlFor="member-active">
+                <label
+                  className="form-check-label"
+                  htmlFor="member-active"
+                >
                   Show on site
                 </label>
               </div>
