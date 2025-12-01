@@ -1,6 +1,6 @@
 // src/pages/Members.jsx
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import API from "../api/api";
 
 const emptyMember = {
@@ -9,8 +9,18 @@ const emptyMember = {
   isActive: true,
 };
 
+// Same safe unwrap helper used here as in AddMember.jsx
+async function unwrap(promise) {
+  if (typeof API.unwrap === "function") {
+    return API.unwrap(promise);
+  }
+  const res = await promise;
+  return res?.data?.data ?? res?.data;
+}
+
 export default function Members() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -20,21 +30,38 @@ export default function Members() {
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState(null); // member being edited
   const [form, setForm] = useState(emptyMember);
+  const [flash, setFlash] = useState(
+    location.state && location.state.flash ? location.state.flash : ""
+  );
+
+  // clear flash from history so it doesn't reappear on back navigation
+  useEffect(() => {
+    if (flash) {
+      const timer = setTimeout(() => setFlash(""), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [flash]);
 
   const fetchMembers = async () => {
     setLoading(true);
     setError("");
     try {
-      const data = await API.unwrap(API.get("/members"));
+      const data = await unwrap(API.get("/members"));
       const arr = Array.isArray(data)
         ? data
-        : Array.isArray(data.data)
+        : Array.isArray(data?.data)
         ? data.data
         : [];
+
       setMembers(arr);
     } catch (err) {
       console.error("fetchMembers error:", err);
-      setError(err.userMessage || "Failed to fetch members");
+      const msg =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        err?.message ||
+        "Failed to fetch members";
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -53,6 +80,7 @@ export default function Members() {
       isActive: member.isActive !== false,
     });
     setShowModal(true);
+    setError("");
   };
 
   const closeModal = () => {
@@ -69,7 +97,12 @@ export default function Members() {
       setMembers((prev) => prev.filter((m) => (m._id || m.id) !== id));
     } catch (err) {
       console.error("delete member error:", err);
-      setError(err.userMessage || "Failed to delete member");
+      const msg =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        err?.message ||
+        "Failed to delete member";
+      setError(msg);
     }
   };
 
@@ -94,21 +127,30 @@ export default function Members() {
       isActive: !!form.isActive,
     };
 
+    if (!payload.name) {
+      setError("Name is required.");
+      setSaving(false);
+      return;
+    }
+
+    const editingId = editing._id || editing.id;
+
     try {
-      const saved = await API.unwrap(
-        API.put(`/members/${editing._id || editing.id}`, payload)
-      );
+      const saved = await unwrap(API.put(`/members/${editingId}`, payload));
 
       setMembers((prev) =>
-        prev.map((m) =>
-          (m._id || m.id) === (editing._id || editing.id) ? saved : m
-        )
+        prev.map((m) => ((m._id || m.id) === editingId ? saved : m))
       );
 
       closeModal();
     } catch (err) {
       console.error("save member error:", err);
-      setError(err.userMessage || "Failed to save member");
+      const msg =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        err?.message ||
+        "Failed to save member";
+      setError(msg);
     } finally {
       setSaving(false);
     }
@@ -161,6 +203,12 @@ export default function Members() {
         </div>
       </div>
 
+      {flash && (
+        <div className="alert alert-success" role="alert">
+          {flash}
+        </div>
+      )}
+
       {error && (
         <div className="alert alert-danger" role="alert">
           {error}
@@ -190,38 +238,41 @@ export default function Members() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredMembers.map((m) => (
-                    <tr key={m._id || m.id}>
-                      <td>{m.name}</td>
-                      <td>{m.designation || "-"}</td>
-                      <td>
-                        {m.isActive === false ? (
-                          <span className="badge bg-secondary">Hidden</span>
-                        ) : (
-                          <span className="badge bg-success">Active</span>
-                        )}
-                      </td>
-                      <td>
-                        {m.updatedAt
-                          ? new Date(m.updatedAt).toLocaleDateString("en-IN")
-                          : "-"}
-                      </td>
-                      <td className="text-center">
-                        <button
-                          className="btn btn-sm btn-outline-primary me-2"
-                          onClick={() => openEditModal(m)}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          className="btn btn-sm btn-outline-danger"
-                          onClick={() => handleDelete(m._id || m.id)}
-                        >
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                  {filteredMembers.map((m) => {
+                    const id = m._id || m.id;
+                    return (
+                      <tr key={id}>
+                        <td>{m.name}</td>
+                        <td>{m.designation || "-"}</td>
+                        <td>
+                          {m.isActive === false ? (
+                            <span className="badge bg-secondary">Hidden</span>
+                          ) : (
+                            <span className="badge bg-success">Active</span>
+                          )}
+                        </td>
+                        <td>
+                          {m.updatedAt
+                            ? new Date(m.updatedAt).toLocaleDateString("en-IN")
+                            : "-"}
+                        </td>
+                        <td className="text-center">
+                          <button
+                            className="btn btn-sm btn-outline-primary me-2"
+                            onClick={() => openEditModal(m)}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            className="btn btn-sm btn-outline-danger"
+                            onClick={() => handleDelete(id)}
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
