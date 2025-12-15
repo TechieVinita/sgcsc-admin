@@ -225,7 +225,7 @@ export default function GalleryPage() {
           {error && <div className="alert alert-danger">{error}</div>}
 
           {/* Upload form */}
-          <div className="card mb-4">
+          {/* <div className="card mb-4">
             <div className="card-body">
               <form
                 onSubmit={handleUpload}
@@ -290,7 +290,7 @@ export default function GalleryPage() {
                 </div>
               </form>
             </div>
-          </div>
+          </div> */}
 
           {/* List images */}
           <div className="card">

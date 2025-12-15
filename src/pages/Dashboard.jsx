@@ -1,6 +1,11 @@
 // src/pages/Dashboard.jsx
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import API from "../api/api";
+
+/* -----------------------------
+   Utilities
+------------------------------ */
 
 // Format date exactly like StudentTable
 function fmtDate(d) {
@@ -17,14 +22,15 @@ function toTime(d) {
   return Number.isNaN(t) ? 0 : t;
 }
 
-// Derive base URL from axios instance, fall back to /api
+// Derive base URL from axios instance, fall back safely
 const API_BASE =
-  (API && API.defaults && API.defaults.baseURL) || "/api";
+  (API?.defaults?.baseURL || "").replace(/\/$/, "") || "/api";
 
-// Small helper to call backend WITHOUT using axios interceptors
+// Fetch helper WITHOUT axios interceptors
 async function fetchJSON(path, token) {
   const res = await fetch(`${API_BASE}${path}`, {
     headers: {
+      Accept: "application/json",
       "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
@@ -32,9 +38,7 @@ async function fetchJSON(path, token) {
 
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    const err = new Error(
-      `Request failed: ${res.status} ${res.statusText || ""}`.trim()
-    );
+    const err = new Error(`Request failed: ${res.status}`);
     err.status = res.status;
     err.body = text;
     throw err;
@@ -44,25 +48,35 @@ async function fetchJSON(path, token) {
   return json?.data ?? json;
 }
 
+/* -----------------------------
+   Component
+------------------------------ */
+
 export default function Dashboard() {
+  const navigate = useNavigate();
+
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
   const [counts, setCounts] = useState({
     students: 0,
     courses: 0,
     results: 0,
     franchises: 0,
   });
-  const [recentStudents, setRecentStudents] = useState([]);
-  const [error, setError] = useState("");
 
-  // Central data loader – reused on mount + Refresh button
+  const [recentStudents, setRecentStudents] = useState([]);
+
+  /* -----------------------------
+     Load all dashboard data
+  ------------------------------ */
   const loadAll = useCallback(async () => {
     setLoading(true);
     setError("");
 
     const token =
-      localStorage.getItem("token") ||
       localStorage.getItem("admin_token") ||
+      localStorage.getItem("token") ||
       "";
 
     try {
@@ -71,54 +85,41 @@ export default function Dashboard() {
           fetchJSON("/students", token),
           fetchJSON("/courses", token),
           fetchJSON("/results", token),
-          fetchJSON("/franchises", token), // will just fail quietly if you don't have this yet
+          fetchJSON("/franchises", token),
         ]);
 
-      const newCounts = {
+      const nextCounts = {
         students: 0,
         courses: 0,
         results: 0,
         franchises: 0,
       };
 
-      // ---- Students ----
-      if (studentsRes.status === "fulfilled") {
-        const list = Array.isArray(studentsRes.value)
-          ? studentsRes.value
-          : [];
-        newCounts.students = list.length;
-        setRecentStudents(list);
+      if (studentsRes.status === "fulfilled" && Array.isArray(studentsRes.value)) {
+        nextCounts.students = studentsRes.value.length;
+        setRecentStudents(studentsRes.value);
       }
 
-      // ---- Courses ----
-      if (coursesRes.status === "fulfilled") {
-        const list = Array.isArray(coursesRes.value)
-          ? coursesRes.value
-          : [];
-        newCounts.courses = list.length;
+      if (coursesRes.status === "fulfilled" && Array.isArray(coursesRes.value)) {
+        nextCounts.courses = coursesRes.value.length;
       }
 
-      // ---- Results ----
-      if (resultsRes.status === "fulfilled") {
-        const list = Array.isArray(resultsRes.value)
-          ? resultsRes.value
-          : [];
-        newCounts.results = list.length;
+      if (resultsRes.status === "fulfilled" && Array.isArray(resultsRes.value)) {
+        nextCounts.results = resultsRes.value.length;
       }
 
-      // ---- Franchises ----
-      if (franchisesRes.status === "fulfilled") {
-        const list = Array.isArray(franchisesRes.value)
-          ? franchisesRes.value
-          : [];
-        newCounts.franchises = list.length;
+      if (
+        franchisesRes.status === "fulfilled" &&
+        Array.isArray(franchisesRes.value)
+      ) {
+        nextCounts.franchises = franchisesRes.value.length;
       }
 
-      setCounts(newCounts);
+      setCounts(nextCounts);
     } catch (err) {
-      console.warn("dashboard loadAll error:", err);
+      console.warn("Dashboard load error:", err);
       setError(
-        "Some data could not be loaded. Check your backend endpoints and authentication."
+        "Some dashboard data could not be loaded. Check backend routes or authentication."
       );
     } finally {
       setLoading(false);
@@ -129,31 +130,32 @@ export default function Dashboard() {
     loadAll();
   }, [loadAll]);
 
-  // Recent students: sort by joinDate/createdAt DESC, then top 6
+  /* -----------------------------
+     Recent students (top 6)
+  ------------------------------ */
   const formattedRecentStudents = useMemo(() => {
     const mapped = (recentStudents || []).map((s) => ({
-      id: s._id || s.id || Math.random().toString(36).slice(2, 8),
-      name: s.name || s.fullName || s.rollNo || "Unknown",
+      id: s._id || s.id,
+      name: s.name || s.fullName || "Unknown",
       rollNo: s.rollNo || s.registrationNumber || "-",
       email: s.email || "-",
-      joinedAt: s.joinDate || s.createdAt || s.created || "",
+      joinedAt: s.joinDate || s.createdAt || "",
     }));
 
     mapped.sort((a, b) => toTime(b.joinedAt) - toTime(a.joinedAt));
     return mapped.slice(0, 6);
   }, [recentStudents]);
 
-  const handleNavigate = (path) => {
-    window.location.href = path;
-  };
-
+  /* -----------------------------
+     Render
+  ------------------------------ */
   return (
     <div className="bg-light min-vh-100">
       <div className="container-fluid p-4">
-        {/* Header + actions */}
+        {/* Header */}
         <div className="d-flex justify-content-between align-items-start mb-3">
           <div>
-            <h1 className="mb-0 h3">Admin Dashboard</h1>
+            <h1 className="h3 mb-0">Admin Dashboard</h1>
             <div className="small text-muted">
               Overview — quick actions and recent activity
             </div>
@@ -167,9 +169,10 @@ export default function Dashboard() {
             >
               {loading ? "Refreshing…" : "Refresh"}
             </button>
+
             <button
               className="btn btn-outline-primary"
-              onClick={() => handleNavigate("/students")}
+              onClick={() => navigate("/students")}
             >
               Manage Students
             </button>
@@ -178,20 +181,20 @@ export default function Dashboard() {
 
         {error && <div className="alert alert-warning">{error}</div>}
 
-        {/* Summary cards – all same style */}
+        {/* Summary cards */}
         <div className="row gx-3 gy-3">
           {[
             { key: "students", label: "Students" },
             { key: "courses", label: "Courses" },
             { key: "results", label: "Results" },
             { key: "franchises", label: "Franchises" },
-          ].map((item) => (
-            <div key={item.key} className="col-12 col-md-6 col-lg-3">
-              <div className="card h-100 shadow-sm border-0">
+          ].map(({ key, label }) => (
+            <div key={key} className="col-12 col-md-6 col-lg-3">
+              <div className="card shadow-sm border-0 h-100">
                 <div className="card-body d-flex flex-column justify-content-center">
-                  <div className="small text-muted">{item.label}</div>
+                  <div className="small text-muted">{label}</div>
                   <div className="display-6 fw-semibold">
-                    {loading ? "—" : counts[item.key]}
+                    {loading ? "—" : counts[key]}
                   </div>
                 </div>
               </div>
@@ -199,20 +202,18 @@ export default function Dashboard() {
           ))}
         </div>
 
-        {/* Recent Students only */}
-        <div className="row mt-4 gx-3 gy-3">
+        {/* Recent Students */}
+        <div className="row mt-4">
           <div className="col-12">
-            <div className="card shadow-sm h-100">
+            <div className="card shadow-sm">
               <div className="card-body">
-                <div className="d-flex justify-content-between align-items-center mb-3">
+                <div className="d-flex justify-content-between mb-3">
                   <h5 className="mb-0">Recent Students</h5>
                   <small className="text-muted">Latest registered</small>
                 </div>
 
                 {formattedRecentStudents.length === 0 ? (
-                  <div className="text-muted">
-                    No recent students to show.
-                  </div>
+                  <div className="text-muted">No recent students.</div>
                 ) : (
                   <div className="table-responsive">
                     <table className="table table-borderless table-hover align-middle mb-0">
@@ -242,14 +243,6 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
-        </div>
-
-        {/* footer quick tips */}
-        <div className="mt-4 text-muted small">
-          Tip: use the buttons at the top to quickly reach management screens.
-          If an endpoint fails to respond, check your backend routes
-          (/students, /courses, /results, /franchises) and ensure the API
-          server is running.
         </div>
       </div>
     </div>

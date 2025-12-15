@@ -129,12 +129,12 @@ export default function AddResults() {
             </div>
           </div>
 
-          <div className="mt-3 small text-muted">
+          {/* <div className="mt-3 small text-muted">
             This form sends <code>enrollmentNumber</code>, <code>rollNo</code>{' '}
             and <code>course</code> to <code>POST /results</code>. Listing,
             editing and deleting are handled in the <strong>Results</strong>{' '}
             page.
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

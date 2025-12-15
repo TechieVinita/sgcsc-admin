@@ -112,10 +112,10 @@ export default function CertificateCreate() {
             </div>
           </div>
 
-          <div className="mt-3 small text-muted">
+          {/* <div className="mt-3 small text-muted">
             Sends <code>enrollmentNumber</code> and <code>issueDate</code> to{' '}
             <code>POST /certificates</code>.
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

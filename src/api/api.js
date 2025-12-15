@@ -1,50 +1,55 @@
 // admin-panel/src/api/api.js
 import api from './axiosInstance';
 
-// Use the shared axios instance as the base
 const API = api;
 
-// ---- Global response / error handling ----
+/* ===================== Response / Error Interceptor ===================== */
 API.interceptors.response.use(
   (response) => response,
   (error) => {
     const status = error?.response?.status;
 
-    // If unauthorized, clear auth and kick back to login
+    // Handle auth expiry centrally
     if (status === 401) {
       try {
         localStorage.removeItem('token');
         localStorage.removeItem('admin_token');
         localStorage.removeItem('user');
-      } catch {
-        // ignore
-      }
+      } catch (_) {}
 
       if (typeof window !== 'undefined') {
         window.location.replace('/login');
       }
     }
 
-    const message =
+    const userMessage =
       error?.response?.data?.message ||
       error?.response?.data?.error ||
       error?.message ||
-      'An unexpected error occurred';
+      'Unexpected error';
 
-    return Promise.reject({ ...error, userMessage: message });
+    return Promise.reject({
+      ...error,
+      status,
+      userMessage,
+    });
   }
 );
 
-// ---- Helpers ----
+/* ===================== Helpers ===================== */
 
-// Usage: const data = await API.unwrap(API.get('/students'));
+// Always returns the actual payload
 API.unwrap = async (promise) => {
   const res = await promise;
-  // prefer { success:true, data } but fall back to plain data
-  return res?.data?.data ?? res?.data;
+  if (!res) return null;
+
+  if (res.data && typeof res.data === 'object') {
+    return res.data.data ?? res.data;
+  }
+  return res.data;
 };
 
-// Try to fetch authenticated admin user. Returns object or null.
+// Fetch logged-in admin safely
 API.getAuthUser = async () => {
   try {
     const r = await API.get('/auth/me');

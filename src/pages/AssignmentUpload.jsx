@@ -1,23 +1,18 @@
 // src/pages/AssignmentUpload.jsx
-import { useState } from 'react';
-import API from '../api/api';
+import { useState } from "react";
+import API from "../api/api";
 
 export default function AssignmentUpload() {
   const [file, setFile] = useState(null);
-  const [description, setDescription] = useState('');
+  const [description, setDescription] = useState("");
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState('');
-  const [messageType, setMessageType] = useState('info'); // 'info' | 'success' | 'danger'
-
-  const handleFileChange = (e) => {
-    const f = e.target.files?.[0] ?? null;
-    setFile(f);
-  };
+  const [msg, setMsg] = useState("");
+  const [msgType, setMsgType] = useState("info");
 
   const validate = () => {
     if (!file) {
-      setMessageType('danger');
-      setMessage('Please select a file to upload.');
+      setMsgType("danger");
+      setMsg("File is required");
       return false;
     }
     return true;
@@ -25,102 +20,90 @@ export default function AssignmentUpload() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage('');
+    setMsg("");
 
     if (!validate()) return;
 
     setSaving(true);
-
     try {
       const form = new FormData();
-      form.append('file', file); // MUST match multer field name in backend
-      form.append('description', description || '');
+      form.append("file", file); // MUST match multer.single('file')
+      if (description.trim()) {
+        form.append("description", description.trim());
+      }
 
-      await API.post('/assignments', form, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+      await API.post("/assignments", form, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
 
-      setMessageType('success');
-      setMessage('Assignment uploaded successfully.');
+      setMsgType("success");
+      setMsg("Assignment uploaded successfully");
+
       setFile(null);
-      setDescription('');
+      setDescription("");
       e.target.reset();
     } catch (err) {
-      console.error('upload assignment error:', err);
-      setMessageType('danger');
-      setMessage(err.userMessage || 'Failed to upload assignment.');
+      console.error("upload assignment error", err);
+      setMsgType("danger");
+      setMsg(err.userMessage || "Failed to upload assignment");
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <div className="d-flex min-vh-100 bg-light">
-      <div className="flex-grow-1">
-        <div className="container-fluid p-4">
-          <h2 className="mb-3 fw-bold">Upload Assignment</h2>
-          <div className="small text-muted mb-3">
-            Upload Word, PDF, or PowerPoint files with an optional
-            description.
-          </div>
+    <div className="container-fluid p-4">
+      <h2>Upload Assignment</h2>
+      <p className="text-muted">
+        Upload Word, PDF, or PowerPoint files with an optional description.
+      </p>
 
-          {message && (
-            <div
-              className={`alert alert-${
-                messageType === 'danger'
-                  ? 'danger'
-                  : messageType === 'success'
-                  ? 'success'
-                  : 'info'
-              }`}
+      {msg && (
+        <div
+          className={`alert alert-${
+            msgType === "danger"
+              ? "danger"
+              : msgType === "success"
+              ? "success"
+              : "info"
+          }`}
+        >
+          {msg}
+        </div>
+      )}
+
+      <div className="card shadow-sm">
+        <div className="card-body">
+          <form onSubmit={handleSubmit}>
+            <div className="mb-3">
+              <label className="form-label">File *</label>
+              <input
+                type="file"
+                className="form-control"
+                accept=".pdf,.doc,.docx,.ppt,.pptx"
+                onChange={(e) => setFile(e.target.files?.[0] || null)}
+              />
+            </div>
+
+            <div className="mb-3">
+              <label className="form-label">Description (optional)</label>
+              <textarea
+                className="form-control"
+                rows="3"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Short description about this assignment"
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={saving}
             >
-              {message}
-            </div>
-          )}
-
-          <div className="card shadow-sm" style={{ maxWidth: 600 }}>
-            <div className="card-body">
-              <form onSubmit={handleSubmit}>
-                <div className="mb-3">
-                  <label className="form-label">File *</label>
-                  <input
-                    type="file"
-                    className="form-control"
-                    accept=".pdf,.doc,.docx,.ppt,.pptx"
-                    onChange={handleFileChange}
-                    required
-                  />
-                  <div className="small text-muted mt-1">
-                    Allowed: .doc, .docx, .pdf, .ppt, .pptx (max ~20MB)
-                  </div>
-                </div>
-
-                <div className="mb-3">
-                  <label className="form-label">Description (optional)</label>
-                  <textarea
-                    className="form-control"
-                    rows={3}
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Short description about this assignment"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  className="btn btn-primary w-100"
-                  disabled={saving}
-                >
-                  {saving ? 'Uploading…' : 'Upload Assignment'}
-                </button>
-              </form>
-            </div>
-          </div>
-
-          <div className="mt-3 small text-muted">
-            This sends a multipart request to <code>POST /assignments</code>{' '}
-            with fields <code>file</code> and <code>description</code>.
-          </div>
+              {saving ? "Uploading…" : "Upload Assignment"}
+            </button>
+          </form>
         </div>
       </div>
     </div>

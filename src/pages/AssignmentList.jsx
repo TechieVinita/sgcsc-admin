@@ -262,12 +262,12 @@ export default function AssignmentList() {
             </div>
           </div>
 
-          <div className="mt-3 small text-muted">
+          {/* <div className="mt-3 small text-muted">
             Uses <code>GET /assignments</code>,{' '}
             <code>PUT /assignments/:id</code>,{' '}
             <code>DELETE /assignments/:id</code>, and{' '}
             <code>GET /assignments/:id/download</code>.
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

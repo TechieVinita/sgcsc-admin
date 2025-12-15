@@ -413,12 +413,12 @@ export default function AdmitCardList() {
             </div>
           </div>
 
-          <div className="mt-3 small text-muted">
+          {/* <div className="mt-3 small text-muted">
             This page calls <code>GET /admit-cards</code> for the list and uses{' '}
             <code>PUT /admit-cards/:id</code> and{' '}
             <code>DELETE /admit-cards/:id</code> for editing and deleting
             records.
-          </div>
+          </div> */}
         </div>
       </div>
 

@@ -267,13 +267,13 @@ export default function AdmitCardCreate() {
             </div>
           </div>
 
-          <div className="mt-3 small text-muted">
+          {/* <div className="mt-3 small text-muted">
             This form sends <code>enrollmentNumber</code>,{' '}
             <code>rollNumber</code>, <code>examCenter</code>,{' '}
             <code>examDate</code>, <code>examTime</code>, and optional{' '}
             <code>studentId</code>/<code>courseId</code> to{' '}
             <code>POST /admit-cards</code>.
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

@@ -321,11 +321,11 @@ export default function CertificateList() {
             </div>
           </div>
 
-          <div className="mt-3 small text-muted">
+          {/* <div className="mt-3 small text-muted">
             Uses <code>GET /certificates</code>,{' '}
             <code>PUT /certificates/:id</code>, and{' '}
             <code>DELETE /certificates/:id</code>.
-          </div>
+          </div> */}
         </div>
       </div>
 

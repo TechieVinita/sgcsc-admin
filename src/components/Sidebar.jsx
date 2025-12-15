@@ -266,7 +266,7 @@ export default function Sidebar() {
               </li>
               <li className="mb-1">
                 <NavLink to="/admit-cards" className={subLinkClass}>
-                  List / Show Admit Cards
+                  List Admit Cards
                 </NavLink>
               </li>
             </ul>
@@ -333,6 +333,7 @@ export default function Sidebar() {
                   List
                 </NavLink>
               </li>
+
             </ul>
           )}
         </li>
