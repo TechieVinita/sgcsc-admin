@@ -64,20 +64,26 @@ export default function SubjectList() {
     setError("");
     try {
       const [courseRes, subjectRes] = await Promise.all([
-        API.unwrap(API.get("/courses")),
-        API.unwrap(API.get("/subjects")),
+        API.get("/courses"),
+        API.get("/subjects"),
       ]);
 
-      const courseArr = Array.isArray(courseRes)
-        ? courseRes
-        : Array.isArray(courseRes?.data)
-        ? courseRes.data
+
+      const courseData = courseRes.data;
+const subjectData = subjectRes.data;
+
+      const courseArr = Array.isArray(courseData)
+        ? courseData
+        : Array.isArray(courseData?.data)
+        ? courseData.data
         : [];
-      const subjectArr = Array.isArray(subjectRes)
-        ? subjectRes
-        : Array.isArray(subjectRes?.data)
-        ? subjectRes.data
+
+      const subjectArr = Array.isArray(subjectData)
+        ? subjectData
+        : Array.isArray(subjectData?.data)
+        ? subjectData.data
         : [];
+
 
       setCourses(courseArr);
       setSubjects(subjectArr);

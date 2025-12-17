@@ -26,7 +26,9 @@ export default function CreateSubject() {
     const loadCourses = async () => {
       setLoadingCourses(true);
       try {
-        const data = await API.unwrap(API.get('/courses'));
+        const res = await API.get('/courses');
+        const data = res.data;
+
         const arr = Array.isArray(data)
           ? data
           : Array.isArray(data?.data)
@@ -51,9 +53,9 @@ export default function CreateSubject() {
         return;
       }
       try {
-        const data = await API.unwrap(
-          API.get(`/subjects/${subjectId}`)
-        );
+        const res = await API.get(`/subjects/${subjectId}`);
+        const data = res.data;
+
         const s =
           data && typeof data === 'object' && !Array.isArray(data)
             ? data
@@ -96,12 +98,11 @@ export default function CreateSubject() {
     setSaving(true);
     try {
       if (subjectId) {
-        await API.unwrap(
-          API.put(`/subjects/${subjectId}`, payload)
-        );
+        await API.put(`/subjects/${subjectId}`, payload);
       } else {
-        await API.unwrap(API.post('/subjects', payload));
+        await API.post('/subjects', payload);
       }
+
       navigate('/subjects');
     } catch (err) {
       console.error('save subject error', err);

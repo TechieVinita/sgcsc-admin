@@ -43,7 +43,9 @@ export default function Students() {
     setLoading(true);
     setError("");
     try {
-      const data = await API.unwrap(API.get("/students"));
+      const res = await API.get("/students");
+      const data = res.data;
+
       const arr = Array.isArray(data)
         ? data
         : Array.isArray(data.data)
@@ -155,7 +157,9 @@ export default function Students() {
         photo: editForm.photo.trim(),
       };
 
-      const updated = await API.unwrap(API.put(`/students/${id}`, payload));
+      const res = await API.put(`/students/${id}`, payload);
+      const updated = res.data;
+
 
       const updatedStudent =
         updated && updated.data && updated.success ? updated.data : updated;

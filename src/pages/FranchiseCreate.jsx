@@ -201,11 +201,12 @@ export default function FranchiseCreate() {
     const uname = (username || '').trim();
     if (!uname) return false;
 
-    const raw = await API.unwrap(
-      API.get('/franchises/check-username', {
-        params: { username: uname },
-      })
-    );
+    const res = await API.get('/franchises/check-username', {
+      params: { username: uname },
+    });
+
+    const raw = res.data;
+
 
     // API.unwrap might return either the outer object or inner .data
     const payload = raw && raw.data ? raw.data : raw;
@@ -347,12 +348,13 @@ export default function FranchiseCreate() {
       Object.entries(files).forEach(([key, file]) => {
         if (file) fd.append(key, file);
       });
+      
+      const res = await API.post('/franchises', fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
 
-      const created = await API.unwrap(
-        API.post('/franchises', fd, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        })
-      );
+      const created = res.data;
+
 
       console.log('created franchise', created);
       setMessage('Franchise created successfully.');

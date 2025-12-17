@@ -149,27 +149,21 @@ export default function AddStudent() {
       setError("");
       try {
         const [coursesRes, franchisesRes] = await Promise.allSettled([
-          API.unwrap(API.get("/courses")),
-          API.unwrap(API.get("/franchises")),
+          API.get("/courses"),
+          API.get("/franchises"),
         ]);
 
+
         if (mounted && coursesRes.status === "fulfilled") {
-          const arr = Array.isArray(coursesRes.value)
-            ? coursesRes.value
-            : Array.isArray(coursesRes.value?.data)
-            ? coursesRes.value.data
-            : [];
-          setCourses(arr);
+          const data = coursesRes.value.data;
+          setCourses(Array.isArray(data) ? data : data?.data || []);
         }
 
         if (mounted && franchisesRes.status === "fulfilled") {
-          const arr = Array.isArray(franchisesRes.value)
-            ? franchisesRes.value
-            : Array.isArray(franchisesRes.value?.data)
-            ? franchisesRes.value.data
-            : [];
-          setFranchises(arr);
+          const data = franchisesRes.value.data;
+          setFranchises(Array.isArray(data) ? data : data?.data || []);
         }
+
       } catch (err) {
         console.error("loadMeta error:", err);
         if (mounted) {
@@ -329,11 +323,12 @@ export default function AddStudent() {
         fd.append("photo", photoFile); // backend field name: "photo"
       }
 
-      const created = await API.unwrap(
-        API.post("/students", fd, {
-          headers: { "Content-Type": "multipart/form-data" },
-        })
-      );
+      const res = await API.post("/students", fd, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      const created = res.data;
+
       console.log("student created:", created);
 
       setSuccess("Student added successfully.");

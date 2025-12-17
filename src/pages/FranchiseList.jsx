@@ -84,7 +84,9 @@ export default function FranchiseList() {
     setLoading(true);
     setError('');
     try {
-      const data = await API.unwrap(API.get('/franchises'));
+      const res = await API.get('/franchises');
+      const data = res.data;
+
       const arr = Array.isArray(data)
         ? data
         : Array.isArray(data?.data)
@@ -171,11 +173,12 @@ export default function FranchiseList() {
         }
       });
 
-      const updated = await API.unwrap(
-        API.put(`/franchises/${editing._id}`, fd, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        })
-      );
+      const res = await API.put(`/franchises/${editing._id}`, fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      const updated = res.data;
+
 
       const updatedData =
         updated && updated.data && updated.success ? updated.data : updated;
