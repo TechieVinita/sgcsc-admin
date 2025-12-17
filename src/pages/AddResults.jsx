@@ -1,6 +1,6 @@
 // src/pages/AddResults.jsx
 import { useState } from 'react';
-import API from '../api/api';
+import API from "../api/axiosInstance";
 
 export default function AddResults() {
   const [enrollmentNumber, setEnrollmentNumber] = useState('');

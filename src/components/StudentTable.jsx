@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import API from "../api/api";
+import API from "../api/axiosInstance";
 
 // Inline placeholder — no external HTTP request
 const DEV_PLACEHOLDER =

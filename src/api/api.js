@@ -1,67 +1,32 @@
-// admin-panel/src/api/api.js
-import api from './axiosInstance';
+import axios from "axios";
 
-const API = api;
+const baseURL =
+  process.env.REACT_APP_API_URL ||
+  "https://sgcsc-backend.onrender.com/api";
 
-/* ===================== Response / Error Interceptor ===================== */
+const API = axios.create({
+  baseURL,
+  timeout: 15000,
+});
+
+/* ===================== Error Normalization ===================== */
 API.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    const status = error?.response?.status;
-
-    // Handle auth expiry centrally
-    if (status === 401) {
-      try {
-        localStorage.removeItem('token');
-        localStorage.removeItem('admin_token');
-        localStorage.removeItem('user');
-      } catch (_) {}
-
-      if (typeof window !== 'undefined') {
-        window.location.replace('/login');
-      }
-    }
-
-    const userMessage =
-      error?.response?.data?.message ||
-      error?.response?.data?.error ||
-      error?.message ||
-      'Unexpected error';
-
-    return Promise.reject({
-      ...error,
-      status,
-      userMessage,
-    });
+  (res) => res,
+  (err) => {
+    const msg =
+      err?.response?.data?.message ||
+      err.message ||
+      "Request failed";
+    return Promise.reject({ ...err, userMessage: msg });
   }
 );
 
-/* ===================== Helpers ===================== */
+/* ===================== COURSES ===================== */
 
-// Always returns the actual payload
-API.unwrap = async (promise) => {
-  const res = await promise;
-  if (!res) return null;
-
-  if (res.data && typeof res.data === 'object') {
-    return res.data.data ?? res.data;
-  }
-  return res.data;
-};
-
-// Fetch logged-in admin safely
-API.getAuthUser = async () => {
-  try {
-    const r = await API.get('/auth/me');
-    return r?.data?.data ?? r?.data;
-  } catch {
-    try {
-      const r2 = await API.get('/admins/me');
-      return r2?.data?.data ?? r2?.data;
-    } catch {
-      return null;
-    }
-  }
+// PUBLIC / ADMIN – list courses
+export const getCourses = async () => {
+  const res = await API.get("/courses");
+  return Array.isArray(res.data?.data) ? res.data.data : [];
 };
 
 export default API;

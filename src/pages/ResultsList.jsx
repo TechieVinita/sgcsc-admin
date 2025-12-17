@@ -1,6 +1,6 @@
 // src/pages/ResultsList.jsx
 import { useEffect, useMemo, useState } from 'react';
-import API from '../api/api';
+import API from "../api/axiosInstance";
 
 const emptyForm = {
   enrollmentNumber: '',

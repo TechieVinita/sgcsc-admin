@@ -1,7 +1,7 @@
 // src/pages/CreateSubject.jsx
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import API from '../api/api';
+import API from "../api/axiosInstance";
 
 export default function CreateSubject() {
   const navigate = useNavigate();

@@ -1,7 +1,7 @@
 // src/pages/Members.jsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import API from "../api/api";
+import API from "../api/axiosInstance";
 
 const emptyMember = {
   name: "",

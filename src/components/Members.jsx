@@ -1,6 +1,7 @@
 // src/components/Members.jsx
 import React, { useEffect, useState } from 'react';
-import api from '../../api/api';
+import api from '../import API from "../api/axiosInstance";
+';
 
 export default function Members(){
   const [list, setList] = useState([]);

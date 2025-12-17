@@ -1,6 +1,6 @@
 // src/pages/AddGalleryCategory.jsx
 import { useState } from 'react';
-import API from '../api/api';
+import API from "../api/axiosInstance";
 
 export default function AddGalleryCategory() {
   const [title, setTitle] = useState('');

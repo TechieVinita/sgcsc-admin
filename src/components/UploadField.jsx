@@ -1,6 +1,6 @@
 // src/components/UploadField.jsx
 import React, { useState } from 'react';
-import API from '../api/api';
+import API from "../api/axiosInstance";
 
 export default function UploadField({ onUploaded, accept = 'image/*' }) {
   const [file, setFile] = useState(null);

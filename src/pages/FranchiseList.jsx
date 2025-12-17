@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import API from '../api/api';
+import API from "../api/axiosInstance";
 
 const DEV_PLACEHOLDER =
   'https://via.placeholder.com/80x80.png?text=Photo';

@@ -1,7 +1,7 @@
 // src/pages/Students.jsx
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import API from "../api/api";
+import API from "../api/axiosInstance";
 import StudentTable from "../components/StudentTable";
 
 function fmtDate(d) {

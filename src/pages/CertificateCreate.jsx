@@ -1,6 +1,6 @@
 // src/pages/CertificateCreate.jsx
 import { useState } from 'react';
-import API from '../api/api';
+import API from "../api/axiosInstance";
 
 export default function CertificateCreate() {
   const [enrollmentNumber, setEnrollmentNumber] = useState('');

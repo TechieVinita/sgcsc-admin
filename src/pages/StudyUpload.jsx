@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import API from "../api/api";
+import API from "../api/axiosInstance";
 
 // Derive API origin for file downloads
 let API_ORIGIN = "";

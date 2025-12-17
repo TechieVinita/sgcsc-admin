@@ -1,6 +1,6 @@
 // src/pages/GalleryPage.jsx
 import { useEffect, useState } from 'react';
-import API from '../api/api';
+import API from "../api/axiosInstance";
 
 export default function GalleryPage() {
   const [title, setTitle] = useState('');

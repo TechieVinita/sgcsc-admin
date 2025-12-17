@@ -1,6 +1,6 @@
 // admin-panel/src/components/AddStudentModal.jsx
 import { useEffect, useState } from 'react';
-import API from '../api/api';
+import API from "../api/axiosInstance";
 
 const emptyForm = {
   rollNo: '',

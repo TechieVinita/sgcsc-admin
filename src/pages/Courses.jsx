@@ -1,138 +1,140 @@
-// src/pages/Courses.jsx
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import API from "../api/api";
+import API from "../api/axiosInstance";
 
 export default function Courses() {
   const [courses, setCourses] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const load = async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const data = await API.unwrap(API.get("/courses"));
-      const arr = Array.isArray(data)
-        ? data
-        : Array.isArray(data?.data)
-        ? data.data
-        : [];
-      setCourses(arr);
-    } catch (err) {
-      console.error("load courses", err);
-      setError(err.userMessage || "Failed to load courses");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    load();
+    const loadCourses = async () => {
+      try {
+        setLoading(true);
+        setError("");
+
+        const res = await API.get("/courses");
+        setCourses(res.data?.data || []);
+      } catch (err) {
+        console.error("Failed to load courses:", err);
+        setError(
+          err?.response?.data?.message || "Failed to load courses"
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadCourses();
   }, []);
 
-  const handleAdd = () => {
-    navigate("/courses/create");
-  };
+  const groupedCourses = courses.reduce((acc, course) => {
+    const type = course.type || "other";
+    if (!acc[type]) acc[type] = [];
+    acc[type].push(course);
+    return acc;
+  }, {});
 
   const handleEdit = (course) => {
-    const id = course._id || course.id;
-    navigate(`/courses/create?id=${id}`);
+    navigate(`/courses/create?id=${course._id}`);
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Delete this course?")) return;
+  const handleDelete = async (courseId) => {
+    if (!window.confirm("Are you sure you want to delete this course?")) return;
+
     try {
-      await API.delete(`/courses/${id}`);
-      setCourses((prev) => prev.filter((c) => (c._id || c.id) !== id));
+      await API.delete(`/courses/${courseId}`);
+      setCourses((prev) =>
+        prev.filter((c) => c._id !== courseId)
+      );
     } catch (err) {
-      console.error("delete course", err);
-      alert(err.userMessage || "Failed to delete course");
+      console.error("Delete failed:", err);
+      alert(
+        err?.response?.data?.message || "Failed to delete course"
+      );
     }
   };
 
+  if (loading) {
+    return (
+      <div className="container py-5 text-center text-muted">
+        Loading courses…
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container py-5">
+        <div className="alert alert-danger">{error}</div>
+      </div>
+    );
+  }
+
   return (
-    <div className="d-flex min-vh-100 bg-light">
-      <div className="flex-grow-1">
-        <div className="p-4">
-          <div className="d-flex justify-content-between align-items-center mb-4">
-            <div>
-              <h2 className="mb-0">Courses</h2>
-              <div className="small text-muted">
-                Manage long / short / certificate courses
-              </div>
-            </div>
-            <div>
-              <button
-                className="btn btn-outline-secondary me-2"
-                onClick={load}
-                disabled={loading}
-              >
-                {loading ? "Refreshing…" : "Refresh"}
-              </button>
-              <button className="btn btn-primary" onClick={handleAdd}>
-                Add Course
-              </button>
-            </div>
-          </div>
+    <div className="container py-5">
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h1 className="fw-bold mb-0">Courses</h1>
+        <button
+          className="btn btn-primary"
+          onClick={() => navigate("/courses/create")}
+        >
+          + Add Course
+        </button>
+      </div>
 
-          {error && (
-            <div className="alert alert-danger" role="alert">
-              {error}
-            </div>
-          )}
+      {Object.entries(groupedCourses).map(([type, list]) => (
+        <div key={type} className="mb-5">
+          <h4 className="fw-bold mb-3 text-capitalize">
+            {type.replace("-", " ")} Courses
+          </h4>
 
-          {loading ? (
-            <div className="text-muted">Loading courses…</div>
-          ) : courses.length === 0 ? (
-            <div className="text-muted">
-              No courses yet. Click <strong>Add Course</strong> to create one.
-            </div>
-          ) : (
-            <div className="row">
-              {courses.map((c) => (
-                <div className="col-md-4 mb-3" key={c._id || c.id}>
-                  <div className="card h-100 shadow-sm border-0">
-                    <div className="card-body d-flex flex-column">
-                      <h5 className="card-title mb-1">
-                        {c.title || c.name || "Untitled course"}
-                      </h5>
+          <div className="row g-4">
+            {list.map((course) => (
+              <div key={course._id} className="col-md-6 col-lg-4">
+                <div className="card h-100 shadow-sm border-0">
+                  <div className="card-body d-flex flex-column">
+                    <h5 className="fw-bold mb-2">
+                      {course.title}
+                    </h5>
 
-                      <p
-                        className="card-text small text-muted mb-2"
-                        style={{ flex: 1 }}
+                    <div className="mb-2">
+                      <span className="badge bg-dark me-2">
+                        {course.type}
+                      </span>
+                      {course.duration && (
+                        <span className="badge bg-secondary">
+                          {course.duration}
+                        </span>
+                      )}
+                    </div>
+
+                    <p className="text-muted small flex-grow-1">
+                      {course.description || "No description provided."}
+                    </p>
+
+                    <div className="d-flex justify-content-end gap-2">
+                      <button
+                        className="btn btn-sm btn-outline-primary"
+                        onClick={() => handleEdit(course)}
                       >
-                        {c.description || "No description provided."}
-                      </p>
-
-                      <div className="small text-muted mb-2">
-                        {(c.type || "long")}{" "}
-                        {c.duration ? `• ${c.duration}` : ""}
-                      </div>
-
-                      <div className="d-flex justify-content-end mt-auto">
-                        <button
-                          className="btn btn-sm btn-outline-primary me-2"
-                          onClick={() => handleEdit(c)}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          className="btn btn-sm btn-danger"
-                          onClick={() => handleDelete(c._id || c.id)}
-                        >
-                          Delete
-                        </button>
-                      </div>
+                        Edit
+                      </button>
+                      <button
+                        className="btn btn-sm btn-outline-danger"
+                        onClick={() => handleDelete(course._id)}
+                      >
+                        Delete
+                      </button>
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      ))}
     </div>
   );
 }

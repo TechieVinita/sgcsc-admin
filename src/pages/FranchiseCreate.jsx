@@ -1,6 +1,6 @@
 // src/pages/FranchiseCreate.jsx
 import { useState } from 'react';
-import API from '../api/api';
+import API from "../api/axiosInstance";
 
 // ---- Constants ----
 const MAX_FILE_SIZE_MB = 2;

@@ -1,6 +1,6 @@
 // src/pages/AdmitCardCreate.jsx
 import { useEffect, useState } from 'react';
-import API from '../api/api';
+import API from "../api/axiosInstance";
 
 export default function AdmitCardCreate() {
   const [courses, setCourses] = useState([]);
