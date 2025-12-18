@@ -34,7 +34,8 @@ export default function AddMember() {
     const fd = new FormData();
     fd.append("name", name.trim());
     fd.append("designation", designation.trim());
-    fd.append("isActive", isActive);
+    fd.append("isActive", isActive ? "true" : "false");
+
     if (photo) fd.append("photo", photo);
 
     try {

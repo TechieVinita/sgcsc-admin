@@ -11,7 +11,8 @@ export default function Members() {
     try {
       setLoading(true);
       const res = await API.get("/members");
-      setMembers(Array.isArray(res.data) ? res.data : []);
+      setMembers(Array.isArray(res.data.data) ? res.data.data : []);
+
     } catch (err) {
       console.error("fetch members error:", err);
     } finally {
