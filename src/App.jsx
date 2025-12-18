@@ -11,6 +11,9 @@ import PrivateRoute from "./components/PrivateRoute";
 import Sidebar from "./components/Sidebar";
 import Navbar from "./components/Navbar";
 
+import FranchiseApplications from "./pages/FranchiseApplications";
+
+
 /* ------------------- Lazy Imports ------------------- */
 const Login = lazy(() => import("./pages/Login"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
@@ -136,6 +139,11 @@ export default function App() {
                 </ProtectedLayout>
               </PrivateRoute>
             }
+          />
+
+          <Route
+            path="/franchise-applications"
+            element={<FranchiseApplications />}
           />
 
           {/* Students */}

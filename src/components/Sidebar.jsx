@@ -77,6 +77,14 @@ export default function Sidebar() {
                   List Franchise
                 </NavLink>
               </li>
+
+              <li className="mb-1">
+                <NavLink to="/franchise-applications" className={subLinkClass}>
+                  Franchise Applications
+                </NavLink>
+              </li>
+
+
             </ul>
           )}
         </li>
