@@ -69,6 +69,7 @@ const emptyEdit = {
   hasToilet: false,
   username: '',
   password: '',
+  status: 'pending',
 };
 
 export default function FranchiseList() {
@@ -132,6 +133,8 @@ export default function FranchiseList() {
       hasToilet: f.hasToilet ?? false,
       username: f.username || '',
       password: '',
+      status: f.status || 'pending',
+
     });
   };
 
@@ -164,18 +167,17 @@ export default function FranchiseList() {
     setEditError('');
 
     try {
-      const fd = new FormData();
-      Object.entries(editForm).forEach(([key, value]) => {
-        // ignore empty password
-        if (key === 'password' && !value) return;
-        if (value !== '' && value !== null && value !== undefined) {
-          fd.append(key, value);
-        }
-      });
+const payload = { ...editForm };
 
-      const res = await API.put(`/franchises/${editing._id}`, fd, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+// do not overwrite password if empty
+if (!payload.password) {
+  delete payload.password;
+}
+
+const res = await API.put(
+  `/franchises/${editing._id}`,
+  payload
+);
 
       const updated = res.data;
 
@@ -662,6 +664,23 @@ export default function FranchiseList() {
                         onChange={handleEditChange}
                       />
                     </div>
+
+                    <div className="row g-3 mb-3">
+  <div className="col-md-6">
+    <label className="form-label">Franchise Status</label>
+    <select
+      className="form-select"
+      name="status"
+      value={editForm.status}
+      onChange={handleEditChange}
+    >
+      <option value="pending">Pending</option>
+      <option value="approved">Approved</option>
+      <option value="rejected">Rejected</option>
+    </select>
+  </div>
+</div>
+
                   </div>
 
                   {/* Existing docs quick view (read-only) */}
