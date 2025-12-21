@@ -18,6 +18,8 @@ export default function Students() {
   const [search, setSearch] = useState("");
   const [selectedCenter, setSelectedCenter] = useState("all");
   const [viewMode, setViewMode] = useState("all"); // "all" | "franchise"
+  const [showPassword, setShowPassword] = useState(false);
+
 
   // edit modal state
   const [editing, setEditing] = useState(null); // student object
@@ -92,24 +94,38 @@ export default function Students() {
     setEditing(s);
     setEditError("");
     setEditForm({
-      centerName: s.centerName || s.franchiseName || s.instituteName || "",
-      name: s.name || s.studentName || "",
+      centerName: s.centerName || "",
+      name: s.name || "",
+      fatherName: s.fatherName || "",
+      motherName: s.motherName || "",
       gender: s.gender || "",
       dob: fmtDate(s.dob),
+
       email: s.email || "",
       mobile: s.mobile || s.contact || "",
+
       state: s.state || "",
       district: s.district || "",
       address: s.address || "",
+
       examPassed: s.examPassed || "",
       marksOrGrade: s.marksOrGrade || "",
       board: s.board || "",
       passingYear: s.passingYear || "",
+
       courseName: s.courseName || "",
       sessionStart: fmtDate(s.sessionStart),
       sessionEnd: fmtDate(s.sessionEnd),
-      photo: s.photo || s.photoUrl || "",
+
+      username: s.username || "",
+      password: "", // NEVER prefill real password
+      feesPaid: !!s.feesPaid,
+      isCertified: !!s.isCertified,
+
+      photo: s.photo || "",
+      photoFile: null,
     });
+
   };
 
   const closeEdit = () => {
@@ -138,24 +154,50 @@ export default function Students() {
 
     try {
       const payload = {
-        centerName: editForm.centerName.trim(),
-        name: editForm.name.trim(),
+        centerName: editForm.centerName,
+        name: editForm.name,
+        fatherName: editForm.fatherName,
+        motherName: editForm.motherName,
+
         gender: editForm.gender,
         dob: editForm.dob || null,
-        email: editForm.email.trim(),
-        mobile: editForm.mobile.trim(),
-        state: editForm.state.trim(),
-        district: editForm.district.trim(),
-        address: editForm.address.trim(),
-        examPassed: editForm.examPassed.trim(),
-        marksOrGrade: editForm.marksOrGrade.trim(),
-        board: editForm.board.trim(),
-        passingYear: editForm.passingYear.trim(),
-        courseName: editForm.courseName.trim(),
+
+        email: editForm.email,
+        mobile: editForm.mobile,
+        state: editForm.state,
+        district: editForm.district,
+        address: editForm.address,
+
+        examPassed: editForm.examPassed,
+        marksOrGrade: editForm.marksOrGrade,
+        board: editForm.board,
+        passingYear: editForm.passingYear,
+
+        courseName: editForm.courseName,
         sessionStart: editForm.sessionStart || null,
         sessionEnd: editForm.sessionEnd || null,
-        photo: editForm.photo.trim(),
+
+        username: editForm.username,
+        ...(editForm.password && { password: editForm.password }),
+
+        feesPaid: editForm.feesPaid,
+        isCertified: editForm.isCertified,
       };
+
+      if (editForm.photoFile) {
+        const fd = new FormData();
+        fd.append("file", editForm.photoFile);
+        fd.append("upload_preset", "YOUR_PRESET");
+
+        const res = await fetch(
+          "https://api.cloudinary.com/v1_1/YOUR_CLOUD/image/upload",
+          { method: "POST", body: fd }
+        );
+
+        const img = await res.json();
+        payload.photo = img.secure_url;
+      }
+
 
       const res = await API.put(`/students/${id}`, payload);
       const updated = res.data;
@@ -271,9 +313,6 @@ export default function Students() {
       <div className="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
         <div>
           <h2 className="fw-bold mb-0">Students</h2>
-          <div className="small text-muted">
-            All students, with optional grouping by franchise/center.
-          </div>
         </div>
 
         <div className="d-flex gap-2">
@@ -296,35 +335,8 @@ export default function Students() {
       {/* Filters / search / view mode */}
       <div className="card mb-3">
         <div className="card-body d-flex flex-wrap gap-3 align-items-center">
-          <div className="d-flex align-items-center gap-2">
-            <span className="small text-muted">View:</span>
-            <div className="btn-group" role="group">
-              <button
-                type="button"
-                className={
-                  viewMode === "all"
-                    ? "btn btn-sm btn-primary"
-                    : "btn btn-sm btn-outline-primary"
-                }
-                onClick={() => switchView("all")}
-              >
-                All Students
-              </button>
-              <button
-                type="button"
-                className={
-                  viewMode === "franchise"
-                    ? "btn btn-sm btn-primary"
-                    : "btn btn-sm btn-outline-primary"
-                }
-                onClick={() => switchView("franchise")}
-              >
-                By Franchise / Center
-              </button>
-            </div>
-          </div>
 
-          <div style={{ minWidth: 220 }}>
+          <div style={{ minWidth: 320 }}>
             <input
               type="text"
               className="form-control form-control-sm"
@@ -540,9 +552,30 @@ export default function Students() {
                     </div>
                   </div>
 
+                  <div className="row g-3 mb-3">
+                    <div className="col-md-6">
+                      <label className="form-label">Father's Name</label>
+                      <input
+                        className="form-control"
+                        name="fatherName"
+                        value={editForm.fatherName}
+                        onChange={handleEditChange}
+                      />
+                    </div>
+                    <div className="col-md-6">
+                      <label className="form-label">Mother's Name</label>
+                      <input
+                        className="form-control"
+                        name="motherName"
+                        value={editForm.motherName}
+                        onChange={handleEditChange}
+                      />
+                    </div>
+                  </div>
+
                   {/* Gender / DOB */}
                   <div className="row g-3 mb-3">
-                    <div className="col-md-4">
+                    <div className="col-md-6">
                       <label className="form-label">Gender</label>
                       <select
                         className="form-select"
@@ -556,7 +589,7 @@ export default function Students() {
                         <option value="Other">Other</option>
                       </select>
                     </div>
-                    <div className="col-md-4">
+                    <div className="col-md-6">
                       <label className="form-label">Date of Birth</label>
                       <input
                         type="date"
@@ -570,7 +603,7 @@ export default function Students() {
 
                   {/* Contact */}
                   <div className="row g-3 mb-3">
-                    <div className="col-md-4">
+                    <div className="col-md-6">
                       <label className="form-label">Email</label>
                       <input
                         type="email"
@@ -580,7 +613,7 @@ export default function Students() {
                         onChange={handleEditChange}
                       />
                     </div>
-                    <div className="col-md-4">
+                    <div className="col-md-6">
                       <label className="form-label">Mobile</label>
                       <input
                         type="text"
@@ -591,6 +624,8 @@ export default function Students() {
                       />
                     </div>
                   </div>
+
+
 
                   {/* Location */}
                   <div className="row g-3 mb-3">
@@ -696,22 +731,113 @@ export default function Students() {
 
                   {/* Photo string (URL or /uploads/filename) */}
                   <div className="mb-3">
-                    <label className="form-label">
-                      Photo (URL or /uploads/filename)
-                    </label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      name="photo"
-                      value={editForm.photo || ""}
-                      onChange={handleEditChange}
-                      placeholder="e.g. /uploads/student-123.jpg"
-                    />
-                    <div className="form-text">
-                      This should match what your Add Student form saves in the
-                      photo field.
+                    {/* Photo preview + upload */}
+                    <div className="mb-3">
+                      <label className="form-label">Student Photo</label>
+
+                      <div className="d-flex align-items-center gap-3">
+                        {/* Old photo preview */}
+                        {editForm.photo && (
+                          <img
+                            src={editForm.photo}
+                            alt="Student"
+                            style={{
+                              width: 80,
+                              height: 80,
+                              objectFit: "cover",
+                              borderRadius: "50%",
+                              border: "1px solid #ddd",
+                            }}
+                          />
+                        )}
+
+                        {/* Upload new photo */}
+                        <input
+                          type="file"
+                          className="form-control"
+                          accept="image/*"
+                          onChange={(e) =>
+                            setEditForm((p) => ({
+                              ...p,
+                              photoFile: e.target.files[0],
+                            }))
+                          }
+                        />
+                      </div>
+
+                      <small className="text-muted">
+                        Upload only if you want to replace the existing photo
+                      </small>
+                    </div>
+
+                    <div className="row g-3 mb-3">
+                      <div className="col-md-6 form-check">
+                        <input
+                          type="checkbox"
+                          className="form-check-input"
+                          id="feesPaid"
+                          checked={editForm.feesPaid}
+                          onChange={(e) =>
+                            setEditForm((p) => ({ ...p, feesPaid: e.target.checked }))
+                          }
+                        />
+                        <label className="form-check-label" htmlFor="feesPaid">
+                          Fees Paid
+                        </label>
+                      </div>
+
+                      <div className="col-md-6 form-check">
+                        <input
+                          type="checkbox"
+                          className="form-check-input"
+                          id="isCertified"
+                          checked={editForm.isCertified}
+                          onChange={(e) =>
+                            setEditForm((p) => ({ ...p, isCertified: e.target.checked }))
+                          }
+                        />
+                        <label className="form-check-label" htmlFor="isCertified">
+                          Certified
+                        </label>
+                      </div>
+</div>
+
+                  </div>
+
+                  <div className="row g-3 mb-3">
+                    <div className="col-md-6">
+                      <label className="form-label">Username</label>
+                      <input
+                        className="form-control"
+                        name="username"
+                        value={editForm.username}
+                        onChange={handleEditChange}
+                      />
+                    </div>
+
+                    <div className="col-md-6">
+                      <label className="form-label">Password</label>
+                      <div className="input-group">
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          className="form-control"
+                          name="password"
+                          value={editForm.password}
+                          onChange={handleEditChange}
+                          placeholder="Leave blank to keep unchanged"
+                        />
+                        <button
+                          type="button"
+                          className="btn btn-outline-secondary"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          👁
+                        </button>
+                      </div>
                     </div>
                   </div>
+
+
                 </div>
 
                 <div className="modal-footer">

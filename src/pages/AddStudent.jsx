@@ -43,62 +43,6 @@ const INDIAN_STATES = [
   "Puducherry",
 ];
 
-// Keep full only for a couple of states. You can extend later.
-const DISTRICTS_BY_STATE = {
-  Bihar: [
-    "Araria",
-    "Arwal",
-    "Aurangabad",
-    "Banka",
-    "Begusarai",
-    "Bhagalpur",
-    "Bhojpur",
-    "Buxar",
-    "Darbhanga",
-    "East Champaran",
-    "Gaya",
-    "Gopalganj",
-    "Jamui",
-    "Jehanabad",
-    "Kaimur",
-    "Katihar",
-    "Khagaria",
-    "Kishanganj",
-    "Lakhisarai",
-    "Madhepura",
-    "Madhubani",
-    "Munger",
-    "Muzaffarpur",
-    "Nalanda",
-    "Nawada",
-    "Patna",
-    "Purnia",
-    "Rohtas",
-    "Saharsa",
-    "Samastipur",
-    "Saran",
-    "Sheikhpura",
-    "Sheohar",
-    "Sitamarhi",
-    "Siwan",
-    "Supaul",
-    "Vaishali",
-    "West Champaran",
-  ],
-  "Uttar Pradesh": [
-    "Agra",
-    "Aligarh",
-    "Prayagraj",
-    "Ambedkar Nagar",
-    "Amethi",
-    "Amroha",
-    "Auraiya",
-    "Azamgarh",
-    // ...complete if needed
-  ],
-  // other states can be filled later
-};
-
 const initialForm = {
   centerName: "",
   name: "",
@@ -107,7 +51,7 @@ const initialForm = {
   motherName: "",
   dob: "",
   email: "",
-  mobile: "", // we'll store ONLY the 10 digits here
+  mobile: "", 
   state: "",
   district: "",
   address: "",
@@ -121,6 +65,8 @@ const initialForm = {
   courseName: "",
   sessionStart: "",
   sessionEnd: "",
+  feesPaid: false,
+  isCertified: false
 };
 
 const MAX_PHOTO_SIZE_MB = 2;
@@ -137,6 +83,9 @@ export default function AddStudent() {
   const [loadingMeta, setLoadingMeta] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  const [showPassword, setShowPassword] = useState(false);
+
 
   const navigate = useNavigate();
 
@@ -184,19 +133,27 @@ export default function AddStudent() {
   }, []);
 
   // ---------- Helpers ----------
-  const districtOptions = DISTRICTS_BY_STATE[form.state] || [];
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
 
-    // Mobile: keep only digits, max 10
+    // Handle checkboxes properly
+    if (type === "checkbox") {
+      setForm((prev) => ({
+        ...prev,
+        [name]: checked,
+      }));
+      return;
+    }
+
+    // Mobile: digits only, max 10
     if (name === "mobile") {
       const digits = value.replace(/\D/g, "").slice(0, 10);
       setForm((prev) => ({ ...prev, mobile: digits }));
       return;
     }
 
-    // State change: reset district
+    // State change → reset district
     if (name === "state") {
       setForm((prev) => ({
         ...prev,
@@ -211,6 +168,7 @@ export default function AddStudent() {
       [name]: value,
     }));
   };
+
 
   const handleCourseChange = (e) => {
     const value = e.target.value;
@@ -379,9 +337,10 @@ export default function AddStudent() {
 
       <form
         onSubmit={handleSubmit}
-        className="card shadow-sm"
-        style={{ maxWidth: "1000px" }}
+        className="card shadow-sm mx-auto"
+        style={{ maxWidth: "1400px" }}
       >
+
         <div className="card-body">
           {loadingMeta && (
             <div className="mb-3 small text-muted">
@@ -390,8 +349,8 @@ export default function AddStudent() {
           )}
 
           {/* Center / Franchise */}
-          <div className="row g-3 mb-3">
-            <div className="col-md-6">
+          <div className="row g-4 mb-4">
+            <div className="col-lg-5 col-md-6">
               <label className="form-label">
                 Center / Institute (Franchise)
               </label>
@@ -411,7 +370,7 @@ export default function AddStudent() {
                 This will pre-fill the center name, or you can type manually.
               </small>
             </div>
-            <div className="col-md-6">
+            <div className="col-lg-7 col-md-6">
               <label className="form-label">
                 Center Name <span className="text-danger">*</span>
               </label>
@@ -428,7 +387,7 @@ export default function AddStudent() {
 
           {/* Basic identity */}
           <div className="row g-3 mb-3">
-            <div className="col-md-4">
+            <div className="col-lg-4">
               <label className="form-label">
                 Student Name <span className="text-danger">*</span>
               </label>
@@ -441,7 +400,7 @@ export default function AddStudent() {
                 required
               />
             </div>
-            <div className="col-md-4">
+            <div className="col-lg-4">
               <label className="form-label">Gender</label>
               <select
                 className="form-select"
@@ -455,7 +414,7 @@ export default function AddStudent() {
                 <option value="Other">Other</option>
               </select>
             </div>
-            <div className="col-md-4">
+            <div className="col-lg-4">
               <label className="form-label">Date of Birth</label>
               <input
                 type="date"
@@ -469,7 +428,7 @@ export default function AddStudent() {
 
           {/* Parents */}
           <div className="row g-3 mb-3">
-            <div className="col-md-4">
+            <div className="col-lg-6">
               <label className="form-label">Father&apos;s Name</label>
               <input
                 type="text"
@@ -479,7 +438,7 @@ export default function AddStudent() {
                 onChange={handleChange}
               />
             </div>
-            <div className="col-md-4">
+            <div className="col-lg-6">
               <label className="form-label">Mother&apos;s Name</label>
               <input
                 type="text"
@@ -493,7 +452,7 @@ export default function AddStudent() {
 
           {/* Contact */}
           <div className="row g-3 mb-3">
-            <div className="col-md-4">
+            <div className="col-lg-6">
               <label className="form-label">Email</label>
               <input
                 type="email"
@@ -503,7 +462,7 @@ export default function AddStudent() {
                 onChange={handleChange}
               />
             </div>
-            <div className="col-md-4">
+            <div className="col-lg-6">
               <label className="form-label">
                 Mobile Number <span className="text-danger">*</span>
               </label>
@@ -519,15 +478,12 @@ export default function AddStudent() {
                   required
                 />
               </div>
-              <small className="text-muted">
-                Enter only 10 digits. +91 is added automatically.
-              </small>
             </div>
           </div>
 
           {/* Location */}
           <div className="row g-3 mb-3">
-            <div className="col-md-4">
+            <div className="col-lg-3">
               <label className="form-label">
                 State <span className="text-danger">*</span>
               </label>
@@ -545,49 +501,32 @@ export default function AddStudent() {
                 ))}
               </select>
             </div>
-            <div className="col-md-4">
-              <label className="form-label">
-                District <span className="text-danger">*</span>
-              </label>
-              {districtOptions.length > 0 ? (
-                <select
-                  className="form-select"
-                  name="district"
-                  value={form.district}
-                  onChange={handleChange}
-                  disabled={!form.state}
-                >
-                  <option value="">Select District</option>
-                  {districtOptions.map((d) => (
-                    <option key={d} value={d}>
-                      {d}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <input
-                  type="text"
-                  className="form-control"
-                  name="district"
-                  value={form.district}
-                  onChange={handleChange}
-                  disabled={!form.state}
-                  placeholder={
-                    form.state
-                      ? "Enter district (list not configured yet)"
-                      : "Select state first"
-                  }
-                />
-              )}
+
+            <div className="col-lg-3">
+              <div>
+  <label className="form-label">
+    District <span className="text-danger">*</span>
+  </label>
+  <input
+    type="text"
+    className="form-control"
+    name="district"
+    value={form.district}
+    onChange={handleChange}
+    placeholder="Enter district name"
+    required
+  />
+              </div>
             </div>
-            <div className="col-md-4">
+
+            <div className="col-lg-6">
               <label className="form-label">
                 Full Address <span className="text-danger">*</span>
               </label>
               <textarea
                 className="form-control"
                 name="address"
-                rows={3}
+                rows={1}
                 value={form.address}
                 onChange={handleChange}
               />
@@ -596,7 +535,7 @@ export default function AddStudent() {
 
           {/* Academic background */}
           <div className="row g-3 mb-3">
-            <div className="col-md-4">
+            <div className="col-lg-3">
               <label className="form-label">Exam Passed</label>
               <input
                 type="text"
@@ -607,7 +546,7 @@ export default function AddStudent() {
                 placeholder="10th / 12th / Graduation, etc."
               />
             </div>
-            <div className="col-md-4">
+            <div className="col-lg-3">
               <label className="form-label">Marks (%) / Grade</label>
               <input
                 type="text"
@@ -617,7 +556,7 @@ export default function AddStudent() {
                 onChange={handleChange}
               />
             </div>
-            <div className="col-md-4">
+            <div className="col-lg-3">
               <label className="form-label">Board</label>
               <input
                 type="text"
@@ -627,10 +566,7 @@ export default function AddStudent() {
                 onChange={handleChange}
               />
             </div>
-          </div>
-
-          <div className="row g-3 mb-3">
-            <div className="col-md-4">
+            <div className="col-lg-3">
               <label className="form-label">Passing Year</label>
               <input
                 type="text"
@@ -642,9 +578,11 @@ export default function AddStudent() {
             </div>
           </div>
 
+
+
           {/* Course selection + session */}
           <div className="row g-3 mb-3">
-            <div className="col-md-6">
+            <div className="col-lg-6">
               <label className="form-label">Selected Course</label>
               <select
                 className="form-select"
@@ -660,7 +598,7 @@ export default function AddStudent() {
                 ))}
               </select>
             </div>
-            <div className="col-md-3">
+            <div className="col-lg-3">
               <label className="form-label">Session Start</label>
               <input
                 type="date"
@@ -670,7 +608,7 @@ export default function AddStudent() {
                 onChange={handleChange}
               />
             </div>
-            <div className="col-md-3">
+            <div className="col-lg-3">
               <label className="form-label">Session End</label>
               <input
                 type="date"
@@ -683,8 +621,8 @@ export default function AddStudent() {
           </div>
 
           {/* Photo upload */}
-          <div className="row g-3 mb-3">
-            <div className="col-md-6">
+          <div className="row g-3 mb-3 align-items-end">
+            <div className="col-lg-8">
               <label className="form-label">
                 Student Photo (max {MAX_PHOTO_SIZE_MB} MB)
               </label>
@@ -694,13 +632,9 @@ export default function AddStudent() {
                 accept="image/*"
                 onChange={handlePhotoChange}
               />
-              <small className="text-muted">
-                This will be saved on the server and shown in the student
-                table.
-              </small>
             </div>
             {photoPreview && (
-              <div className="col-md-3 d-flex flex-column align-items-start">
+              <div className="col-lg-4 text-center d-flex flex-column align-items-start">
                 <label className="form-label">Preview</label>
                 <img
                   src={photoPreview}
@@ -717,9 +651,22 @@ export default function AddStudent() {
             )}
           </div>
 
+          {/* ================= STATUS ================= */}
+          <div className="row g-3 mb-3">
+            <div className="col-lg-6 form-check">
+              <input className="form-check-input" type="checkbox" name="feesPaid" checked={form.feesPaid} onChange={handleChange} />
+              <label className="form-check-label">Fees Paid</label>
+            </div>
+            <div className="col-lg-6 form-check">
+              <input className="form-check-input" type="checkbox" name="isCertified" checked={form.isCertified} onChange={handleChange} />
+              <label className="form-check-label">Certified</label>
+            </div>
+          </div>
+
+
           {/* Login credentials */}
           <div className="row g-3 mb-3">
-            <div className="col-md-4">
+            <div className="col-lg-6">
               <label className="form-label">Username</label>
               <input
                 type="text"
@@ -729,18 +676,26 @@ export default function AddStudent() {
                 onChange={handleChange}
               />
             </div>
-            <div className="col-md-4">
+            <div className="col-lg-6">
               <label className="form-label">Password</label>
-              <input
-                type="password"
-                className="form-control"
-                name="password"
-                value={form.password}
-                onChange={handleChange}
-              />
-              <small className="text-muted">
-                Password will be hashed and managed on the server side.
-              </small>
+              <div className="input-group">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  className="form-control"
+                  name="password"
+                  value={form.password}
+                  onChange={handleChange}
+                  placeholder="Enter password"
+                />
+                <span
+                  className="input-group-text"
+                  style={{ cursor: "pointer" }}
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  title={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? "Hide" : "Show"}
+                </span>
+              </div>
             </div>
           </div>
         </div>

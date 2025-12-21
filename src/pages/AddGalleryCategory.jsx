@@ -69,7 +69,7 @@ export default function AddGalleryCategory() {
       <div className="card">
         <div className="card-body">
           <form onSubmit={handleSubmit} className="row g-3">
-            <div className="col-md-6">
+            <div className="col-md-12">
               <label className="form-label">Name / Title *</label>
               <input
                 type="text"
@@ -80,7 +80,7 @@ export default function AddGalleryCategory() {
               />
             </div>
 
-            <div className="col-md-6">
+            <div className="col-md-12">
               <label className="form-label">Category *</label>
               <input
                 type="text"
@@ -95,7 +95,7 @@ export default function AddGalleryCategory() {
               </small>
             </div>
 
-            <div className="col-md-6">
+            <div className="col-md-12">
               <label className="form-label">Upload Image (optional)</label>
               <input
                 type="file"
@@ -108,7 +108,7 @@ export default function AddGalleryCategory() {
               </small>
             </div>
 
-            <div className="col-md-6">
+            {/* <div className="col-md-6">
               <label className="form-label">OR External Image URL</label>
               <input
                 type="url"
@@ -120,12 +120,12 @@ export default function AddGalleryCategory() {
               <small className="text-muted">
                 If provided, this URL will be used instead of uploaded file.
               </small>
-            </div>
+            </div> */}
 
             <div className="col-12 text-end">
               <button
                 type="submit"
-                className="btn btn-primary"
+                className="col-md-12 btn btn-primary"
                 disabled={saving}
               >
                 {saving ? 'Saving…' : 'Save'}

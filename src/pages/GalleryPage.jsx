@@ -143,7 +143,7 @@ export default function GalleryPage() {
             </option>
           ))}
         </select>
-      </div>
+      </div> 
 
       {message && <div className="alert alert-success">{message}</div>}
       {error && <div className="alert alert-danger">{error}</div>}
