@@ -11,8 +11,6 @@ import PrivateRoute from "./components/PrivateRoute";
 import Sidebar from "./components/Sidebar";
 import Navbar from "./components/Navbar";
 
-import FranchiseApplications from "./pages/FranchiseApplications";
-
 
 /* ------------------- Lazy Imports ------------------- */
 const Login = lazy(() => import("./pages/Login"));
@@ -35,8 +33,8 @@ const CreateSubject = lazy(() => import("./pages/CreateSubject"));
 const SubjectList = lazy(() => import("./pages/SubjectList"));
 
 /* Gallery */
-const GalleryPage = lazy(() => import("./pages/GalleryPage"));
-const AddGalleryCategory = lazy(() => import("./pages/AddGalleryCategory"));
+const GalleryPage = lazy(() => import("./pages/Gallery"));
+const AddGalleryCategory = lazy(() => import("./pages/AddGalleryImage"));
 
 /* Members */
 const Members = lazy(() => import("./pages/Members"));
@@ -141,10 +139,6 @@ export default function App() {
             }
           />
 
-          <Route
-            path="/franchise-applications"
-            element={<FranchiseApplications />}
-          />
 
           {/* Students */}
           <Route

@@ -137,7 +137,7 @@ export default function Dashboard() {
     const mapped = (recentStudents || []).map((s) => ({
       id: s._id || s.id,
       name: s.name || s.fullName || "Unknown",
-      rollNo: s.rollNo || s.registrationNumber || "-",
+      // rollNo: s.rollNo || s.registrationNumber || "-",
       email: s.email || "-",
       joinedAt: s.joinDate || s.createdAt || "",
     }));
@@ -220,7 +220,7 @@ export default function Dashboard() {
                       <thead>
                         <tr>
                           <th>Name</th>
-                          <th>Roll No</th>
+                          {/* <th>Roll No</th> */}
                           <th>Email</th>
                           <th>Joined</th>
                         </tr>
@@ -229,7 +229,7 @@ export default function Dashboard() {
                         {formattedRecentStudents.map((s) => (
                           <tr key={s.id}>
                             <td className="fw-semibold">{s.name}</td>
-                            <td className="text-muted">{s.rollNo}</td>
+                            {/* <td className="text-muted">{s.rollNo}</td> */}
                             <td className="text-muted">{s.email}</td>
                             <td className="text-muted">
                               {fmtDate(s.joinedAt)}

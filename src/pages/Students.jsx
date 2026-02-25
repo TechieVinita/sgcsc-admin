@@ -94,6 +94,8 @@ export default function Students() {
     setEditing(s);
     setEditError("");
     setEditForm({
+      rollNumber: s.rollNumber || "",
+
       centerName: s.centerName || "",
       name: s.name || "",
       fatherName: s.fatherName || "",
@@ -151,6 +153,7 @@ export default function Students() {
 
     setSavingEdit(true);
     setEditError("");
+    
 
     try {
       const payload = {
@@ -158,6 +161,8 @@ export default function Students() {
         name: editForm.name,
         fatherName: editForm.fatherName,
         motherName: editForm.motherName,
+        rollNumber: editForm.rollNumber,
+
 
         gender: editForm.gender,
         dob: editForm.dob || null,
@@ -187,15 +192,21 @@ export default function Students() {
       if (editForm.photoFile) {
         const fd = new FormData();
         fd.append("file", editForm.photoFile);
-        fd.append("upload_preset", "YOUR_PRESET");
+        fd.append("upload_preset", "sgcsc_unsigned");
 
         const res = await fetch(
-          "https://api.cloudinary.com/v1_1/YOUR_CLOUD/image/upload",
+          "https://api.cloudinary.com/v1_1/your_cloud_name/image/upload",
           { method: "POST", body: fd }
         );
 
         const img = await res.json();
         payload.photo = img.secure_url;
+
+        setEditForm((p) => ({
+          ...p,
+          photo: img.secure_url,
+        }));
+
       }
 
 
@@ -432,6 +443,7 @@ export default function Students() {
                     <table className="table table-sm table-hover align-middle mb-0">
                       <thead className="table-light">
                         <tr>
+                          
                           <th>Student</th>
                           <th>Mobile</th>
                           <th>Course</th>
@@ -530,7 +542,7 @@ export default function Students() {
 
                   {/* Center + Name */}
                   <div className="row g-3 mb-3">
-                    <div className="col-md-6">
+                    <div className="col-md-4">
                       <label className="form-label">Center Name</label>
                       <input
                         type="text"
@@ -540,7 +552,24 @@ export default function Students() {
                         onChange={handleEditChange}
                       />
                     </div>
-                    <div className="col-md-6">
+
+                    <div className="col-md-4">
+                      <label className="form-label">
+                        Roll Number 
+                        {/* <span className="text-danger">*</span> */}
+                      </label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        name="rollNumber"
+                        value={editForm.rollNumber || ""}
+                        onChange={handleEditChange}
+                        placeholder="e.g. CS-2024-017"
+                        // required
+                      />
+                    </div>
+
+                    <div className="col-md-4">
                       <label className="form-label">Student Name</label>
                       <input
                         type="text"
@@ -732,12 +761,12 @@ export default function Students() {
                   {/* Photo string (URL or /uploads/filename) */}
                   <div className="mb-3">
                     {/* Photo preview + upload */}
-                    <div className="mb-3">
-                      <label className="form-label">Student Photo</label>
+                    {/* <div className="mb-3"> */}
+                      {/* <label className="form-label">Student Photo</label> */}
 
-                      <div className="d-flex align-items-center gap-3">
+                      {/* <div className="d-flex align-items-center gap-3"> */}
                         {/* Old photo preview */}
-                        {editForm.photo && (
+                        {/* {editForm.photo && (
                           <img
                             src={editForm.photo}
                             alt="Student"
@@ -749,10 +778,10 @@ export default function Students() {
                               border: "1px solid #ddd",
                             }}
                           />
-                        )}
+                        )} */}
 
                         {/* Upload new photo */}
-                        <input
+                        {/* <input
                           type="file"
                           className="form-control"
                           accept="image/*"
@@ -762,13 +791,14 @@ export default function Students() {
                               photoFile: e.target.files[0],
                             }))
                           }
-                        />
-                      </div>
+                        /> */}
+                        
+                      {/* </div> */}
 
-                      <small className="text-muted">
+                      {/* <small className="text-muted">
                         Upload only if you want to replace the existing photo
-                      </small>
-                    </div>
+                      </small> */}
+                    {/* </div> */}
 
                     <div className="row g-3 mb-3">
                       <div className="col-md-6 form-check">
@@ -826,13 +856,15 @@ export default function Students() {
                           onChange={handleEditChange}
                           placeholder="Leave blank to keep unchanged"
                         />
-                        <button
-                          type="button"
-                          className="btn btn-outline-secondary"
-                          onClick={() => setShowPassword(!showPassword)}
-                        >
-                          👁
-                        </button>
+                          <button
+                            type="button"
+                            className="btn btn-outline-secondary"
+                            onClick={() => setShowPassword((v) => !v)}
+                            title={showPassword ? "Hide password" : "Show password"}
+                          >
+                            <i className={`bi ${showPassword ? "bi-eye-slash" : "bi-eye"}`} />
+                          </button>
+
                       </div>
                     </div>
                   </div>

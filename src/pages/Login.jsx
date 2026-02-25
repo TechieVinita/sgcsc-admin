@@ -1,10 +1,12 @@
 // src/pages/Login.jsx
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../api/axiosInstance'; // shared axios instance
+import logo from '../assets/images/logo.jpeg';
+
+import api from '../api/axiosInstance'; 
 
 export default function Login({ onLogin }) {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -19,8 +21,7 @@ export default function Login({ onLogin }) {
 
     try {
       // POST to backend login
-      const res = await api.post('/auth/admin-login', { email, password });
-
+      const res = await api.post('/auth/admin-login', { username, password });
       // Possible shapes:
       // 1) res.data = { success:true, data: { token, user } }
       // 2) res.data = { token, user }
@@ -69,7 +70,16 @@ export default function Login({ onLogin }) {
             className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-3"
             style={{ width: '70px', height: '70px', fontSize: '28px', fontWeight: 'bold', boxShadow: '0 6px 15px rgba(0,0,0,0.2)' }}
           >
-            A
+            <img
+              src={logo}
+              alt="Admin Logo"
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                borderRadius: '50%',
+              }}
+            />
           </div>
           <h3 className="fw-bold text-dark">Admin Login</h3>
         </div>
@@ -78,13 +88,13 @@ export default function Login({ onLogin }) {
 
         <form onSubmit={handleLogin}>
           <div className="mb-3">
-            <label htmlFor="email" className="form-label fw-semibold">Email</label>
+            <label htmlFor="username" className="form-label fw-semibold">Username</label>
             <input
-              type="email"
-              id="email"
-              placeholder="admin@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              type="text"
+              id="username"
+              placeholder="sgcsc"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               required
               className="form-control form-control-lg shadow-sm"
             />
@@ -113,7 +123,7 @@ export default function Login({ onLogin }) {
           </button>
         </form>
 
-        <p className="text-center text-muted mt-4 mb-0" style={{ fontSize: '0.9rem' }}>
+        {/* <p className="text-center text-muted mt-4 mb-0" style={{ fontSize: '0.9rem' }}>
           Forgot your password?{' '}
           <span
             onClick={() => navigate('/reset-password')}
@@ -122,7 +132,9 @@ export default function Login({ onLogin }) {
           >
             Reset it
           </span>
-        </p>
+        </p> */}
+
+
       </div>
     </div>
   );

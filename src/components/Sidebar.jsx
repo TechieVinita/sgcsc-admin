@@ -78,11 +78,11 @@ export default function Sidebar() {
                 </NavLink>
               </li>
 
-              <li className="mb-1">
+              {/* <li className="mb-1">
                 <NavLink to="/franchise-applications" className={subLinkClass}>
                   Franchise Applications
                 </NavLink>
-              </li>
+              </li> */}
 
 
             </ul>
@@ -148,21 +148,22 @@ export default function Sidebar() {
                 </NavLink>
               </li>
               <li className="mb-1">
-                <NavLink to="/subjects" className={subLinkClass}>
-                  List Subjects by Course
-                </NavLink>
-              </li>
-              <li className="mb-1">
                 <NavLink to="/courses" className={subLinkClass}>
                   Course List
                 </NavLink>
               </li>
+              <li className="mb-1">
+                <NavLink to="/subjects" className={subLinkClass}>
+                  Subjects List
+                </NavLink>
+              </li>
+
             </ul>
           )}
         </li>
 
         {/* 5. Institute Members -------------------------------------------- */}
-        <li className="nav-item mb-2">
+        {/* <li className="nav-item mb-2">
           <button
             type="button"
             className="btn btn-toggle w-100 text-start d-flex justify-content-between align-items-center text-dark"
@@ -189,7 +190,7 @@ export default function Sidebar() {
               </li>
             </ul>
           )}
-        </li>
+        </li> */}
 
         {/* 6. Gallery ------------------------------------------------------- */}
         <li className="nav-item mb-2">
@@ -209,7 +210,7 @@ export default function Sidebar() {
             <ul className="btn-toggle-nav list-unstyled ps-4 pt-2 pb-1">
               <li className="mb-1">
                 <NavLink to="/gallery/categories/create" className={subLinkClass}>
-                  Add Category
+                  Add Images
                 </NavLink>
               </li>
               <li className="mb-1">
@@ -239,12 +240,12 @@ export default function Sidebar() {
             <ul className="btn-toggle-nav list-unstyled ps-4 pt-2 pb-1">
               <li className="mb-1">
                 <NavLink to="/results/create" className={subLinkClass}>
-                  Create Result
+                  Add Result
                 </NavLink>
               </li>
               <li className="mb-1">
                 <NavLink to="/results" className={subLinkClass}>
-                  Get Result
+                  List Result
                 </NavLink>
               </li>
             </ul>
@@ -303,12 +304,12 @@ export default function Sidebar() {
             <ul className="btn-toggle-nav list-unstyled ps-4 pt-2 pb-1">
               <li className="mb-1">
                 <NavLink to="/certificates/create" className={subLinkClass}>
-                  Create Certificate
+                  Add Certificate
                 </NavLink>
               </li>
               <li className="mb-1">
                 <NavLink to="/certificates" className={subLinkClass}>
-                  Get Certificate
+                  List Certificate
                 </NavLink>
               </li>
             </ul>
@@ -347,7 +348,7 @@ export default function Sidebar() {
         </li>
 
         {/* 11. Assignment --------------------------------------------------- */}
-        <li className="nav-item mb-2">
+        {/* <li className="nav-item mb-2">
           <button
             type="button"
             className="btn btn-toggle w-100 text-start d-flex justify-content-between align-items-center text-dark"
@@ -378,7 +379,7 @@ export default function Sidebar() {
               </li>
             </ul>
           )}
-        </li>
+        </li> */}
 
         {/* 12. Settings (placeholders for now) ------------------------------ */}
         <li className="nav-item mb-2">

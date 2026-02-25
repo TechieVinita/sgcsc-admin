@@ -1,61 +1,127 @@
 // src/pages/AddResults.jsx
-import { useState } from 'react';
+import { useEffect, useState } from "react";
 import API from "../api/axiosInstance";
 
 export default function AddResults() {
-  const [enrollmentNumber, setEnrollmentNumber] = useState('');
-  const [rollNo, setRollNo] = useState('');
-  const [course, setCourse] = useState('');
+  const [course, setCourse] = useState("");
+
+  const [loadingCourses, setLoadingCourses] = useState(false);
 
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState('');
-  const [messageType, setMessageType] = useState('info'); // 'info' | 'success' | 'danger'
+  const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState("info"); // info | success | danger
 
+  const [students, setStudents] = useState([]);
+  const [rollNo, setRollNo] = useState("");
+  const [selectedStudent, setSelectedStudent] = useState(null);
+
+  const [courses, setCourses] = useState([]);
+  const [courseId, setCourseId] = useState("");
+
+  const [subjects, setSubjects] = useState([]);
+  const [marks, setMarks] = useState({});
+  
+
+  /* ================= FETCH COURSES ================= */
+  useEffect(() => {
+    const fetchCourses = async () => {
+      setLoadingCourses(true);
+      try {
+        const res = await API.get("/courses");
+
+        const list =
+          Array.isArray(res.data?.data) ? res.data.data :
+          Array.isArray(res.data) ? res.data : [];
+
+        setCourses(list);
+      } catch (err) {
+        console.error("fetch courses error:", err);
+        setMessageType("danger");
+        setMessage("Failed to load courses list");
+      } finally {
+        setLoadingCourses(false);
+      }
+    };
+
+    fetchCourses();
+  }, []);
+
+
+useEffect(() => {
+  const fetchRollNos = async () => {
+    try {
+      const res = await API.get("/students/rollnos");
+      setStudents(res.data.data || []);
+    } catch (err) {
+      console.error("fetch roll nos error", err);
+    }
+  };
+
+  fetchRollNos();
+}, []);
+
+
+  /* ================= VALIDATION ================= */
   const validate = () => {
-    if (!enrollmentNumber.trim()) {
-      setMessageType('danger');
-      setMessage('Enrollment Number is required.');
+
+    if (!courseId) {
+      setMessageType("danger");
+      setMessage("Please select a course.");
       return false;
     }
+
+    if (subjects.length === 0) {
+      setMessageType("danger");
+      setMessage("No subjects found for this course.");
+      return false;
+    }
+
+
     if (!rollNo.trim()) {
-      setMessageType('danger');
-      setMessage('Roll No is required.');
+      setMessageType("danger");
+      setMessage("Roll No is required.");
       return false;
     }
-    if (!course.trim()) {
-      setMessageType('danger');
-      setMessage('Course is required.');
+    if (!course) {
+      setMessageType("danger");
+      setMessage("Please select a course.");
       return false;
     }
     return true;
   };
 
+  /* ================= SUBMIT ================= */
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage('');
+    setMessage("");
 
     if (!validate()) return;
 
     setSaving(true);
     try {
       const payload = {
-        enrollmentNumber: enrollmentNumber.trim(),
-        rollNo: rollNo.trim(),
-        course: course.trim(),
+        rollNumber: rollNo,
+        studentId: selectedStudent?._id,
+        courseId,
+        subjects: Object.entries(marks).map(([name, m]) => ({
+          name,
+          objective: Number(m.objective || 0),
+          practical: Number(m.practical || 0)
+        }))
       };
 
-      await API.unwrap(API.post('/results', payload));
+      await API.post("/results", payload);
 
-      setMessageType('success');
-      setMessage('Result added successfully!');
 
-      setEnrollmentNumber('');
-      setRollNo('');
-      setCourse('');
+      setMessageType("success");
+      setMessage("Result added successfully!");
+
+      setRollNo("");
+      setCourse("");
     } catch (err) {
-      console.error('add result error:', err);
-      setMessageType('danger');
-      setMessage(err.userMessage || 'Failed to add result');
+      console.error("add result error:", err);
+      setMessageType("danger");
+      setMessage(err.userMessage || "Failed to add result");
     } finally {
       setSaving(false);
     }
@@ -68,16 +134,7 @@ export default function AddResults() {
           <h2 className="mb-4 fw-bold">Create Result</h2>
 
           {message && (
-            <div
-              className={`alert alert-${
-                messageType === 'danger'
-                  ? 'danger'
-                  : messageType === 'success'
-                  ? 'success'
-                  : 'info'
-              }`}
-              role="alert"
-            >
+            <div className={`alert alert-${messageType}`} role="alert">
               {message}
             </div>
           )}
@@ -85,56 +142,137 @@ export default function AddResults() {
           <div className="card shadow-sm" style={{ maxWidth: 520 }}>
             <div className="card-body">
               <form onSubmit={handleSubmit}>
-                <div className="mb-3">
-                  <label className="form-label">Enrollment Number</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={enrollmentNumber}
-                    onChange={(e) => setEnrollmentNumber(e.target.value)}
-                    required
-                  />
-                </div>
 
-                <div className="mb-3">
-                  <label className="form-label">Roll No.</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={rollNo}
-                    onChange={(e) => setRollNo(e.target.value)}
-                    required
-                  />
-                </div>
+                {/* Roll No */}
+                  <div className="mb-3">
+                    <label className="form-label">Roll No</label>
+                    
+                      <select
+                        className="form-select"
+                        value={rollNo}
+                        onChange={(e) => {
+                          const rn = e.target.value;
+                          setRollNo(rn);
 
+                          const student = students.find(
+                            s => String(s.rollNumber) === String(rn)
+                          );
+
+                          setSelectedStudent(student || null);
+                        }}
+                        required
+                      >
+                        <option value="">Select Roll No</option>
+
+                        {students.map(s => (
+                          <option key={s._id} value={s.rollNumber}>
+                            {s.rollNumber} — {s.name}
+                          </option>
+                        ))}
+                      </select>
+
+                  </div>
+
+                {/* Course SELECT */}
                 <div className="mb-3">
                   <label className="form-label">Course</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={course}
-                    onChange={(e) => setCourse(e.target.value)}
-                    required
-                  />
+                <select
+                  className="form-select"
+                  value={courseId}
+                  onChange={(e) => {
+                    const id = e.target.value;
+                    setCourseId(id);
+
+                    const courseObj = courses.find(c => c._id === id);
+                    if (courseObj?.subjects) {
+                      setSubjects(courseObj.subjects);
+
+                      // init marks
+                      const init = {};
+                      courseObj.subjects.forEach(sub => {
+                        init[sub.name] = { objective: "", practical: "" };
+                      });
+                      setMarks(init);
+                    }
+                  }}
+                  required
+                >
+                  <option value="">Select course</option>
+                  {courses.map(c => (
+                    <option key={c._id} value={c._id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
                 </div>
+
+
+
+                {subjects.length > 0 && (
+                  <div className="mt-4">
+                    <h5>Subject Marks</h5>
+
+                    {subjects.map(sub => (
+                      <div key={sub.name} className="row mb-2">
+                        <div className="col-md-4">
+                          <strong>{sub.name}</strong>
+                        </div>
+
+                        <div className="col-md-4">
+                          <input
+                            type="number"
+                            className="form-control"
+                            placeholder="Objective Marks"
+                            value={marks[sub.name]?.objective || ""}
+                            onChange={(e) =>
+                              setMarks(prev => ({
+                                ...prev,
+                                [sub.name]: {
+                                  ...prev[sub.name],
+                                  objective: e.target.value
+                                }
+                              }))
+                            }
+                          />
+                        </div>
+
+                        {sub.hasPractical && (
+                          <div className="col-md-4">
+                            <input
+                              type="number"
+                              className="form-control"
+                              placeholder="Practical Marks"
+                              value={marks[sub.name]?.practical || ""}
+                              onChange={(e) =>
+                                setMarks(prev => ({
+                                  ...prev,
+                                  [sub.name]: {
+                                    ...prev[sub.name],
+                                    practical: e.target.value
+                                  }
+                                }))
+                              }
+                            />
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+
 
                 <button
                   type="submit"
                   className="btn btn-primary w-100"
                   disabled={saving}
                 >
-                  {saving ? 'Saving…' : 'Save Result'}
+                  {saving ? "Saving…" : "Save Result"}
                 </button>
               </form>
             </div>
           </div>
 
-          {/* <div className="mt-3 small text-muted">
-            This form sends <code>enrollmentNumber</code>, <code>rollNo</code>{' '}
-            and <code>course</code> to <code>POST /results</code>. Listing,
-            editing and deleting are handled in the <strong>Results</strong>{' '}
-            page.
-          </div> */}
         </div>
       </div>
     </div>

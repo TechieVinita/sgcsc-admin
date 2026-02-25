@@ -88,6 +88,8 @@ export default function StudentTable({ students, onEdit, onDelete }) {
             >
               Student {sortOrder === "asc" ? "▲" : "▼"}
             </th>
+            <th>Roll No</th>
+
             <th scope="col">Center</th>
             <th scope="col">Contact</th>
             <th scope="col">State / District / Address</th>
@@ -193,6 +195,9 @@ export default function StudentTable({ students, onEdit, onDelete }) {
                       {dobStr !== "-" ? ` • ${dobStr}` : ""}
                     </div>
                   </td>
+                  <td>{s.rollNumber || "-"}</td>
+
+
 
                   <td>{center}</td>
 

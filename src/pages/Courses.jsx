@@ -36,6 +36,19 @@ export default function Courses() {
     return acc;
   }, {});
 
+  const getTypeBadgeClass = (type) => {
+    switch (type) {
+      case "certificate":
+        return "bg-success";
+      case "long":
+        return "bg-primary";
+      case "short":
+        return "bg-warning text-dark";
+      default:
+        return "bg-secondary";
+    }
+  };
+
   const handleEdit = (course) => {
     navigate(`/courses/create?id=${course._id}`);
   };
@@ -45,9 +58,7 @@ export default function Courses() {
 
     try {
       await API.delete(`/courses/${courseId}`);
-      setCourses((prev) =>
-        prev.filter((c) => c._id !== courseId)
-      );
+      setCourses((prev) => prev.filter((c) => c._id !== courseId));
     } catch (err) {
       console.error("Delete failed:", err);
       alert(
@@ -100,11 +111,14 @@ export default function Courses() {
                     </h5>
 
                     <div className="mb-2">
-                      <span className="badge bg-dark me-2">
+                      <span
+                        className={`badge me-2 ${getTypeBadgeClass(course.type)}`}
+                      >
                         {course.type}
                       </span>
+
                       {course.duration && (
-                        <span className="badge bg-secondary">
+                        <span className="badge bg-info text-dark">
                           {course.duration}
                         </span>
                       )}

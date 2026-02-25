@@ -66,7 +66,8 @@ const initialForm = {
   sessionStart: "",
   sessionEnd: "",
   feesPaid: false,
-  isCertified: false
+  isCertified: false,
+  rollNumber: ""
 };
 
 const MAX_PHOTO_SIZE_MB = 2;
@@ -223,6 +224,11 @@ export default function AddStudent() {
   const isValidMobile = (digits) => /^\d{10}$/.test(digits || "");
 
   const validateForm = () => {
+    if (!form.rollNumber.trim()) {
+      setError("Roll number is required.");
+      return false;
+    }
+
     if (!form.centerName.trim()) {
       setError("Center Name is required.");
       return false;
@@ -280,6 +286,7 @@ export default function AddStudent() {
       if (photoFile) {
         fd.append("photo", photoFile); // backend field name: "photo"
       }
+
 
       const res = await API.post("/students", fd, {
         headers: { "Content-Type": "multipart/form-data" },
@@ -350,7 +357,7 @@ export default function AddStudent() {
 
           {/* Center / Franchise */}
           <div className="row g-4 mb-4">
-            <div className="col-lg-5 col-md-6">
+            <div className="col-lg-4 col-md-4">
               <label className="form-label">
                 Center / Institute (Franchise)
               </label>
@@ -370,7 +377,7 @@ export default function AddStudent() {
                 This will pre-fill the center name, or you can type manually.
               </small>
             </div>
-            <div className="col-lg-7 col-md-6">
+            <div className="col-lg-4 col-md-4">
               <label className="form-label">
                 Center Name <span className="text-danger">*</span>
               </label>
@@ -383,6 +390,21 @@ export default function AddStudent() {
                 required
               />
             </div>
+            <div className="col-lg-4 col-md-4">
+              <label className="form-label">
+                Roll Number 
+                <span className="text-danger">*</span>
+              </label>
+              <input
+                type="text"
+                className="form-control"
+                name="rollNumber"
+                value={form.rollNumber}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
           </div>
 
           {/* Basic identity */}
@@ -504,18 +526,18 @@ export default function AddStudent() {
 
             <div className="col-lg-3">
               <div>
-  <label className="form-label">
-    District <span className="text-danger">*</span>
-  </label>
-  <input
-    type="text"
-    className="form-control"
-    name="district"
-    value={form.district}
-    onChange={handleChange}
-    placeholder="Enter district name"
-    required
-  />
+                <label className="form-label">
+                  District <span className="text-danger">*</span>
+                </label>
+                <input
+                  type="text"
+                  className="form-control"
+                  name="district"
+                  value={form.district}
+                  onChange={handleChange}
+                  placeholder="Enter district name"
+                  required
+                />
               </div>
             </div>
 

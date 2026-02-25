@@ -111,16 +111,16 @@ export default function CreateCourse() {
   }
 
   return (
-    <div className="container py-4" style={{ maxWidth: 900 }}>
+    <div className="container py-4">
       {/* Header */}
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
           <h2 className="fw-bold mb-1">
             {courseId ? "Edit Course" : "Create Course"}
           </h2>
-          <div className="text-muted">
+          {/* <div className="text-muted">
             Manage course name, duration and type
-          </div>
+          </div> */}
         </div>
 
         <button
@@ -128,7 +128,7 @@ export default function CreateCourse() {
           onClick={() => navigate("/courses")}
           disabled={saving}
         >
-          Back
+          Back to Courses
         </button>
       </div>
 

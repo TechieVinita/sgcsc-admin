@@ -1,90 +1,99 @@
 // src/pages/CreateSubject.jsx
-import { useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import API from "../api/axiosInstance";
 
 export default function CreateSubject() {
   const navigate = useNavigate();
   const location = useLocation();
   const params = new URLSearchParams(location.search);
-  const subjectId = params.get('id');
+  const subjectId = params.get("id");
 
   const [courses, setCourses] = useState([]);
   const [loadingCourses, setLoadingCourses] = useState(false);
 
-  const [courseId, setCourseId] = useState('');
-  const [name, setName] = useState('');
-  const [maxMarks, setMaxMarks] = useState('');
-  const [minMarks, setMinMarks] = useState('');
+  const [courseId, setCourseId] = useState("");
+  const [name, setName] = useState("");
+  const [maxMarks, setMaxMarks] = useState("");
+  const [minMarks, setMinMarks] = useState("");
 
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [initialLoaded, setInitialLoaded] = useState(false);
 
-  // Load courses for dropdown
+  /* ----------------------------------------------------
+     Load courses FIRST (dropdown source of truth)
+  ---------------------------------------------------- */
   useEffect(() => {
     const loadCourses = async () => {
       setLoadingCourses(true);
       try {
-        const res = await API.get('/courses');
-        const data = res.data;
-
-        const arr = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.data)
-          ? data.data
+        const res = await API.get("/courses");
+        const arr = Array.isArray(res.data?.data)
+          ? res.data.data
+          : Array.isArray(res.data)
+          ? res.data
           : [];
         setCourses(arr);
       } catch (err) {
-        console.error('load courses for subjects', err);
-        setError(err.userMessage || 'Failed to load courses');
+        console.error("load courses", err);
+        setError("Failed to load courses");
       } finally {
         setLoadingCourses(false);
       }
     };
+
     loadCourses();
   }, []);
 
-  // Load subject when editing
+  /* ----------------------------------------------------
+     Load subject AFTER courses are available
+  ---------------------------------------------------- */
   useEffect(() => {
     const loadSubject = async () => {
-      if (!subjectId) {
+      if (!subjectId || courses.length === 0) {
         setInitialLoaded(true);
         return;
       }
+
       try {
         const res = await API.get(`/subjects/${subjectId}`);
-        const data = res.data;
+        const s = res.data?.data || {};
 
-        const s =
-          data && typeof data === 'object' && !Array.isArray(data)
-            ? data
-            : data?.data || {};
-        // expecting s.course = courseId
-        setCourseId(s.course || s.courseId || '');
-        setName(s.name || s.subjectName || '');
-        setMaxMarks(s.maxMarks ?? s.max ?? '');
-        setMinMarks(s.minMarks ?? s.min ?? '');
+        const extractedCourseId =
+          typeof s.course === "object"
+            ? s.course._id || s.course.id
+            : s.course || s.courseId || "";
+
+        setCourseId(String(extractedCourseId));
+        setName(s.name || s.subjectName || "");
+        setMaxMarks(s.maxMarks ?? s.max ?? "");
+        setMinMarks(s.minMarks ?? s.min ?? "");
       } catch (err) {
-        console.error('load subject', err);
-        setError(err.userMessage || 'Failed to load subject');
+        console.error("load subject", err);
+        setError("Failed to load subject");
       } finally {
         setInitialLoaded(true);
       }
     };
-    loadSubject();
-  }, [subjectId]);
 
+    loadSubject();
+  }, [subjectId, courses]);
+
+  /* ----------------------------------------------------
+     Submit
+  ---------------------------------------------------- */
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setError("");
 
     if (!courseId) {
-      setError('Please select a course');
+      setError("Please select a course");
       return;
     }
+
     if (!name.trim()) {
-      setError('Subject name is required');
+      setError("Subject name is required");
       return;
     }
 
@@ -100,31 +109,26 @@ export default function CreateSubject() {
       if (subjectId) {
         await API.put(`/subjects/${subjectId}`, payload);
       } else {
-        await API.post('/subjects', payload);
+        await API.post("/subjects", payload);
       }
-
-      navigate('/subjects');
+      navigate("/subjects");
     } catch (err) {
-      console.error('save subject error', err);
+      console.error("save subject", err);
       setError(
-        err?.response?.data?.message ||
-          err.userMessage ||
-          'Failed to save subject'
+        err?.response?.data?.message || "Failed to save subject"
       );
     } finally {
       setSaving(false);
     }
   };
 
-  const handleCancel = () => {
-    navigate('/subjects');
-  };
+  const handleCancel = () => navigate("/subjects");
 
   if (!initialLoaded && subjectId) {
     return (
-      <div className="d-flex align-items-center justify-content-center py-5">
-        <div className="spinner-border" role="status" />
-        <span className="ms-2">Loading subject…</span>
+      <div className="d-flex justify-content-center align-items-center py-5">
+        <div className="spinner-border me-2" />
+        Loading subject…
       </div>
     );
   }
@@ -134,28 +138,17 @@ export default function CreateSubject() {
       <div className="flex-grow-1">
         <div className="container py-4">
           <div className="d-flex justify-content-between align-items-center mb-4">
-            <div>
-              <h2 className="mb-0">
-                {subjectId ? 'Edit Subject' : 'Create Subject'}
-              </h2>
-              <div className="small text-muted">
-                Link subjects to courses with max/min marks.
-              </div>
-            </div>
+            <h2>{subjectId ? "Edit Subject" : "Create Subject"}</h2>
             <button
               className="btn btn-outline-secondary"
               onClick={handleCancel}
               disabled={saving}
             >
-              Back to Subjects
+              Back
             </button>
           </div>
 
-          {error && (
-            <div className="alert alert-danger" role="alert">
-              {error}
-            </div>
-          )}
+          {error && <div className="alert alert-danger">{error}</div>}
 
           <form
             onSubmit={handleSubmit}
@@ -163,7 +156,9 @@ export default function CreateSubject() {
             style={{ maxWidth: 700 }}
           >
             <div className="mb-3">
-              <label className="form-label">Course *</label>
+              <label className="form-label">
+                Course <span className="text-danger">*</span>
+              </label>
               <select
                 className="form-select"
                 value={courseId}
@@ -172,22 +167,21 @@ export default function CreateSubject() {
                 required
               >
                 <option value="">
-                  {loadingCourses
-                    ? 'Loading courses…'
-                    : 'Select course'}
+                  {loadingCourses ? "Loading courses…" : "Select course"}
                 </option>
                 {courses.map((c) => (
-                  <option key={c._id || c.id} value={c._id || c.id}>
-                    {c.title || c.name || 'Untitled course'}
+                  <option key={c._id} value={String(c._id)}>
+                    {c.title || c.name || "Untitled course"}
                   </option>
                 ))}
               </select>
             </div>
 
             <div className="mb-3">
-              <label className="form-label">Subject Name *</label>
+              <label className="form-label">
+                Subject Name <span className="text-danger">*</span>
+              </label>
               <input
-                type="text"
                 className="form-control"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -233,12 +227,10 @@ export default function CreateSubject() {
                 disabled={saving}
               >
                 {saving
-                  ? subjectId
-                    ? 'Saving…'
-                    : 'Creating…'
+                  ? "Saving…"
                   : subjectId
-                  ? 'Save Changes'
-                  : 'Create Subject'}
+                  ? "Save Changes"
+                  : "Create Subject"}
               </button>
             </div>
           </form>

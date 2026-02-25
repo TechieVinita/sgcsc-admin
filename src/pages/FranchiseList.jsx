@@ -12,14 +12,18 @@ try {
   API_ORIGIN = window.location.origin;
 }
 
-function imgUrl(filename) {
-  if (!filename) return DEV_PLACEHOLDER;
-  if (filename.startsWith('http')) return filename;
-  const path = filename.startsWith('/uploads')
-    ? filename
-    : `/uploads/${filename}`;
-  return `${API_ORIGIN}${path}`;
+function imgUrl(url) {
+  if (!url) return DEV_PLACEHOLDER;
+
+  // Cloudinary URLs → open directly
+  if (typeof url === 'string' && url.startsWith('http')) {
+    return url;
+  }
+
+  // Fallback for legacy local uploads
+  return `${API_ORIGIN}/uploads/${url}`;
 }
+
 
 function boolBadge(value, labelTrue = 'Yes', labelFalse = 'No') {
   if (value) {
@@ -44,6 +48,21 @@ function docBadge(label, filename) {
     </a>
   );
 }
+
+function statusBadge(status) {
+  const value = (status || 'pending').toLowerCase();
+
+  switch (value) {
+    case 'approved':
+      return <span className="badge bg-success">Approved</span>;
+    case 'rejected':
+      return <span className="badge bg-danger">Rejected</span>;
+    case 'pending':
+    default:
+      return <span className="badge bg-warning text-dark">Pending</span>;
+  }
+}
+
 
 const emptyEdit = {
   instituteId: '',
@@ -70,6 +89,8 @@ const emptyEdit = {
   username: '',
   password: '',
   status: 'pending',
+  balance: 0,
+
 };
 
 export default function FranchiseList() {
@@ -78,8 +99,10 @@ export default function FranchiseList() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [editError, setEditError] = useState('');
-  const [editing, setEditing] = useState(null); // franchise object
+  const [editing, setEditing] = useState(null); 
   const [editForm, setEditForm] = useState(emptyEdit);
+  const [showPassword, setShowPassword] = useState(false);
+
 
   const load = async () => {
     setLoading(true);
@@ -134,6 +157,8 @@ export default function FranchiseList() {
       username: f.username || '',
       password: '',
       status: f.status || 'pending',
+      balance: f.balance ?? 0,
+
 
     });
   };
@@ -254,8 +279,11 @@ const res = await API.put(
                     <th>Contact</th>
                     <th>Infra</th>
                     <th>Facilities</th>
+                    <th>Status</th>  
                     {/* Photo column removed */}
                     <th>Docs</th>
+                    <th>Balance (₹)</th>
+
                     <th className="text-center">Actions</th>
                   </tr>
                 </thead>
@@ -309,6 +337,10 @@ const res = await API.put(
                         &nbsp;
                         {boolBadge(f.hasToilet, 'Toilet', 'No Toilet')}
                       </td>
+                      <td>
+                        {statusBadge(f.status)}
+                      </td>
+
                       {/* Photo <td> removed */}
                       <td style={{ maxWidth: 180 }}>
                         {docBadge('Aadhar Front', f.aadharFront)}
@@ -319,6 +351,12 @@ const res = await API.put(
                         {docBadge('Owner Image', f.ownerImage)}
                         {docBadge('Certificate', f.certificateFile)}
                       </td>
+                      <td>
+                        <span className="fw-semibold">
+                          ₹{Number(f.balance || 0).toLocaleString()}
+                        </span>
+                      </td>
+
                       <td className="text-center">
                         <button
                           className="btn btn-sm btn-outline-primary me-2"
@@ -656,30 +694,60 @@ const res = await API.put(
                       <label className="form-label">
                         New Password (leave blank to keep existing)
                       </label>
-                      <input
-                        type="password"
-                        className="form-control"
-                        name="password"
-                        value={editForm.password}
-                        onChange={handleEditChange}
-                      />
+                        <div className="input-group">
+                          <input
+                            type={showPassword ? 'text' : 'password'}
+                            className="form-control"
+                            name="password"
+                            value={editForm.password}
+                            onChange={handleEditChange}
+                            placeholder="Leave blank to keep existing"
+                          />
+                          <button
+                            type="button"
+                            className="btn btn-outline-secondary"
+                            onClick={() => setShowPassword((prev) => !prev)}
+                            tabIndex={-1}
+                            aria-label={showPassword ? 'Hide password' : 'Show password'}
+                          >
+                            <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'}`} />
+                          </button>
+                        </div>
+
                     </div>
 
                     <div className="row g-3 mb-3">
-  <div className="col-md-6">
-    <label className="form-label">Franchise Status</label>
-    <select
-      className="form-select"
-      name="status"
-      value={editForm.status}
-      onChange={handleEditChange}
-    >
-      <option value="pending">Pending</option>
-      <option value="approved">Approved</option>
-      <option value="rejected">Rejected</option>
-    </select>
-  </div>
-</div>
+                      <div className="col-md-6">
+                        <label className="form-label">Franchise Status</label>
+                        <select
+                          className="form-select"
+                          name="status"
+                          value={editForm.status}
+                          onChange={handleEditChange}
+                        >
+                          <option value="pending">Pending</option>
+                          <option value="approved">Approved</option>
+                          <option value="rejected">Rejected</option>
+                        </select>
+                      </div>
+                      {/* <div className="row g-3 mb-3"> */}
+                      <div className="col-md-6">
+                        <label className="form-label">Balance (₹)</label>
+                        <input
+                          type="number"
+                          className="form-control"
+                          name="balance"
+                          value={editForm.balance}
+                          onChange={handleEditChange}
+                          min={0}
+                        />
+                        <div className="form-text">
+                          Amount paid by franchise (admin controlled)
+                        </div>
+                      </div>
+                    {/* </div> */}
+
+                    </div>
 
                   </div>
 

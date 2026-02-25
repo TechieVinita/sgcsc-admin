@@ -152,6 +152,8 @@ export default function FranchiseCreate() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+
 
   const districtOptions = DISTRICTS_BY_STATE[form.state] || [];
 
@@ -739,15 +741,30 @@ export default function FranchiseCreate() {
               <label className="form-label">
                 Password <span className="text-danger">*</span>
               </label>
-              <input
-                type="password"
-                className="form-control"
-                name="password"
-                value={form.password}
-                onChange={handleChange}
-                autoComplete="new-password"
-                placeholder="Strong password"
-              />
+
+              <div className="input-group">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  className="form-control"
+                  name="password"
+                  value={form.password}
+                  onChange={handleChange}
+                  autoComplete="new-password"
+                  placeholder="Strong password"
+                />
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  tabIndex={-1}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'}`} />
+                </button>
+              </div>
+
+
+
               <div className="form-text">
                 Min 8 chars, include uppercase, lowercase, number and special
                 character.
