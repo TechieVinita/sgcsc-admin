@@ -30,7 +30,7 @@ export default function StudentDetail() {
     }
   };
 
-  useEffect(() => { fetch(); }, [id]);
+  useEffect(() => { fetch(); }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const addResult = async (e) => {
     e.preventDefault();

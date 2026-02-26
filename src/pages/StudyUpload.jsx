@@ -1,32 +1,5 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import API from "../api/axiosInstance";
-
-// Derive API origin for file downloads
-let API_ORIGIN = "";
-try {
-  const base = API?.defaults?.baseURL || "";
-  if (base) {
-    API_ORIGIN = new URL(base).origin;
-  } else if (typeof window !== "undefined") {
-    API_ORIGIN = window.location.origin;
-  }
-} catch {
-  if (typeof window !== "undefined") {
-    API_ORIGIN = window.location.origin;
-  }
-}
-
-function getFileUrl(item) {
-  if (!item) return "";
-  if (item.fileUrl) return item.fileUrl;
-  if (item.url) return item.url;
-
-  const fname = item.fileName || "";
-  if (!fname) return "";
-
-  if (fname.startsWith("http")) return fname;
-  return `${API_ORIGIN}/uploads/${fname.replace(/^uploads[\\/]/, "")}`;
-}
 
 const TYPE_OPTIONS = ["pdf", "word", "ppt", "link", "other"];
 
@@ -39,29 +12,9 @@ export default function StudyUpload() {
   const [linkUrl, setLinkUrl] = useState("");
   const [file, setFile] = useState(null);
 
-  const [materials, setMaterials] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
   const [msgType, setMsgType] = useState("info");
-
-  const loadAll = async () => {
-    setLoading(true);
-    setMsg("");
-    try {
-      const data = await API.unwrap(API.get("/study-materials"));
-      setMaterials(Array.isArray(data) ? data : []);
-    } catch (err) {
-      setMsgType("danger");
-      setMsg(err.userMessage || "Failed to load study materials");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadAll();
-  }, []);
 
   const validate = () => {
     if (!name.trim()) {
@@ -114,26 +67,11 @@ export default function StudyUpload() {
       setType("pdf");
       setLinkUrl("");
       setFile(null);
-
-      await loadAll();
     } catch (err) {
       setMsgType("danger");
       setMsg(err.userMessage || "Failed to upload study material");
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleDelete = async (id) => {
-    if (!window.confirm("Delete this study material?")) return;
-    try {
-      await API.delete(`/study-materials/${id}`);
-      setMaterials((prev) => prev.filter((m) => (m._id || m.id) !== id));
-      setMsgType("success");
-      setMsg("Deleted.");
-    } catch (err) {
-      setMsgType("danger");
-      setMsg(err.userMessage || "Delete failed");
     }
   };
 
@@ -205,61 +143,6 @@ export default function StudyUpload() {
           </button>
         </div>
       </form>
-
-      <hr />
-
-      {/* {loading ? (
-        <p>Loading…</p>
-      ) : materials.length === 0 ? (
-        <p>No study materials uploaded.</p>
-      ) : (
-        <table className="table table-bordered">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Type</th>
-              <th>File / Link</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {materials.map((m) => {
-              const id = m._id || m.id;
-              const fileUrl = getFileUrl(m);
-              return (
-                <tr key={id}>
-                  <td>{m.name}</td>
-                  <td>{m.type}</td>
-                  <td>
-                    {m.linkUrl && (
-                      <a href={m.linkUrl} target="_blank" rel="noreferrer">
-                        Open link
-                      </a>
-                    )}
-                    {fileUrl && (
-                      <>
-                        {m.linkUrl && " | "}
-                        <a href={fileUrl} target="_blank" rel="noreferrer">
-                          Download file
-                        </a>
-                      </>
-                    )}
-                  </td>
-                  <td>
-                    <button
-                      className="btn btn-sm btn-danger"
-                      onClick={() => handleDelete(id)}
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      )}
-       */}
     </div>
   );
 }

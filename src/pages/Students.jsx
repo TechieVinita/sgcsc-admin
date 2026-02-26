@@ -307,16 +307,17 @@ export default function Students() {
     return groups;
   }, [filteredStudents]);
 
-  const switchView = (mode) => {
-    setViewMode(mode);
-    const params = new URLSearchParams(location.search);
-    if (mode === "franchise") {
-      params.set("view", "franchise");
-    } else {
-      params.delete("view");
-    }
-    navigate({ pathname: "/students", search: params.toString() });
-  };
+  // switchView function for future use
+  // const switchView = (mode) => {
+  //   setViewMode(mode);
+  //   const params = new URLSearchParams(location.search);
+  //   if (mode === "franchise") {
+  //     params.set("view", "franchise");
+  //   } else {
+  //     params.delete("view");
+  //   }
+  //   navigate({ pathname: "/students", search: params.toString() });
+  // };
 
   return (
     <div className="container-fluid p-4">
