@@ -36,3 +36,34 @@
     transform: rotate(360deg);
   }
 }
+
+/* Certificate Preview Styles */
+.certificate-preview {
+  background: #fff;
+  border: 3px double #1a365d !important;
+  border-radius: 8px;
+  font-family: 'Times New Roman', serif;
+}
+
+.certificate-preview h5 {
+  color: #1a365d;
+  font-size: 24px;
+  text-transform: uppercase;
+}
+
+.certificate-preview .name {
+  font-size: 22px;
+  font-weight: bold;
+  color: #1a365d;
+}
+
+.certificate-preview h5.fw-bold {
+  color: #2d3748;
+  font-size: 18px;
+}
+
+@media print {
+  .certificate-preview {
+    border: none !important;
+  }
+}

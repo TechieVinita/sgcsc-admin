@@ -6,12 +6,23 @@ export default function AdmitCardCreate() {
   const [courses, setCourses] = useState([]);
   const [students, setStudents] = useState([]);
 
-  const [enrollmentNumber, setEnrollmentNumber] = useState('');
+  // Form fields
   const [rollNumber, setRollNumber] = useState('');
-  const [courseId, setCourseId] = useState('');
-  const [examCenter, setExamCenter] = useState('');
+  const [studentName, setStudentName] = useState('');
+  const [fatherName, setFatherName] = useState('');
+  const [motherName, setMotherName] = useState('');
+  const [courseName, setCourseName] = useState('');
+  const [instituteName, setInstituteName] = useState('');
+  const [examCenterAddress, setExamCenterAddress] = useState('');
+  
+  // Exam schedule fields
   const [examDate, setExamDate] = useState('');
   const [examTime, setExamTime] = useState('');
+  const [reportingTime, setReportingTime] = useState('');
+  const [examDuration, setExamDuration] = useState('');
+
+  // Optional links
+  const [courseId, setCourseId] = useState('');
   const [studentId, setStudentId] = useState('');
 
   const [loadingLists, setLoadingLists] = useState(false);
@@ -60,14 +71,39 @@ export default function AdmitCardCreate() {
   }, []);
 
   const validate = () => {
-    if (!enrollmentNumber.trim()) {
-      setMessageType('danger');
-      setMessage('Enrollment Number is required.');
-      return false;
-    }
     if (!rollNumber.trim()) {
       setMessageType('danger');
       setMessage('Roll Number is required.');
+      return false;
+    }
+    if (!studentName.trim()) {
+      setMessageType('danger');
+      setMessage('Student Name is required.');
+      return false;
+    }
+    if (!fatherName.trim()) {
+      setMessageType('danger');
+      setMessage('Father Name is required.');
+      return false;
+    }
+    if (!motherName.trim()) {
+      setMessageType('danger');
+      setMessage('Mother Name is required.');
+      return false;
+    }
+    if (!courseName.trim()) {
+      setMessageType('danger');
+      setMessage('Course Name is required.');
+      return false;
+    }
+    if (!instituteName.trim()) {
+      setMessageType('danger');
+      setMessage('Institute Name is required.');
+      return false;
+    }
+    if (!examCenterAddress.trim()) {
+      setMessageType('danger');
+      setMessage('Exam Center Address is required.');
       return false;
     }
     if (!examDate) {
@@ -78,6 +114,16 @@ export default function AdmitCardCreate() {
     if (!examTime.trim()) {
       setMessageType('danger');
       setMessage('Exam Time is required.');
+      return false;
+    }
+    if (!reportingTime.trim()) {
+      setMessageType('danger');
+      setMessage('Reporting Time is required.');
+      return false;
+    }
+    if (!examDuration.trim()) {
+      setMessageType('danger');
+      setMessage('Exam Duration is required.');
       return false;
     }
     return true;
@@ -92,18 +138,20 @@ export default function AdmitCardCreate() {
     setSaving(true);
 
     try {
-      const selectedCourse = courses.find((c) => (c._id || c.id) === courseId);
-
       const payload = {
-        enrollmentNumber: enrollmentNumber.trim(),
         rollNumber: rollNumber.trim(),
-        examCenter: examCenter.trim(),
+        studentName: studentName.trim(),
+        fatherName: fatherName.trim(),
+        motherName: motherName.trim(),
+        courseName: courseName.trim(),
+        instituteName: instituteName.trim(),
+        examCenterAddress: examCenterAddress.trim(),
         examDate,
         examTime: examTime.trim(),
-        studentId: studentId || undefined,
+        reportingTime: reportingTime.trim(),
+        examDuration: examDuration.trim(),
         courseId: courseId || undefined,
-        courseName:
-          selectedCourse?.name || selectedCourse?.title || undefined,
+        studentId: studentId || undefined,
       };
 
       await API.unwrap(API.post('/admit-cards', payload));
@@ -111,13 +159,19 @@ export default function AdmitCardCreate() {
       setMessageType('success');
       setMessage('Admit Card created successfully.');
 
-      // reset
-      setEnrollmentNumber('');
+      // Reset form
       setRollNumber('');
-      setCourseId('');
-      setExamCenter('');
+      setStudentName('');
+      setFatherName('');
+      setMotherName('');
+      setCourseName('');
+      setInstituteName('');
+      setExamCenterAddress('');
       setExamDate('');
       setExamTime('');
+      setReportingTime('');
+      setExamDuration('');
+      setCourseId('');
       setStudentId('');
     } catch (err) {
       console.error('create admit card error:', err);
@@ -125,6 +179,35 @@ export default function AdmitCardCreate() {
       setMessage(err.userMessage || 'Failed to create admit card');
     } finally {
       setSaving(false);
+    }
+  };
+
+  // Handle course selection to auto-fill course name
+  const handleCourseChange = (e) => {
+    const selectedCourseId = e.target.value;
+    setCourseId(selectedCourseId);
+    
+    if (selectedCourseId) {
+      const selectedCourse = courses.find((c) => (c._id || c.id) === selectedCourseId);
+      if (selectedCourse) {
+        setCourseName(selectedCourse.name || selectedCourse.title || '');
+      }
+    }
+  };
+
+  // Handle student selection to auto-fill student details
+  const handleStudentChange = (e) => {
+    const selectedStudentId = e.target.value;
+    setStudentId(selectedStudentId);
+    
+    if (selectedStudentId) {
+      const selectedStudent = students.find((s) => (s._id || s.id) === selectedStudentId);
+      if (selectedStudent) {
+        if (selectedStudent.name) setStudentName(selectedStudent.name);
+        if (selectedStudent.fatherName) setFatherName(selectedStudent.fatherName);
+        if (selectedStudent.motherName) setMotherName(selectedStudent.motherName);
+        if (selectedStudent.rollNo) setRollNumber(selectedStudent.rollNo);
+      }
     }
   };
 
@@ -149,22 +232,34 @@ export default function AdmitCardCreate() {
             </div>
           )}
 
-          <div className="card shadow-sm" style={{ maxWidth: 700 }}>
+          <div className="card shadow-sm" style={{ maxWidth: 800 }}>
             <div className="card-body">
               {loadingLists ? (
                 <div className="text-muted">Loading students and courses…</div>
               ) : (
                 <form onSubmit={handleSubmit} className="row g-3">
-                  {/* Enrollment Number */}
+                  <div className="col-12">
+                    <h5 className="mb-3 text-primary">Student Details</h5>
+                  </div>
+
+                  {/* Student Selection (optional - for auto-fill) */}
                   <div className="col-md-6">
-                    <label className="form-label">Enrollment Number *</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      value={enrollmentNumber}
-                      onChange={(e) => setEnrollmentNumber(e.target.value)}
-                      required
-                    />
+                    <label className="form-label">
+                      Select Student (optional - auto-fills details)
+                    </label>
+                    <select
+                      className="form-select"
+                      value={studentId}
+                      onChange={handleStudentChange}
+                    >
+                      <option value="">Select a student</option>
+                      {students.map((s) => (
+                        <option key={s._id || s.id} value={s._id || s.id}>
+                          {s.name || s.fullName || 'Student'}{' '}
+                          {s.rollNo ? `(${s.rollNo})` : ''}
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   {/* Roll Number */}
@@ -175,39 +270,65 @@ export default function AdmitCardCreate() {
                       className="form-control"
                       value={rollNumber}
                       onChange={(e) => setRollNumber(e.target.value)}
+                      placeholder="Enter roll number"
                       required
                     />
                   </div>
 
-                  {/* Student (optional link) */}
+                  {/* Student Name */}
+                  <div className="col-md-6">
+                    <label className="form-label">Student Name *</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={studentName}
+                      onChange={(e) => setStudentName(e.target.value)}
+                      placeholder="Enter student name"
+                      required
+                    />
+                  </div>
+
+                  {/* Father Name */}
+                  <div className="col-md-6">
+                    <label className="form-label">Father Name *</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={fatherName}
+                      onChange={(e) => setFatherName(e.target.value)}
+                      placeholder="Enter father name"
+                      required
+                    />
+                  </div>
+
+                  {/* Mother Name */}
+                  <div className="col-md-6">
+                    <label className="form-label">Mother Name *</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={motherName}
+                      onChange={(e) => setMotherName(e.target.value)}
+                      placeholder="Enter mother name"
+                      required
+                    />
+                  </div>
+
+                  <div className="col-12 mt-4">
+                    <h5 className="mb-3 text-primary">Course & Institute Details</h5>
+                  </div>
+
+                  {/* Course Selection (optional - for auto-fill) */}
                   <div className="col-md-6">
                     <label className="form-label">
-                      Student (optional – for linking)
+                      Select Course (optional - auto-fills course name)
                     </label>
                     <select
                       className="form-select"
-                      value={studentId}
-                      onChange={(e) => setStudentId(e.target.value)}
-                    >
-                      <option value="">Not linked to a student</option>
-                      {students.map((s) => (
-                        <option key={s._id || s.id} value={s._id || s.id}>
-                          {s.name || s.fullName || 'Student'}{' '}
-                          {s.rollNo ? `(${s.rollNo})` : ''}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Course */}
-                  <div className="col-md-6">
-                    <label className="form-label">Course (optional)</label>
-                    <select
-                      className="form-select"
                       value={courseId}
-                      onChange={(e) => setCourseId(e.target.value)}
+                      onChange={handleCourseChange}
                     >
-                      <option value="">No specific course</option>
+                      <option value="">Select a course</option>
                       {courses.map((c) => (
                         <option key={c._id || c.id} value={c._id || c.id}>
                           {c.name || c.title}
@@ -216,20 +337,51 @@ export default function AdmitCardCreate() {
                     </select>
                   </div>
 
-                  {/* Exam Center */}
-                  <div className="col-md-12">
-                    <label className="form-label">Exam Center</label>
+                  {/* Course Name */}
+                  <div className="col-md-6">
+                    <label className="form-label">Course Name *</label>
                     <input
                       type="text"
                       className="form-control"
-                      value={examCenter}
-                      onChange={(e) => setExamCenter(e.target.value)}
-                      placeholder="Center name and address"
+                      value={courseName}
+                      onChange={(e) => setCourseName(e.target.value)}
+                      placeholder="Enter course name"
+                      required
                     />
                   </div>
 
-                  {/* Exam Date */}
+                  {/* Institute Name */}
                   <div className="col-md-6">
+                    <label className="form-label">Institute Name *</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={instituteName}
+                      onChange={(e) => setInstituteName(e.target.value)}
+                      placeholder="Enter institute name"
+                      required
+                    />
+                  </div>
+
+                  {/* Exam Center Address */}
+                  <div className="col-md-6">
+                    <label className="form-label">Exam Center Address *</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={examCenterAddress}
+                      onChange={(e) => setExamCenterAddress(e.target.value)}
+                      placeholder="Enter exam center address"
+                      required
+                    />
+                  </div>
+
+                  <div className="col-12 mt-4">
+                    <h5 className="mb-3 text-primary">Exam Schedule</h5>
+                  </div>
+
+                  {/* Exam Date */}
+                  <div className="col-md-3">
                     <label className="form-label">Exam Date *</label>
                     <input
                       type="date"
@@ -241,39 +393,57 @@ export default function AdmitCardCreate() {
                   </div>
 
                   {/* Exam Time */}
-                  <div className="col-md-6">
+                  <div className="col-md-3">
                     <label className="form-label">Exam Time *</label>
                     <input
                       type="text"
                       className="form-control"
                       value={examTime}
                       onChange={(e) => setExamTime(e.target.value)}
-                      placeholder="e.g. 10:00 AM – 12:00 PM"
+                      placeholder="e.g. 10:00 AM - 12:00 PM"
                       required
                     />
                   </div>
 
-                  <div className="col-12">
+                  {/* Reporting Time */}
+                  <div className="col-md-3">
+                    <label className="form-label">Reporting Time *</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={reportingTime}
+                      onChange={(e) => setReportingTime(e.target.value)}
+                      placeholder="e.g. 09:00 AM"
+                      required
+                    />
+                  </div>
+
+                  {/* Exam Duration */}
+                  <div className="col-md-3">
+                    <label className="form-label">Exam Duration *</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={examDuration}
+                      onChange={(e) => setExamDuration(e.target.value)}
+                      placeholder="e.g. 2 Hours"
+                      required
+                    />
+                  </div>
+
+                  <div className="col-12 mt-4">
                     <button
                       type="submit"
                       className="btn btn-primary w-100"
                       disabled={saving || loadingLists}
                     >
-                      {saving ? 'Saving…' : 'Create Admit Card'}
+                      {saving ? 'Generating Admit Card...' : 'Generate Admit Card'}
                     </button>
                   </div>
                 </form>
               )}
             </div>
           </div>
-
-          {/* <div className="mt-3 small text-muted">
-            This form sends <code>enrollmentNumber</code>,{' '}
-            <code>rollNumber</code>, <code>examCenter</code>,{' '}
-            <code>examDate</code>, <code>examTime</code>, and optional{' '}
-            <code>studentId</code>/<code>courseId</code> to{' '}
-            <code>POST /admit-cards</code>.
-          </div> */}
         </div>
       </div>
     </div>

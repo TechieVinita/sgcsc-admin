@@ -10,12 +10,17 @@ function fmtDate(d) {
 }
 
 function AdmitCardModal({ show, onClose, onSaved, initial, courses }) {
-  const [enrollmentNumber, setEnrollmentNumber] = useState('');
   const [rollNumber, setRollNumber] = useState('');
-  const [courseId, setCourseId] = useState('');
-  const [examCenter, setExamCenter] = useState('');
+  const [studentName, setStudentName] = useState('');
+  const [fatherName, setFatherName] = useState('');
+  const [motherName, setMotherName] = useState('');
+  const [courseName, setCourseName] = useState('');
+  const [instituteName, setInstituteName] = useState('');
+  const [examCenterAddress, setExamCenterAddress] = useState('');
   const [examDate, setExamDate] = useState('');
   const [examTime, setExamTime] = useState('');
+  const [reportingTime, setReportingTime] = useState('');
+  const [examDuration, setExamDuration] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -26,33 +31,63 @@ function AdmitCardModal({ show, onClose, onSaved, initial, courses }) {
     setSaving(false);
 
     if (initial) {
-      setEnrollmentNumber(initial.enrollmentNumber || '');
       setRollNumber(initial.rollNumber || '');
-      setCourseId(initial.course || '');
-      setExamCenter(initial.examCenter || '');
+      setStudentName(initial.studentName || '');
+      setFatherName(initial.fatherName || '');
+      setMotherName(initial.motherName || '');
+      setCourseName(initial.courseName || '');
+      setInstituteName(initial.instituteName || '');
+      setExamCenterAddress(initial.examCenterAddress || '');
       setExamDate(
         initial.examDate ? new Date(initial.examDate).toISOString().slice(0, 10) : ''
       );
       setExamTime(initial.examTime || '');
+      setReportingTime(initial.reportingTime || '');
+      setExamDuration(initial.examDuration || '');
     } else {
-      setEnrollmentNumber('');
       setRollNumber('');
-      setCourseId('');
-      setExamCenter('');
+      setStudentName('');
+      setFatherName('');
+      setMotherName('');
+      setCourseName('');
+      setInstituteName('');
+      setExamCenterAddress('');
       setExamDate('');
       setExamTime('');
+      setReportingTime('');
+      setExamDuration('');
     }
   }, [show, initial]);
 
   if (!show) return null;
 
   const validate = () => {
-    if (!enrollmentNumber.trim()) {
-      setError('Enrollment Number is required.');
-      return false;
-    }
     if (!rollNumber.trim()) {
       setError('Roll Number is required.');
+      return false;
+    }
+    if (!studentName.trim()) {
+      setError('Student Name is required.');
+      return false;
+    }
+    if (!fatherName.trim()) {
+      setError('Father Name is required.');
+      return false;
+    }
+    if (!motherName.trim()) {
+      setError('Mother Name is required.');
+      return false;
+    }
+    if (!courseName.trim()) {
+      setError('Course Name is required.');
+      return false;
+    }
+    if (!instituteName.trim()) {
+      setError('Institute Name is required.');
+      return false;
+    }
+    if (!examCenterAddress.trim()) {
+      setError('Exam Center Address is required.');
       return false;
     }
     if (!examDate) {
@@ -61,6 +96,14 @@ function AdmitCardModal({ show, onClose, onSaved, initial, courses }) {
     }
     if (!examTime.trim()) {
       setError('Exam Time is required.');
+      return false;
+    }
+    if (!reportingTime.trim()) {
+      setError('Reporting Time is required.');
+      return false;
+    }
+    if (!examDuration.trim()) {
+      setError('Exam Duration is required.');
       return false;
     }
     return true;
@@ -74,17 +117,18 @@ function AdmitCardModal({ show, onClose, onSaved, initial, courses }) {
     setSaving(true);
 
     try {
-      const selectedCourse = courses.find((c) => (c._id || c.id) === courseId);
-
       const payload = {
-        enrollmentNumber: enrollmentNumber.trim(),
         rollNumber: rollNumber.trim(),
-        examCenter: examCenter.trim(),
+        studentName: studentName.trim(),
+        fatherName: fatherName.trim(),
+        motherName: motherName.trim(),
+        courseName: courseName.trim(),
+        instituteName: instituteName.trim(),
+        examCenterAddress: examCenterAddress.trim(),
         examDate,
         examTime: examTime.trim(),
-        courseId: courseId || undefined,
-        courseName:
-          selectedCourse?.name || selectedCourse?.title || undefined,
+        reportingTime: reportingTime.trim(),
+        examDuration: examDuration.trim(),
       };
 
       let saved;
@@ -134,16 +178,10 @@ function AdmitCardModal({ show, onClose, onSaved, initial, courses }) {
               )}
 
               <div className="row g-3">
-                <div className="col-md-6">
-                  <label className="form-label">Enrollment Number *</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={enrollmentNumber}
-                    onChange={(e) => setEnrollmentNumber(e.target.value)}
-                    required
-                  />
+                <div className="col-12">
+                  <h6 className="text-primary">Student Details</h6>
                 </div>
+
                 <div className="col-md-6">
                   <label className="form-label">Roll Number *</label>
                   <input
@@ -156,33 +194,80 @@ function AdmitCardModal({ show, onClose, onSaved, initial, courses }) {
                 </div>
 
                 <div className="col-md-6">
-                  <label className="form-label">Course (optional)</label>
-                  <select
-                    className="form-select"
-                    value={courseId}
-                    onChange={(e) => setCourseId(e.target.value)}
-                  >
-                    <option value="">No specific course</option>
-                    {courses.map((c) => (
-                      <option key={c._id || c.id} value={c._id || c.id}>
-                        {c.name || c.title}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="col-md-6">
-                  <label className="form-label">Exam Center</label>
+                  <label className="form-label">Student Name *</label>
                   <input
                     type="text"
                     className="form-control"
-                    value={examCenter}
-                    onChange={(e) => setExamCenter(e.target.value)}
-                    placeholder="Center name and address"
+                    value={studentName}
+                    onChange={(e) => setStudentName(e.target.value)}
+                    required
                   />
                 </div>
 
                 <div className="col-md-6">
+                  <label className="form-label">Father Name *</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={fatherName}
+                    onChange={(e) => setFatherName(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="col-md-6">
+                  <label className="form-label">Mother Name *</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={motherName}
+                    onChange={(e) => setMotherName(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="col-12 mt-3">
+                  <h6 className="text-primary">Course & Institute Details</h6>
+                </div>
+
+                <div className="col-md-6">
+                  <label className="form-label">Course Name *</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={courseName}
+                    onChange={(e) => setCourseName(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="col-md-6">
+                  <label className="form-label">Institute Name *</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={instituteName}
+                    onChange={(e) => setInstituteName(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="col-md-12">
+                  <label className="form-label">Exam Center Address *</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={examCenterAddress}
+                    onChange={(e) => setExamCenterAddress(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="col-12 mt-3">
+                  <h6 className="text-primary">Exam Schedule</h6>
+                </div>
+
+                <div className="col-md-3">
                   <label className="form-label">Exam Date *</label>
                   <input
                     type="date"
@@ -193,14 +278,38 @@ function AdmitCardModal({ show, onClose, onSaved, initial, courses }) {
                   />
                 </div>
 
-                <div className="col-md-6">
+                <div className="col-md-3">
                   <label className="form-label">Exam Time *</label>
                   <input
                     type="text"
                     className="form-control"
                     value={examTime}
                     onChange={(e) => setExamTime(e.target.value)}
-                    placeholder="e.g. 10:00 AM – 12:00 PM"
+                    placeholder="e.g. 10:00 AM - 12:00 PM"
+                    required
+                  />
+                </div>
+
+                <div className="col-md-3">
+                  <label className="form-label">Reporting Time *</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={reportingTime}
+                    onChange={(e) => setReportingTime(e.target.value)}
+                    placeholder="e.g. 09:00 AM"
+                    required
+                  />
+                </div>
+
+                <div className="col-md-3">
+                  <label className="form-label">Exam Duration *</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={examDuration}
+                    onChange={(e) => setExamDuration(e.target.value)}
+                    placeholder="e.g. 2 Hours"
                     required
                   />
                 </div>
@@ -230,6 +339,217 @@ function AdmitCardModal({ show, onClose, onSaved, initial, courses }) {
     </div>
   );
 }
+
+// Function to generate PDF content as HTML and open in new window for printing
+const generateAdmitCardPDF = (card) => {
+  const printWindow = window.open('', '_blank', 'width=800,height=900');
+  
+  if (!printWindow) {
+    alert('Please allow popups to print the admit card');
+    return;
+  }
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Admit Card - ${card.rollNumber}</title>
+      <style>
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+        body {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          padding: 20px;
+        }
+        .admit-card {
+          max-width: 700px;
+          margin: 0 auto;
+          border: 2px solid #333;
+          padding: 20px;
+        }
+        .header {
+          text-align: center;
+          margin-bottom: 20px;
+          padding-bottom: 15px;
+          border-bottom: 2px solid #333;
+        }
+        .header h1 {
+          font-size: 24px;
+          margin-bottom: 5px;
+        }
+        .header h2 {
+          font-size: 18px;
+          color: #666;
+        }
+        .title {
+          text-align: center;
+          font-size: 20px;
+          font-weight: bold;
+          margin-bottom: 20px;
+          text-decoration: underline;
+        }
+        .details {
+          display: table;
+          width: 100%;
+        }
+        .detail-row {
+          display: table-row;
+        }
+        .detail-label {
+          display: table-cell;
+          padding: 8px 5px;
+          font-weight: bold;
+          width: 40%;
+        }
+        .detail-value {
+          display: table-cell;
+          padding: 8px 5px;
+          border-bottom: 1px solid #ddd;
+        }
+        .exam-schedule {
+          margin-top: 25px;
+          padding: 15px;
+          background-color: #f9f9f9;
+          border: 1px solid #ddd;
+        }
+        .exam-schedule h3 {
+          font-size: 16px;
+          margin-bottom: 10px;
+          text-align: center;
+        }
+        .schedule-grid {
+          display: table;
+          width: 100%;
+        }
+        .schedule-row {
+          display: table-row;
+        }
+        .schedule-label {
+          display: table-cell;
+          padding: 5px;
+          font-weight: bold;
+        }
+        .schedule-value {
+          display: table-cell;
+          padding: 5px;
+        }
+        .footer {
+          margin-top: 25px;
+          padding-top: 15px;
+          border-top: 1px solid #ddd;
+          display: flex;
+          justify-content: space-between;
+        }
+        .signature {
+          text-align: center;
+          width: 200px;
+        }
+        .signature-line {
+          border-top: 1px solid #333;
+          margin-top: 40px;
+          padding-top: 5px;
+          font-size: 12px;
+        }
+        .print-btn {
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          padding: 10px 20px;
+          background-color: #007bff;
+          color: white;
+          border: none;
+          cursor: pointer;
+          font-size: 16px;
+        }
+        @media print {
+          .print-btn {
+            display: none;
+          }
+        }
+      </style>
+    </head>
+    <body>
+      <button class="print-btn" onclick="window.print()">Print Admit Card</button>
+      <div class="admit-card">
+        <div class="header">
+          <h1>${card.instituteName || 'Institute Name'}</h1>
+          <h2>ADMIT CARD</h2>
+        </div>
+        
+        <div class="title">Examination Details</div>
+        
+        <div class="details">
+          <div class="detail-row">
+            <div class="detail-label">Roll Number:</div>
+            <div class="detail-value">${card.rollNumber || '-'}</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">Student Name:</div>
+            <div class="detail-value">${card.studentName || '-'}</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">Father Name:</div>
+            <div class="detail-value">${card.fatherName || '-'}</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">Mother Name:</div>
+            <div class="detail-value">${card.motherName || '-'}</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">Course Name:</div>
+            <div class="detail-value">${card.courseName || '-'}</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">Institute Name:</div>
+            <div class="detail-value">${card.instituteName || '-'}</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">Exam Center Address:</div>
+            <div class="detail-value">${card.examCenterAddress || '-'}</div>
+          </div>
+        </div>
+        
+        <div class="exam-schedule">
+          <h3>Exam Schedule</h3>
+          <div class="schedule-grid">
+            <div class="schedule-row">
+              <div class="schedule-label">Exam Date:</div>
+              <div class="schedule-value">${fmtDate(card.examDate)}</div>
+            </div>
+            <div class="schedule-row">
+              <div class="schedule-label">Exam Time:</div>
+              <div class="schedule-value">${card.examTime || '-'}</div>
+            </div>
+            <div class="schedule-row">
+              <div class="schedule-label">Reporting Time:</div>
+              <div class="schedule-value">${card.reportingTime || '-'}</div>
+            </div>
+            <div class="schedule-row">
+              <div class="schedule-label">Exam Duration:</div>
+              <div class="schedule-value">${card.examDuration || '-'}</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="footer">
+          <div class="signature">
+            <div class="signature-line">Candidate Signature</div>
+          </div>
+          <div class="signature">
+            <div class="signature-line">Authorized Signature</div>
+          </div>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+  
+  printWindow.document.write(htmlContent);
+  printWindow.document.close();
+};
 
 export default function AdmitCardList() {
   const [cards, setCards] = useState([]);
@@ -280,10 +600,11 @@ export default function AdmitCardList() {
     const s = search.trim().toLowerCase();
     return cards.filter((c) => {
       return (
-        (c.enrollmentNumber || '').toLowerCase().includes(s) ||
         (c.rollNumber || '').toLowerCase().includes(s) ||
+        (c.studentName || '').toLowerCase().includes(s) ||
         (c.courseName || '').toLowerCase().includes(s) ||
-        (c.examCenter || '').toLowerCase().includes(s)
+        (c.instituteName || '').toLowerCase().includes(s) ||
+        (c.examCenterAddress || '').toLowerCase().includes(s)
       );
     });
   }, [cards, search]);
@@ -303,6 +624,10 @@ export default function AdmitCardList() {
   const handleEdit = (card) => {
     setEditing(card);
     setShowModal(true);
+  };
+
+  const handleDownload = (card) => {
+    generateAdmitCardPDF(card);
   };
 
   const handleSaved = (saved) => {
@@ -331,7 +656,7 @@ export default function AdmitCardList() {
             <div>
               <h2 className="mb-0">Admit Cards</h2>
               <div className="small text-muted">
-                List, search, edit and delete admit cards
+                List, search, edit, download and delete admit cards
               </div>
             </div>
             <div className="d-flex gap-2">
@@ -339,7 +664,7 @@ export default function AdmitCardList() {
                 type="text"
                 className="form-control"
                 style={{ maxWidth: 240 }}
-                placeholder="Search by enrollment / roll / course"
+                placeholder="Search by roll / name / course"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -370,10 +695,10 @@ export default function AdmitCardList() {
                   <table className="table table-hover align-middle mb-0">
                     <thead className="table-primary">
                       <tr>
-                        <th>Enrollment No.</th>
                         <th>Roll No.</th>
+                        <th>Student Name</th>
                         <th>Course</th>
-                        <th>Exam Center</th>
+                        <th>Institute</th>
                         <th>Exam Date</th>
                         <th>Exam Time</th>
                         <th className="text-center">Actions</th>
@@ -382,13 +707,20 @@ export default function AdmitCardList() {
                     <tbody>
                       {filteredCards.map((c) => (
                         <tr key={c._id || c.id}>
-                          <td>{c.enrollmentNumber}</td>
                           <td>{c.rollNumber}</td>
+                          <td>{c.studentName || '-'}</td>
                           <td>{c.courseName || '-'}</td>
-                          <td>{c.examCenter || '-'}</td>
+                          <td>{c.instituteName || '-'}</td>
                           <td>{fmtDate(c.examDate)}</td>
                           <td>{c.examTime || '-'}</td>
                           <td className="text-center">
+                            <button
+                              className="btn btn-sm btn-outline-success me-2"
+                              onClick={() => handleDownload(c)}
+                              title="Download/Print Admit Card"
+                            >
+                              Download
+                            </button>
                             <button
                               className="btn btn-sm btn-outline-primary me-2"
                               onClick={() => handleEdit(c)}
@@ -412,13 +744,6 @@ export default function AdmitCardList() {
               )}
             </div>
           </div>
-
-          {/* <div className="mt-3 small text-muted">
-            This page calls <code>GET /admit-cards</code> for the list and uses{' '}
-            <code>PUT /admit-cards/:id</code> and{' '}
-            <code>DELETE /admit-cards/:id</code> for editing and deleting
-            records.
-          </div> */}
         </div>
       </div>
 

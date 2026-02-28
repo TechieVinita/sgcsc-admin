@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API_BASE_URL =
-  process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+  process.env.REACT_APP_API_URL || "https://sgcsc-backend.onrender.com/api";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -27,5 +27,27 @@ api.interceptors.request.use((config) => {
 
   return config;
 });
+
+// Add error interceptor to provide user-friendly error messages
+api.interceptors.response.use(
+  (res) => res,
+  (err) => {
+    const msg =
+      err?.response?.data?.message ||
+      err.message ||
+      "Request failed";
+    return Promise.reject({ ...err, userMessage: msg });
+  }
+);
+
+// Add unwrap method to extract data from response
+api.unwrap = async (promise) => {
+  const response = await promise;
+  // Handle both { success: true, data: ... } and direct data responses
+  if (response.data && response.data.success === true) {
+    return response.data.data;
+  }
+  return response.data;
+};
 
 export default api;
