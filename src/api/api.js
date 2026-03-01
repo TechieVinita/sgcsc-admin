@@ -29,4 +29,12 @@ export const getCourses = async () => {
   return Array.isArray(res.data?.data) ? res.data.data : [];
 };
 
+/* ===================== STUDENTS ===================== */
+
+// Lookup student by enrollment/roll number
+export const getStudentByEnrollment = async (enrollmentNumber) => {
+  const res = await API.get(`/students/lookup/${enrollmentNumber}`);
+  return res.data?.data || null;
+};
+
 export default API;

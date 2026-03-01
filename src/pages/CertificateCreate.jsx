@@ -1,25 +1,96 @@
 // src/pages/CertificateCreate.jsx
-import { useState } from 'react';
-import API from "../api/axiosInstance";
+import { useState, useEffect } from 'react';
+import API, { getCourses, getStudentByEnrollment } from "../api/api";
 
 export default function CertificateCreate() {
+  // Form fields
+  const [enrollmentNumber, setEnrollmentNumber] = useState('');
   const [name, setName] = useState('');
   const [fatherName, setFatherName] = useState('');
   const [courseName, setCourseName] = useState('');
   const [sessionFrom, setSessionFrom] = useState('');
   const [sessionTo, setSessionTo] = useState('');
   const [grade, setGrade] = useState('');
-  const [enrollmentNumber, setEnrollmentNumber] = useState('');
   const [certificateNumber, setCertificateNumber] = useState('');
   const [issueDate, setIssueDate] = useState('');
+  
+  // State management
+  const [courses, setCourses] = useState([]);
   const [saving, setSaving] = useState(false);
+  const [loadingStudent, setLoadingStudent] = useState(false);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('info'); // 'success' | 'danger' | 'info'
 
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 20 }, (_, i) => currentYear - 10 + i);
 
+  // Fetch courses on mount
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const data = await getCourses();
+        setCourses(data);
+      } catch (err) {
+        console.error('Failed to fetch courses:', err);
+      }
+    };
+    fetchCourses();
+  }, []);
+
+  // Lookup student by enrollment number
+  const handleLookupStudent = async () => {
+    if (!enrollmentNumber.trim()) {
+      setMessageType('danger');
+      setMessage('Please enter an enrollment number first.');
+      return;
+    }
+
+    setLoadingStudent(true);
+    setMessage('');
+
+    try {
+      const student = await getStudentByEnrollment(enrollmentNumber.trim());
+      
+      if (student) {
+        // Auto-fill student details
+        setName(student.name || '');
+        setFatherName(student.fatherName || '');
+        setCourseName(student.courseName || '');
+        
+        // Set session years if available
+        if (student.sessionStart) {
+          const startYear = new Date(student.sessionStart).getFullYear();
+          setSessionFrom(startYear.toString());
+        }
+        if (student.sessionEnd) {
+          const endYear = new Date(student.sessionEnd).getFullYear();
+          setSessionTo(endYear.toString());
+        }
+
+        setMessageType('success');
+        setMessage('Student details loaded successfully!');
+      }
+    } catch (err) {
+      console.error('Student lookup error:', err);
+      setMessageType('danger');
+      setMessage(err.userMessage || 'Student not found with this enrollment number.');
+      // Clear auto-filled fields on error
+      setName('');
+      setFatherName('');
+      setCourseName('');
+      setSessionFrom('');
+      setSessionTo('');
+    } finally {
+      setLoadingStudent(false);
+    }
+  };
+
   const validate = () => {
+    if (!enrollmentNumber.trim()) {
+      setMessageType('danger');
+      setMessage('Enrollment Number is required.');
+      return false;
+    }
     if (!name.trim()) {
       setMessageType('danger');
       setMessage('Name is required.');
@@ -48,11 +119,6 @@ export default function CertificateCreate() {
     if (!grade.trim()) {
       setMessageType('danger');
       setMessage('Grade is required.');
-      return false;
-    }
-    if (!enrollmentNumber.trim()) {
-      setMessageType('danger');
-      setMessage('Enrollment Number is required.');
       return false;
     }
     if (!certificateNumber.trim()) {
@@ -88,19 +154,19 @@ export default function CertificateCreate() {
         issueDate,
       };
 
-      await API.unwrap(API.post('/certificates', payload));
+      await API.post('/certificates', payload);
 
       setMessageType('success');
       setMessage('Certificate created successfully.');
 
       // reset form
+      setEnrollmentNumber('');
       setName('');
       setFatherName('');
       setCourseName('');
       setSessionFrom('');
       setSessionTo('');
       setGrade('');
-      setEnrollmentNumber('');
       setCertificateNumber('');
       setIssueDate('');
     } catch (err) {
@@ -136,6 +202,32 @@ export default function CertificateCreate() {
           <div className="card shadow-sm">
             <div className="card-body">
               <form onSubmit={handleSubmit} className="row g-3">
+                {/* Enrollment Number - First field with Lookup button */}
+                <div className="col-md-6">
+                  <label className="form-label">Enrollment Number *</label>
+                  <div className="input-group">
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={enrollmentNumber}
+                      onChange={(e) => setEnrollmentNumber(e.target.value)}
+                      placeholder="Enter enrollment number"
+                      required
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-outline-primary"
+                      onClick={handleLookupStudent}
+                      disabled={loadingStudent}
+                    >
+                      {loadingStudent ? 'Looking up...' : 'Lookup'}
+                    </button>
+                  </div>
+                  <small className="text-muted">
+                    Enter enrollment number and click Lookup to auto-fill student details
+                  </small>
+                </div>
+
                 <div className="col-md-6">
                   <label className="form-label">Name *</label>
                   <input
@@ -158,15 +250,22 @@ export default function CertificateCreate() {
                   />
                 </div>
 
+                {/* Course Name - Dropdown */}
                 <div className="col-md-6">
                   <label className="form-label">Course Name *</label>
-                  <input
-                    type="text"
-                    className="form-control"
+                  <select
+                    className="form-select"
                     value={courseName}
                     onChange={(e) => setCourseName(e.target.value)}
                     required
-                  />
+                  >
+                    <option value="">Select Course</option>
+                    {courses.map((course) => (
+                      <option key={course._id} value={course.name}>
+                        {course.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div className="col-md-3">
@@ -211,17 +310,6 @@ export default function CertificateCreate() {
                     value={grade}
                     onChange={(e) => setGrade(e.target.value)}
                     placeholder="e.g., A, A+, First Division"
-                    required
-                  />
-                </div>
-
-                <div className="col-md-6">
-                  <label className="form-label">Enrollment Number *</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={enrollmentNumber}
-                    onChange={(e) => setEnrollmentNumber(e.target.value)}
                     required
                   />
                 </div>
