@@ -182,19 +182,6 @@ export default function AddStudent() {
   };
 
 
-  const handleCourseChange = (e) => {
-    const value = e.target.value;
-    const selected = courses.find(
-      (c) => (c._id || c.id || "").toString() === value
-    );
-    setForm((prev) => ({
-      ...prev,
-      courseId: value,
-      courseName: selected ? selected.name || selected.title || "" : "",
-      feeAmount: selected ? selected.feeAmount || 0 : 0,
-    }));
-  };
-
   // Handle adding a new course to the student's courses list
   const handleAddCourse = () => {
     const newCourse = {
@@ -706,58 +693,6 @@ export default function AddStudent() {
           </div>
 
 
-
-          {/* Course selection + session */}
-          <div className="row g-3 mb-3">
-            <div className="col-lg-6">
-              <label className="form-label">Selected Course</label>
-              <select
-                className="form-select"
-                name="courseId"
-                value={form.courseId}
-                onChange={handleCourseChange}
-              >
-                <option value="">Select Course</option>
-                {courses.map((c) => (
-                  <option key={c._id || c.id} value={c._id || c.id}>
-                    {c.name || c.title || "Untitled"}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="col-lg-3">
-              <label className="form-label">Session Start</label>
-              <input
-                type="date"
-                className="form-control"
-                name="sessionStart"
-                value={form.sessionStart}
-                onChange={handleChange}
-              />
-            </div>
-            <div className="col-lg-3">
-              <label className="form-label">Session End</label>
-              <input
-                type="date"
-                className="form-control"
-                name="sessionEnd"
-                value={form.sessionEnd}
-                onChange={handleChange}
-              />
-            </div>
-            <div className="col-lg-3">
-              <label className="form-label">Fee Amount (₹)</label>
-              <input
-                type="number"
-                className="form-control"
-                name="feeAmount"
-                value={form.feeAmount}
-                onChange={handleChange}
-                min="0"
-                placeholder="0"
-              />
-            </div>
-          </div>
 
           {/* Multiple Courses Section */}
           <div className="mb-4">

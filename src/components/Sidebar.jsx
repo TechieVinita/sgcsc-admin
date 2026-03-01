@@ -71,7 +71,7 @@ export default function Sidebar() {
                 </NavLink>
               </li>
               <li className="mb-1">
-                <NavLink to="/franchise/list" className={subLinkClass}>
+                <NavLink to="/franchise/list" end className={subLinkClass}>
                   List Franchise
                 </NavLink>
               </li>
@@ -111,7 +111,7 @@ export default function Sidebar() {
                 </NavLink>
               </li>
               <li className="mb-1">
-                <NavLink to="/students" className={subLinkClass}>
+                <NavLink to="/students" end className={subLinkClass}>
                   Student List
                 </NavLink>
               </li>
@@ -146,12 +146,12 @@ export default function Sidebar() {
                 </NavLink>
               </li>
               <li className="mb-1">
-                <NavLink to="/courses" className={subLinkClass}>
+                <NavLink to="/courses" end className={subLinkClass}>
                   Course List
                 </NavLink>
               </li>
               <li className="mb-1">
-                <NavLink to="/subjects" className={subLinkClass}>
+                <NavLink to="/subjects" end className={subLinkClass}>
                   Subjects List
                 </NavLink>
               </li>
@@ -212,7 +212,7 @@ export default function Sidebar() {
                 </NavLink>
               </li>
               <li className="mb-1">
-                <NavLink to="/gallery" className={subLinkClass}>
+                <NavLink to="/gallery" end className={subLinkClass}>
                   List Images
                 </NavLink>
               </li>
@@ -242,7 +242,7 @@ export default function Sidebar() {
                 </NavLink>
               </li>
               <li className="mb-1">
-                <NavLink to="/results" className={subLinkClass}>
+                <NavLink to="/results" end className={subLinkClass}>
                   List Result
                 </NavLink>
               </li>
@@ -272,7 +272,7 @@ export default function Sidebar() {
                 </NavLink>
               </li>
               <li className="mb-1">
-                <NavLink to="/admit-cards" className={subLinkClass}>
+                <NavLink to="/admit-cards" end className={subLinkClass}>
                   List Admit Cards
                 </NavLink>
               </li>
@@ -306,7 +306,7 @@ export default function Sidebar() {
                 </NavLink>
               </li>
               <li className="mb-1">
-                <NavLink to="/certificates" className={subLinkClass}>
+                <NavLink to="/certificates" end className={subLinkClass}>
                   List Certificate
                 </NavLink>
               </li>
