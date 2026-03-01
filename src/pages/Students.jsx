@@ -1,5 +1,5 @@
 // src/pages/Students.jsx
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import API from "../api/axiosInstance";
 import StudentTable from "../components/StudentTable";
@@ -36,7 +36,7 @@ export default function Students() {
     setViewMode(view === "franchise" ? "franchise" : "all");
   }, [location.search]);
 
-  const fetchStudents = async () => {
+  const fetchStudents = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
@@ -61,7 +61,7 @@ export default function Students() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [navigate]);
 
   useEffect(() => {
     fetchStudents();
@@ -76,7 +76,7 @@ export default function Students() {
       }
     };
     fetchCourses();
-  }, []);
+  }, [fetchStudents]);
 
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this student?")) return;
