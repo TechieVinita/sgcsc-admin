@@ -169,7 +169,7 @@ export default function AddStudentModal({
       role="dialog"
       style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}
     >
-      <div className="modal-dialog modal-lg" role="document">
+      <div className="modal-dialog modal-lg modal-dialog-scrollable" role="document">
         <div className="modal-content">
           <form onSubmit={handleSubmit}>
             <div className="modal-header">
