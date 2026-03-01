@@ -67,7 +67,18 @@ const initialForm = {
   sessionEnd: "",
   feesPaid: false,
   isCertified: false,
-  rollNumber: ""
+  rollNumber: "",
+  enrollmentNo: "",
+  feeAmount: 0,
+  courses: [{
+    courseId: "",
+    courseName: "",
+    feeAmount: 0,
+    amountPaid: 0,
+    feesPaid: false,
+    sessionStart: "",
+    sessionEnd: "",
+  }]
 };
 
 const MAX_PHOTO_SIZE_MB = 2;
@@ -180,7 +191,69 @@ export default function AddStudent() {
       ...prev,
       courseId: value,
       courseName: selected ? selected.name || selected.title || "" : "",
+      feeAmount: selected ? selected.feeAmount || 0 : 0,
     }));
+  };
+
+  // Handle adding a new course to the student's courses list
+  const handleAddCourse = () => {
+    const newCourse = {
+      courseId: "",
+      courseName: "",
+      feeAmount: 0,
+      amountPaid: 0,
+      feesPaid: false,
+      sessionStart: "",
+      sessionEnd: "",
+    };
+    setForm((prev) => ({
+      ...prev,
+      courses: [...(prev.courses || []), newCourse],
+    }));
+  };
+
+  // Handle removing a course from the student's courses list
+  const handleRemoveCourse = (index) => {
+    setForm((prev) => ({
+      ...prev,
+      courses: prev.courses.filter((_, i) => i !== index),
+    }));
+  };
+
+  // Handle change for a specific course in the courses array
+  const handleCourseArrayChange = (index, field, value) => {
+    setForm((prev) => {
+      const updatedCourses = [...(prev.courses || [])];
+      
+      if (field === "courseId") {
+        const selected = courses.find(
+          (c) => (c._id || c.id || "").toString() === value
+        );
+        updatedCourses[index] = {
+          ...updatedCourses[index],
+          courseId: value,
+          courseName: selected ? selected.name || selected.title || "" : "",
+          feeAmount: selected ? selected.feeAmount || 0 : updatedCourses[index].feeAmount || 0,
+        };
+      } else if (field === "amountPaid") {
+        updatedCourses[index] = {
+          ...updatedCourses[index],
+          amountPaid: Number(value) || 0,
+        };
+      } else if (field === "feesPaid") {
+        updatedCourses[index] = {
+          ...updatedCourses[index],
+          feesPaid: value,
+        };
+      } else {
+        updatedCourses[index] = {
+          ...updatedCourses[index],
+          [field]: value,
+        };
+      }
+      
+      return { ...prev, courses: updatedCourses };
+    });
   };
 
   const handleFranchiseChange = (e) => {
@@ -269,16 +342,35 @@ export default function AddStudent() {
     try {
       const fd = new FormData();
 
+      // Prepare courses array for payload
+      const coursesPayload = form.courses ? form.courses.map(c => ({
+        course: c.courseId || null,
+        courseName: c.courseName,
+        feeAmount: Number(c.feeAmount) || 0,
+        amountPaid: Number(c.amountPaid) || 0,
+        feesPaid: c.feesPaid || false,
+        sessionStart: c.sessionStart || null,
+        sessionEnd: c.sessionEnd || null,
+      })) : [];
+
       // Append form fields
       const payload = {
         ...form,
         // store with +91 prefix as requested
         mobile: `+91${form.mobile}`,
+        feeAmount: Number(form.feeAmount) || 0,
+        amountPaid: Number(form.amountPaid) || 0,
+        courses: coursesPayload,
       };
 
       Object.entries(payload).forEach(([key, value]) => {
         if (value !== null && value !== undefined && value !== "") {
-          fd.append(key, value);
+          if (Array.isArray(value)) {
+            // Stringify array fields
+            fd.append(key, JSON.stringify(value));
+          } else {
+            fd.append(key, value);
+          }
         }
       });
 
@@ -402,6 +494,19 @@ export default function AddStudent() {
                 value={form.rollNumber}
                 onChange={handleChange}
                 required
+              />
+            </div>
+            <div className="col-lg-4">
+              <label className="form-label">
+                Enrollment Number
+              </label>
+              <input
+                type="text"
+                className="form-control"
+                name="enrollmentNo"
+                value={form.enrollmentNo}
+                onChange={handleChange}
+                placeholder="Optional (defaults to roll number)"
               />
             </div>
 
@@ -640,6 +745,124 @@ export default function AddStudent() {
                 onChange={handleChange}
               />
             </div>
+            <div className="col-lg-3">
+              <label className="form-label">Fee Amount (₹)</label>
+              <input
+                type="number"
+                className="form-control"
+                name="feeAmount"
+                value={form.feeAmount}
+                onChange={handleChange}
+                min="0"
+                placeholder="0"
+              />
+            </div>
+          </div>
+
+          {/* Multiple Courses Section */}
+          <div className="mb-4">
+            <div className="d-flex justify-content-between align-items-center mb-2">
+              <h6 className="mb-0">Courses</h6>
+              <button
+                type="button"
+                className="btn btn-sm btn-success"
+                onClick={handleAddCourse}
+              >
+                + Add Course
+              </button>
+            </div>
+            
+            {form.courses && form.courses.map((course, index) => (
+              <div key={index} className="card mb-3">
+                <div className="card-body">
+                  <div className="row g-2">
+                    <div className="col-md-4">
+                      <label className="form-label small">Course {index + 1}</label>
+                      <select
+                        className="form-select form-select-sm"
+                        value={course.courseId || ""}
+                        onChange={(e) => handleCourseArrayChange(index, 'courseId', e.target.value)}
+                      >
+                        <option value="">Select Course</option>
+                        {courses.map((c) => (
+                          <option key={c._id || c.id} value={c._id || c.id}>
+                            {c.title || c.name || "Untitled"} {c.feeAmount > 0 ? `(₹${c.feeAmount})` : ""}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="col-md-2">
+                      <label className="form-label small">Fee (₹)</label>
+                      <input
+                        type="number"
+                        className="form-control form-control-sm"
+                        value={course.feeAmount || 0}
+                        onChange={(e) => handleCourseArrayChange(index, 'feeAmount', e.target.value)}
+                        min="0"
+                      />
+                    </div>
+                    <div className="col-md-2">
+                      <label className="form-label small">Paid (₹)</label>
+                      <input
+                        type="number"
+                        className="form-control form-control-sm"
+                        value={course.amountPaid || 0}
+                        onChange={(e) => handleCourseArrayChange(index, 'amountPaid', e.target.value)}
+                        min="0"
+                      />
+                    </div>
+                    <div className="col-md-2">
+                      <label className="form-label small">Paid?</label>
+                      <div className="form-check mt-2">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          checked={course.feesPaid || false}
+                          onChange={(e) => handleCourseArrayChange(index, 'feesPaid', e.target.checked)}
+                        />
+                        <label className="form-check-label small">Yes</label>
+                      </div>
+                    </div>
+                    <div className="col-md-2 d-flex align-items-end">
+                      {form.courses.length > 1 && (
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-outline-danger"
+                          onClick={() => handleRemoveCourse(index)}
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="row g-2 mt-2">
+                    <div className="col-md-4">
+                      <label className="form-label small">Session Start</label>
+                      <input
+                        type="date"
+                        className="form-control form-control-sm"
+                        value={course.sessionStart || ""}
+                        onChange={(e) => handleCourseArrayChange(index, 'sessionStart', e.target.value)}
+                      />
+                    </div>
+                    <div className="col-md-4">
+                      <label className="form-label small">Session End</label>
+                      <input
+                        type="date"
+                        className="form-control form-control-sm"
+                        value={course.sessionEnd || ""}
+                        onChange={(e) => handleCourseArrayChange(index, 'sessionEnd', e.target.value)}
+                      />
+                    </div>
+                    <div className="col-md-4 d-flex align-items-end">
+                      <span className="badge bg-warning text-dark">
+                        Pending: ₹{((course.feeAmount || 0) - (course.amountPaid || 0))}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
 
           {/* Photo upload */}

@@ -67,12 +67,36 @@ export default function StudentTable({ students, onEdit, onDelete }) {
     return dt.toLocaleDateString("en-IN");
   };
 
-  const renderCourse = (s) =>
-    s.courseName ||
-    s.course?.title ||
-    s.course?.name ||
-    (typeof s.course === "string" ? s.course : "") ||
-    "-";
+  const renderCourse = (s) => {
+    // If student has courses array, show first course name or count
+    if (s.courses && Array.isArray(s.courses) && s.courses.length > 0) {
+      const firstCourse = s.courses[0].courseName || "-";
+      if (s.courses.length === 1) return firstCourse;
+      return `${firstCourse} (+${s.courses.length - 1} more)`;
+    }
+    // Fallback to legacy fields
+    return (
+      s.courseName ||
+      s.course?.title ||
+      s.course?.name ||
+      (typeof s.course === "string" ? s.course : "") ||
+      "-"
+    );
+  };
+
+  // Calculate total fee details from courses array or fallback to legacy
+  const getFeeDetails = (s) => {
+    if (s.courses && Array.isArray(s.courses) && s.courses.length > 0) {
+      const totalFee = s.courses.reduce((sum, c) => sum + (Number(c.feeAmount) || 0), 0);
+      const totalPaid = s.courses.reduce((sum, c) => sum + (Number(c.amountPaid) || 0), 0);
+      return { fee: totalFee, paid: totalPaid };
+    }
+    // Fallback to legacy fields
+    return {
+      fee: Number(s.feeAmount) || 0,
+      paid: Number(s.amountPaid) || 0,
+    };
+  };
 
   return (
     <div className="table-responsive bg-white rounded shadow-sm">
@@ -96,6 +120,7 @@ export default function StudentTable({ students, onEdit, onDelete }) {
             <th scope="col">Course</th>
             <th scope="col">Exam / Board / Marks</th>
             <th scope="col">Session</th>
+            <th scope="col">Fee Details</th>
             <th scope="col" className="text-center">
               Actions
             </th>
@@ -105,7 +130,7 @@ export default function StudentTable({ students, onEdit, onDelete }) {
         <tbody>
           {sortedStudents.length === 0 ? (
             <tr>
-              <td colSpan="9" className="text-center py-4 text-muted">
+              <td colSpan="10" className="text-center py-4 text-muted">
                 No students found.
               </td>
             </tr>
@@ -226,6 +251,22 @@ export default function StudentTable({ students, onEdit, onDelete }) {
                   <td className="small text-muted">{examBoardMarks}</td>
 
                   <td className="small text-muted">{session || "-"}</td>
+
+                  <td className="small">
+                        {(() => {
+                          const { fee, paid } = getFeeDetails(s);
+                          const pending = fee - paid;
+                          return (
+                            <>
+                              <div>Fee: ₹{fee}</div>
+                              <div>Paid: ₹{paid}</div>
+                              <div className={pending > 0 ? "text-danger" : "text-success"}>
+                                Pending: ₹{pending}
+                              </div>
+                            </>
+                          );
+                        })()}
+                      </td>
 
                   <td className="text-center">
                     <button

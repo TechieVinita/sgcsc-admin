@@ -48,7 +48,21 @@
 .certificate-preview h5 {
   color: #1a365d;
   font-size: 24px;
-  text-transform: uppercase;
+}
+
+/* Modal Scroll Fix */
+.modal-dialog-scrollable .modal-content {
+  max-height: 90vh;
+  overflow: hidden;
+}
+
+.modal-dialog-scrollable .modal-body {
+  overflow-y: auto;
+  max-height: calc(90vh - 120px);
+}
+
+.modal {
+  overflow-y: auto;
 }
 
 .certificate-preview .name {

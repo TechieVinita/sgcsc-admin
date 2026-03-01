@@ -18,6 +18,7 @@ export default function CreateCourse() {
   const [description, setDescription] = useState("");
   const [duration, setDuration] = useState("");
   const [type, setType] = useState("long");
+  const [feeAmount, setFeeAmount] = useState(0);
 
   /* ======================================================
      LOAD COURSE (EDIT MODE)
@@ -39,6 +40,7 @@ export default function CreateCourse() {
         setDescription(data.description || "");
         setDuration(data.duration || "");
         setType(data.type || "long");
+        setFeeAmount(data.feeAmount || 0);
       } catch (err) {
         console.error("Load course error:", err);
         setError(
@@ -74,6 +76,7 @@ export default function CreateCourse() {
         description: description.trim(),
         duration: duration.trim(),
         type,
+        feeAmount: Number(feeAmount) || 0,
       };
 
       if (courseId) {
@@ -194,6 +197,18 @@ export default function CreateCourse() {
               placeholder="e.g. 1 Year / 6 Months"
               value={duration}
               onChange={(e) => setDuration(e.target.value)}
+            />
+          </div>
+
+          <div className="col-md-6">
+            <label className="form-label fw-semibold">Fee Amount (₹)</label>
+            <input
+              type="number"
+              className="form-control"
+              placeholder="Course fee"
+              value={feeAmount}
+              onChange={(e) => setFeeAmount(e.target.value)}
+              min="0"
             />
           </div>
         </div>

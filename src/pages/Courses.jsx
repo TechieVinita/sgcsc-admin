@@ -118,8 +118,14 @@ export default function Courses() {
                       </span>
 
                       {course.duration && (
-                        <span className="badge bg-info text-dark">
+                        <span className="badge bg-info text-dark me-2">
                           {course.duration}
+                        </span>
+                      )}
+
+                      {course.feeAmount > 0 && (
+                        <span className="badge bg-success">
+                          ₹{course.feeAmount}
                         </span>
                       )}
                     </div>

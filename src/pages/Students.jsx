@@ -3,42 +3,37 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import API from "../api/axiosInstance";
 import StudentTable from "../components/StudentTable";
+import EditStudentModal from "../components/EditStudentModal";
 
 function fmtDate(d) {
   if (!d) return "";
   const dt = new Date(d);
   if (Number.isNaN(dt.getTime())) return "";
-  return dt.toISOString().slice(0, 10); // yyyy-mm-dd for <input type="date">
+  return dt.toISOString().slice(0, 10);
 }
 
 export default function Students() {
   const [students, setStudents] = useState([]);
+  const [courses, setCourses] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedCenter, setSelectedCenter] = useState("all");
-  const [viewMode, setViewMode] = useState("all"); // "all" | "franchise"
-  const [showPassword, setShowPassword] = useState(false);
-
+  const [viewMode, setViewMode] = useState("all");
 
   // edit modal state
-  const [editing, setEditing] = useState(null); // student object
-  const [editForm, setEditForm] = useState({});
+  const [editing, setEditing] = useState(null);
   const [editError, setEditError] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
 
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Initialise view mode from query param (?view=franchise)
+  // Initialise view mode from query param
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const view = params.get("view");
-    if (view === "franchise") {
-      setViewMode("franchise");
-    } else {
-      setViewMode("all");
-    }
+    setViewMode(view === "franchise" ? "franchise" : "all");
   }, [location.search]);
 
   const fetchStudents = async () => {
@@ -47,7 +42,6 @@ export default function Students() {
     try {
       const res = await API.get("/students");
       const data = res.data;
-
       const arr = Array.isArray(data)
         ? data
         : Array.isArray(data.data)
@@ -57,14 +51,11 @@ export default function Students() {
     } catch (err) {
       console.error("fetchStudents:", err);
       setError(err.userMessage || "Failed to fetch students");
-
       if (err?.response?.status === 401) {
-        try {
-          localStorage.removeItem("token");
-          localStorage.removeItem("user");
-          localStorage.removeItem("admin_token");
-          localStorage.removeItem("admin_user");
-        } catch (_) {}
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        localStorage.removeItem("admin_token");
+        localStorage.removeItem("admin_user");
         navigate("/login");
       }
     } finally {
@@ -74,7 +65,17 @@ export default function Students() {
 
   useEffect(() => {
     fetchStudents();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Fetch courses for dropdown
+    const fetchCourses = async () => {
+      try {
+        const res = await API.get("/courses");
+        const data = res.data;
+        setCourses(Array.isArray(data) ? data : Array.isArray(data.data) ? data.data : []);
+      } catch (err) {
+        console.error("fetchCourses error:", err);
+      }
+    };
+    fetchCourses();
   }, []);
 
   const handleDelete = async (id) => {
@@ -88,72 +89,24 @@ export default function Students() {
     }
   };
 
-  // OPEN EDIT MODAL
   const handleOpenEdit = (student) => {
-    const s = student || {};
-    setEditing(s);
+    setEditing(student);
     setEditError("");
-    setEditForm({
-      rollNumber: s.rollNumber || "",
-
-      centerName: s.centerName || "",
-      name: s.name || "",
-      fatherName: s.fatherName || "",
-      motherName: s.motherName || "",
-      gender: s.gender || "",
-      dob: fmtDate(s.dob),
-
-      email: s.email || "",
-      mobile: s.mobile || s.contact || "",
-
-      state: s.state || "",
-      district: s.district || "",
-      address: s.address || "",
-
-      examPassed: s.examPassed || "",
-      marksOrGrade: s.marksOrGrade || "",
-      board: s.board || "",
-      passingYear: s.passingYear || "",
-
-      courseName: s.courseName || "",
-      sessionStart: fmtDate(s.sessionStart),
-      sessionEnd: fmtDate(s.sessionEnd),
-
-      username: s.username || "",
-      password: "", // NEVER prefill real password
-      feesPaid: !!s.feesPaid,
-      isCertified: !!s.isCertified,
-
-      photo: s.photo || "",
-      photoFile: null,
-    });
-
   };
 
   const closeEdit = () => {
     setEditing(null);
-    setEditForm({});
     setEditError("");
     setSavingEdit(false);
   };
 
-  const handleEditChange = (e) => {
-    const { name, value } = e.target;
-    setEditForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const saveEdit = async (e) => {
-    e.preventDefault();
+  const handleSaveEdit = async (editForm) => {
     if (!editing) return;
     const id = editing._id || editing.id;
     if (!id) return;
 
     setSavingEdit(true);
     setEditError("");
-    
 
     try {
       const payload = {
@@ -162,58 +115,34 @@ export default function Students() {
         fatherName: editForm.fatherName,
         motherName: editForm.motherName,
         rollNumber: editForm.rollNumber,
-
-
         gender: editForm.gender,
         dob: editForm.dob || null,
-
         email: editForm.email,
         mobile: editForm.mobile,
         state: editForm.state,
         district: editForm.district,
         address: editForm.address,
-
         examPassed: editForm.examPassed,
         marksOrGrade: editForm.marksOrGrade,
         board: editForm.board,
         passingYear: editForm.passingYear,
-
-        courseName: editForm.courseName,
-        sessionStart: editForm.sessionStart || null,
-        sessionEnd: editForm.sessionEnd || null,
-
         username: editForm.username,
         ...(editForm.password && { password: editForm.password }),
-
-        feesPaid: editForm.feesPaid,
-        isCertified: editForm.isCertified,
+        courses: editForm.courses
+          ? editForm.courses.map((c) => ({
+              course: c.courseId || null,
+              courseName: c.courseName,
+              feeAmount: Number(c.feeAmount) || 0,
+              amountPaid: Number(c.amountPaid) || 0,
+              feesPaid: c.feesPaid || false,
+              sessionStart: c.sessionStart || null,
+              sessionEnd: c.sessionEnd || null,
+            }))
+          : [],
       };
-
-      if (editForm.photoFile) {
-        const fd = new FormData();
-        fd.append("file", editForm.photoFile);
-        fd.append("upload_preset", "sgcsc_unsigned");
-
-        const res = await fetch(
-          "https://api.cloudinary.com/v1_1/your_cloud_name/image/upload",
-          { method: "POST", body: fd }
-        );
-
-        const img = await res.json();
-        payload.photo = img.secure_url;
-
-        setEditForm((p) => ({
-          ...p,
-          photo: img.secure_url,
-        }));
-
-      }
-
 
       const res = await API.put(`/students/${id}`, payload);
       const updated = res.data;
-
-
       const updatedStudent =
         updated && updated.data && updated.success ? updated.data : updated;
 
@@ -238,28 +167,19 @@ export default function Students() {
     const set = new Set();
     (students || []).forEach((s) => {
       const name =
-        s.centerName ||
-        s.franchiseName ||
-        s.instituteName ||
-        s.center ||
-        "";
+        s.centerName || s.franchiseName || s.instituteName || s.center || "";
       if (name) set.add(name);
     });
     return Array.from(set).sort();
   }, [students]);
 
-  // Apply search + center filter
   const filteredStudents = useMemo(() => {
     let list = students || [];
 
     if (selectedCenter !== "all") {
       list = list.filter((s) => {
         const name =
-          s.centerName ||
-          s.franchiseName ||
-          s.instituteName ||
-          s.center ||
-          "";
+          s.centerName || s.franchiseName || s.instituteName || s.center || "";
         return name === selectedCenter;
       });
     }
@@ -291,77 +211,46 @@ export default function Students() {
     return list;
   }, [students, search, selectedCenter]);
 
-  // Group by center for franchise view
   const groupedByCenter = useMemo(() => {
     const groups = {};
     filteredStudents.forEach((s) => {
       const key =
-        s.centerName ||
-        s.franchiseName ||
-        s.instituteName ||
-        s.center ||
-        "Unassigned";
+        s.centerName || s.franchiseName || s.instituteName || s.center || "Unassigned";
       if (!groups[key]) groups[key] = [];
       groups[key].push(s);
     });
     return groups;
   }, [filteredStudents]);
 
-  // switchView function for future use
-  // const switchView = (mode) => {
-  //   setViewMode(mode);
-  //   const params = new URLSearchParams(location.search);
-  //   if (mode === "franchise") {
-  //     params.set("view", "franchise");
-  //   } else {
-  //     params.delete("view");
-  //   }
-  //   navigate({ pathname: "/students", search: params.toString() });
-  // };
-
   return (
-    <div className="container-fluid p-4">
-      {/* Header similar to Franchise List */}
-      <div className="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
-        <div>
-          <h2 className="fw-bold mb-0">Students</h2>
-        </div>
-
-        <div className="d-flex gap-2">
-          <button
-            className="btn btn-outline-secondary"
-            onClick={fetchStudents}
-            disabled={loading}
-          >
-            {loading ? "Refreshing…" : "Refresh"}
-          </button>
-          <button
-            className="btn btn-primary"
-            onClick={() => navigate("/students/add")}
-          >
-            Add Student
-          </button>
-        </div>
+    <div className="container-fluid py-4">
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h2 className="fw-bold mb-0">Students</h2>
+        <button
+          className="btn btn-primary"
+          onClick={() => navigate("/students/add")}
+        >
+          + Add Student
+        </button>
       </div>
 
-      {/* Filters / search / view mode */}
-      <div className="card mb-3">
-        <div className="card-body d-flex flex-wrap gap-3 align-items-center">
-
-          <div style={{ minWidth: 320 }}>
+      {/* Filters */}
+      <div className="card mb-4">
+        <div className="card-body d-flex flex-wrap gap-3 align-items-end">
+          <div style={{ minWidth: 240 }}>
+            <label className="form-label">Search</label>
             <input
-              type="text"
-              className="form-control form-control-sm"
-              placeholder="Search name, center, email, mobile, board..."
+              className="form-control"
+              placeholder="Name, email, mobile, course…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
 
-          <div>
+          <div style={{ minWidth: 200 }}>
+            <label className="form-label">Center</label>
             <select
-              className="form-select form-select-sm"
-              style={{ minWidth: 200 }}
+              className="form-select"
               value={selectedCenter}
               onChange={(e) => setSelectedCenter(e.target.value)}
             >
@@ -399,7 +288,6 @@ export default function Students() {
           </div>
         </div>
       ) : viewMode === "all" ? (
-        // Franchise-like card + table
         <div className="card shadow-sm">
           <div className="card-body p-0">
             <StudentTable
@@ -410,7 +298,6 @@ export default function Students() {
           </div>
         </div>
       ) : (
-        // Grouped by center / franchise
         <div className="accordion" id="studentsByCenterAccordion">
           {Object.entries(groupedByCenter).map(([centerName, list], idx) => (
             <div className="accordion-item mb-2" key={centerName}>
@@ -444,7 +331,6 @@ export default function Students() {
                     <table className="table table-sm table-hover align-middle mb-0">
                       <thead className="table-light">
                         <tr>
-                          
                           <th>Student</th>
                           <th>Mobile</th>
                           <th>Course</th>
@@ -457,11 +343,15 @@ export default function Students() {
                         {list.map((s) => {
                           const id = s._id || s.id;
                           const name = s.name || s.studentName || "-";
+                          // Get course name from courses array or legacy fields
                           const course =
-                            s.courseName ||
-                            (Array.isArray(s.courses) &&
-                              s.courses[0]?.name) ||
-                            "-";
+                            (Array.isArray(s.courses) && s.courses.length > 0)
+                              ? (s.courses[0].courseName || s.courses[0].name || "-") +
+                                (s.courses.length > 1 ? ` (+${s.courses.length - 1} more)` : "")
+                              : s.courseName ||
+                                s.course?.title ||
+                                s.course?.name ||
+                                "-";
                           const session =
                             (s.sessionStart || s.sessionEnd) &&
                             `${fmtDate(s.sessionStart)} – ${fmtDate(
@@ -512,389 +402,15 @@ export default function Students() {
         </div>
       )}
 
-      {/* EDIT MODAL (like Franchise edit) */}
-      {editing && (
-        <div
-          className="modal d-block"
-          tabIndex="-1"
-          role="dialog"
-          style={{ backgroundColor: "rgba(0,0,0,0.4)" }}
-        >
-          <div className="modal-dialog modal-lg" role="document">
-            <div className="modal-content">
-              <form onSubmit={saveEdit}>
-                <div className="modal-header">
-                  <h5 className="modal-title">
-                    Edit Student – {editing.name || editing.studentName}
-                  </h5>
-                  <button
-                    type="button"
-                    className="btn-close"
-                    onClick={closeEdit}
-                  />
-                </div>
-
-                <div className="modal-body">
-                  {editError && (
-                    <div className="alert alert-danger" role="alert">
-                      {editError}
-                    </div>
-                  )}
-
-                  {/* Center + Name */}
-                  <div className="row g-3 mb-3">
-                    <div className="col-md-4">
-                      <label className="form-label">Center Name</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        name="centerName"
-                        value={editForm.centerName || ""}
-                        onChange={handleEditChange}
-                      />
-                    </div>
-
-                    <div className="col-md-4">
-                      <label className="form-label">
-                        Roll Number 
-                        {/* <span className="text-danger">*</span> */}
-                      </label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        name="rollNumber"
-                        value={editForm.rollNumber || ""}
-                        onChange={handleEditChange}
-                        placeholder="e.g. CS-2024-017"
-                        // required
-                      />
-                    </div>
-
-                    <div className="col-md-4">
-                      <label className="form-label">Student Name</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        name="name"
-                        value={editForm.name || ""}
-                        onChange={handleEditChange}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="row g-3 mb-3">
-                    <div className="col-md-6">
-                      <label className="form-label">Father's Name</label>
-                      <input
-                        className="form-control"
-                        name="fatherName"
-                        value={editForm.fatherName}
-                        onChange={handleEditChange}
-                      />
-                    </div>
-                    <div className="col-md-6">
-                      <label className="form-label">Mother's Name</label>
-                      <input
-                        className="form-control"
-                        name="motherName"
-                        value={editForm.motherName}
-                        onChange={handleEditChange}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Gender / DOB */}
-                  <div className="row g-3 mb-3">
-                    <div className="col-md-6">
-                      <label className="form-label">Gender</label>
-                      <select
-                        className="form-select"
-                        name="gender"
-                        value={editForm.gender || ""}
-                        onChange={handleEditChange}
-                      >
-                        <option value="">Select</option>
-                        <option value="Male">Male</option>
-                        <option value="Female">Female</option>
-                        <option value="Other">Other</option>
-                      </select>
-                    </div>
-                    <div className="col-md-6">
-                      <label className="form-label">Date of Birth</label>
-                      <input
-                        type="date"
-                        className="form-control"
-                        name="dob"
-                        value={editForm.dob || ""}
-                        onChange={handleEditChange}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Contact */}
-                  <div className="row g-3 mb-3">
-                    <div className="col-md-6">
-                      <label className="form-label">Email</label>
-                      <input
-                        type="email"
-                        className="form-control"
-                        name="email"
-                        value={editForm.email || ""}
-                        onChange={handleEditChange}
-                      />
-                    </div>
-                    <div className="col-md-6">
-                      <label className="form-label">Mobile</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        name="mobile"
-                        value={editForm.mobile || ""}
-                        onChange={handleEditChange}
-                      />
-                    </div>
-                  </div>
-
-
-
-                  {/* Location */}
-                  <div className="row g-3 mb-3">
-                    <div className="col-md-4">
-                      <label className="form-label">State</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        name="state"
-                        value={editForm.state || ""}
-                        onChange={handleEditChange}
-                      />
-                    </div>
-                    <div className="col-md-4">
-                      <label className="form-label">District</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        name="district"
-                        value={editForm.district || ""}
-                        onChange={handleEditChange}
-                      />
-                    </div>
-                    <div className="col-md-4">
-                      <label className="form-label">Full Address</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        name="address"
-                        value={editForm.address || ""}
-                        onChange={handleEditChange}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Exam / board / marks */}
-                  <div className="row g-3 mb-3">
-                    <div className="col-md-4">
-                      <label className="form-label">Exam Passed</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        name="examPassed"
-                        value={editForm.examPassed || ""}
-                        onChange={handleEditChange}
-                      />
-                    </div>
-                    <div className="col-md-4">
-                      <label className="form-label">Board</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        name="board"
-                        value={editForm.board || ""}
-                        onChange={handleEditChange}
-                      />
-                    </div>
-                    <div className="col-md-4">
-                      <label className="form-label">Marks / Grade</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        name="marksOrGrade"
-                        value={editForm.marksOrGrade || ""}
-                        onChange={handleEditChange}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Course + session */}
-                  <div className="row g-3 mb-3">
-                    <div className="col-md-4">
-                      <label className="form-label">Course Name</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        name="courseName"
-                        value={editForm.courseName || ""}
-                        onChange={handleEditChange}
-                      />
-                    </div>
-                    <div className="col-md-4">
-                      <label className="form-label">Session Start</label>
-                      <input
-                        type="date"
-                        className="form-control"
-                        name="sessionStart"
-                        value={editForm.sessionStart || ""}
-                        onChange={handleEditChange}
-                      />
-                    </div>
-                    <div className="col-md-4">
-                      <label className="form-label">Session End</label>
-                      <input
-                        type="date"
-                        className="form-control"
-                        name="sessionEnd"
-                        value={editForm.sessionEnd || ""}
-                        onChange={handleEditChange}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Photo string (URL or /uploads/filename) */}
-                  <div className="mb-3">
-                    {/* Photo preview + upload */}
-                    {/* <div className="mb-3"> */}
-                      {/* <label className="form-label">Student Photo</label> */}
-
-                      {/* <div className="d-flex align-items-center gap-3"> */}
-                        {/* Old photo preview */}
-                        {/* {editForm.photo && (
-                          <img
-                            src={editForm.photo}
-                            alt="Student"
-                            style={{
-                              width: 80,
-                              height: 80,
-                              objectFit: "cover",
-                              borderRadius: "50%",
-                              border: "1px solid #ddd",
-                            }}
-                          />
-                        )} */}
-
-                        {/* Upload new photo */}
-                        {/* <input
-                          type="file"
-                          className="form-control"
-                          accept="image/*"
-                          onChange={(e) =>
-                            setEditForm((p) => ({
-                              ...p,
-                              photoFile: e.target.files[0],
-                            }))
-                          }
-                        /> */}
-                        
-                      {/* </div> */}
-
-                      {/* <small className="text-muted">
-                        Upload only if you want to replace the existing photo
-                      </small> */}
-                    {/* </div> */}
-
-                    <div className="row g-3 mb-3">
-                      <div className="col-md-6 form-check">
-                        <input
-                          type="checkbox"
-                          className="form-check-input"
-                          id="feesPaid"
-                          checked={editForm.feesPaid}
-                          onChange={(e) =>
-                            setEditForm((p) => ({ ...p, feesPaid: e.target.checked }))
-                          }
-                        />
-                        <label className="form-check-label" htmlFor="feesPaid">
-                          Fees Paid
-                        </label>
-                      </div>
-
-                      <div className="col-md-6 form-check">
-                        <input
-                          type="checkbox"
-                          className="form-check-input"
-                          id="isCertified"
-                          checked={editForm.isCertified}
-                          onChange={(e) =>
-                            setEditForm((p) => ({ ...p, isCertified: e.target.checked }))
-                          }
-                        />
-                        <label className="form-check-label" htmlFor="isCertified">
-                          Certified
-                        </label>
-                      </div>
-</div>
-
-                  </div>
-
-                  <div className="row g-3 mb-3">
-                    <div className="col-md-6">
-                      <label className="form-label">Username</label>
-                      <input
-                        className="form-control"
-                        name="username"
-                        value={editForm.username}
-                        onChange={handleEditChange}
-                      />
-                    </div>
-
-                    <div className="col-md-6">
-                      <label className="form-label">Password</label>
-                      <div className="input-group">
-                        <input
-                          type={showPassword ? "text" : "password"}
-                          className="form-control"
-                          name="password"
-                          value={editForm.password}
-                          onChange={handleEditChange}
-                          placeholder="Leave blank to keep unchanged"
-                        />
-                          <button
-                            type="button"
-                            className="btn btn-outline-secondary"
-                            onClick={() => setShowPassword((v) => !v)}
-                            title={showPassword ? "Hide password" : "Show password"}
-                          >
-                            <i className={`bi ${showPassword ? "bi-eye-slash" : "bi-eye"}`} />
-                          </button>
-
-                      </div>
-                    </div>
-                  </div>
-
-
-                </div>
-
-                <div className="modal-footer">
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={closeEdit}
-                    disabled={savingEdit}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="btn btn-primary"
-                    disabled={savingEdit}
-                  >
-                    {savingEdit ? "Saving…" : "Save Changes"}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Edit Modal */}
+      <EditStudentModal
+        student={editing}
+        courses={courses}
+        onClose={closeEdit}
+        onSave={handleSaveEdit}
+        saving={savingEdit}
+        error={editError}
+      />
     </div>
   );
 }
