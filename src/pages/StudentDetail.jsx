@@ -62,7 +62,17 @@ export default function StudentDetail() {
                 <div><strong>Semester:</strong> {student.semester}</div>
                 <div><strong>Email:</strong> {student.email || '—'}</div>
                 <div><strong>Contact:</strong> {student.contact || '—'}</div>
-                <div><strong>Fees paid:</strong> {student.feesPaid ? 'Yes' : 'No'}</div>
+                <hr />
+                <h6 className="text-muted">Fee Details</h6>
+                <div><strong>Total Fee:</strong> ₹{student.feeAmount || 0}</div>
+                <div><strong>Amount Paid:</strong> ₹{student.amountPaid || 0}</div>
+                <div>
+                  <strong>Pending Amount:</strong>{' '}
+                  <span className={((student.feeAmount || 0) - (student.amountPaid || 0)) > 0 ? 'text-danger' : 'text-success'}>
+                    ₹{((student.feeAmount || 0) - (student.amountPaid || 0))}
+                  </span>
+                </div>
+                <div><strong>Fees Paid:</strong> {student.feesPaid ? 'Yes' : 'No'}</div>
               </div>
 
               <div className="card mb-4 p-3">
