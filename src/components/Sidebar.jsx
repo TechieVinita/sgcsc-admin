@@ -10,7 +10,7 @@ import {
   FaClipboardList,
   FaIdCard,
   FaCertificate,
-  FaBookOpen,
+  // FaBookOpen,
   FaCog,
   FaChevronDown,
   FaChevronRight,
@@ -315,6 +315,7 @@ export default function Sidebar() {
         </li>
 
         {/* 10. Study Material ---------------------------------------------- */}
+        {/*
         <li className="nav-item mb-2">
           <button
             type="button"
@@ -344,6 +345,7 @@ export default function Sidebar() {
             </ul>
           )}
         </li>
+        */}
 
         {/* 11. Assignment --------------------------------------------------- */}
         {/* <li className="nav-item mb-2">
@@ -399,6 +401,7 @@ export default function Sidebar() {
 
           {openMenu === "settings" && (
             <ul className="btn-toggle-nav list-unstyled ps-4 pt-2 pb-1">
+              {/*
               <li className="mb-1">
                 <NavLink to="/settings/header" className={subLinkClass}>
                   Header
@@ -409,16 +412,19 @@ export default function Sidebar() {
                   Footer
                 </NavLink>
               </li>
+              */}
               <li className="mb-1">
                 <NavLink to="/settings/social" className={subLinkClass}>
                   Social Links
                 </NavLink>
               </li>
+              {/*
               <li className="mb-1">
                 <NavLink to="/settings/branding" className={subLinkClass}>
                   Logo & Branding
                 </NavLink>
               </li>
+              */}
             </ul>
           )}
         </li>

@@ -1,14 +1,14 @@
 import { useState, useMemo } from "react";
 import API from "../api/axiosInstance";
 
-// Inline placeholder — no external HTTP request
-const DEV_PLACEHOLDER =
+// Default avatar image for students without a photo
+const DEFAULT_AVATAR =
   "data:image/svg+xml;utf8," +
   encodeURIComponent(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80">
-      <rect width="100%" height="100%" fill="#f0f0f0"/>
-      <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle"
-            font-size="10" fill="#999">Photo</text>
+    `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80">
+      <circle cx="40" cy="40" r="40" fill="#a0a0a0"/>
+      <circle cx="40" cy="30" r="14" fill="#e0e0e0"/>
+      <path d="M20 68 Q40 45 60 68" fill="#e0e0e0"/>
     </svg>`
   );
 
@@ -21,7 +21,7 @@ try {
 }
 
 function imgUrl(filenameOrUrl) {
-  if (!filenameOrUrl) return DEV_PLACEHOLDER;
+  if (!filenameOrUrl) return DEFAULT_AVATAR;
 
   if (filenameOrUrl.startsWith("http://") || filenameOrUrl.startsWith("https://")) {
     return filenameOrUrl;
@@ -206,7 +206,7 @@ export default function StudentTable({ students, onEdit, onDelete }) {
                             display: "block",
                           }}
                           onError={(e) => {
-                            e.currentTarget.src = DEV_PLACEHOLDER;
+                            e.currentTarget.src = DEFAULT_AVATAR;
                           }}
                         />
                       </div>

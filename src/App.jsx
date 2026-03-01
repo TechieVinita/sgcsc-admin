@@ -53,18 +53,18 @@ const CertificateCreate = lazy(() => import("./pages/CertificateCreate"));
 const CertificateList = lazy(() => import("./pages/CertificateList"));
 
 /* Study Material */
-const StudyUpload = lazy(() => import("./pages/StudyUpload"));
-const StudyList = lazy(() => import("./pages/StudyList"));
+// const StudyUpload = lazy(() => import("./pages/StudyUpload"));
+// const StudyList = lazy(() => import("./pages/StudyList"));
 
 /* Assignments */
 const AssignmentUpload = lazy(() => import("./pages/AssignmentUpload"));
 const AssignmentList = lazy(() => import("./pages/AssignmentList"));
 
 /* Settings (future expansion) */
-const SettingsHeader = lazy(() => import("./pages/SettingsHeader"));
-const SettingsFooter = lazy(() => import("./pages/SettingsFooter"));
+// const SettingsHeader = lazy(() => import("./pages/SettingsHeader"));
+// const SettingsFooter = lazy(() => import("./pages/SettingsFooter"));
 const SettingsSocial = lazy(() => import("./pages/SettingsSocial"));
-const SettingsBranding = lazy(() => import("./pages/SettingsBranding"));
+// const SettingsBranding = lazy(() => import("./pages/SettingsBranding"));
 
 /* ----------------------------------------------------- */
 
@@ -325,6 +325,7 @@ export default function App() {
           />
 
           {/* Study Material */}
+          {/*
           <Route
             path="/study-material"
             element={
@@ -345,6 +346,7 @@ export default function App() {
               </PrivateRoute>
             }
           />
+          */}
 
           {/* Assignments */}
           <Route
@@ -369,6 +371,7 @@ export default function App() {
           />
 
           {/* Settings */}
+          {/*
           <Route
             path="/settings/header"
             element={
@@ -389,6 +392,7 @@ export default function App() {
               </PrivateRoute>
             }
           />
+          */}
           <Route
             path="/settings/social"
             element={
@@ -399,6 +403,7 @@ export default function App() {
               </PrivateRoute>
             }
           />
+          {/*
           <Route
             path="/settings/branding"
             element={
@@ -409,6 +414,7 @@ export default function App() {
               </PrivateRoute>
             }
           />
+          */}
 
           {/* Root redirect */}
           <Route

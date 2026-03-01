@@ -1,25 +1,4 @@
-import axios from "axios";
-
-const baseURL =
-  process.env.REACT_APP_API_URL ||
-  "https://sgcsc-backend.onrender.com/api";
-
-const API = axios.create({
-  baseURL,
-  timeout: 15000,
-});
-
-/* ===================== Error Normalization ===================== */
-API.interceptors.response.use(
-  (res) => res,
-  (err) => {
-    const msg =
-      err?.response?.data?.message ||
-      err.message ||
-      "Request failed";
-    return Promise.reject({ ...err, userMessage: msg });
-  }
-);
+import API from "./axiosInstance";
 
 /* ===================== COURSES ===================== */
 
@@ -35,6 +14,18 @@ export const getCourses = async () => {
 export const getStudentByEnrollment = async (enrollmentNumber) => {
   const res = await API.get(`/students/lookup/${enrollmentNumber}`);
   return res.data?.data || null;
+};
+
+/* ===================== SETTINGS ===================== */
+
+export const getSettings = async () => {
+  const res = await API.get("/settings");
+  return res.data?.data || null;
+};
+
+export const updateSocialLinks = async (socialLinks) => {
+  const res = await API.put("/settings/social", { socialLinks });
+  return res.data;
 };
 
 export default API;
