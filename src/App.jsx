@@ -20,6 +20,7 @@ const Dashboard = lazy(() => import("./pages/Dashboard"));
 /* Franchise */
 const FranchiseCreate = lazy(() => import("./pages/FranchiseCreate"));
 const FranchiseList = lazy(() => import("./pages/FranchiseList"));
+const FranchiseCredits = lazy(() => import("./pages/FranchiseCredits"));
 
 /* Students */
 const Students = lazy(() => import("./pages/Students"));
@@ -64,6 +65,8 @@ const AssignmentList = lazy(() => import("./pages/AssignmentList"));
 // const SettingsHeader = lazy(() => import("./pages/SettingsHeader"));
 // const SettingsFooter = lazy(() => import("./pages/SettingsFooter"));
 const SettingsSocial = lazy(() => import("./pages/SettingsSocial"));
+const SettingsCreditPricing = lazy(() => import("./pages/SettingsCreditPricing"));
+const SettingsCreditQR = lazy(() => import("./pages/SettingsCreditQR"));
 // const SettingsBranding = lazy(() => import("./pages/SettingsBranding"));
 
 /* ----------------------------------------------------- */
@@ -138,7 +141,16 @@ export default function App() {
               </PrivateRoute>
             }
           />
-
+          <Route
+            path="/franchise/credits"
+            element={
+              <PrivateRoute>
+                <ProtectedLayout>
+                  <FranchiseCredits />
+                </ProtectedLayout>
+              </PrivateRoute>
+            }
+          />
 
           {/* Students */}
           <Route
@@ -399,6 +411,26 @@ export default function App() {
               <PrivateRoute>
                 <ProtectedLayout>
                   <SettingsSocial />
+                </ProtectedLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/settings/credit-pricing"
+            element={
+              <PrivateRoute>
+                <ProtectedLayout>
+                  <SettingsCreditPricing />
+                </ProtectedLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/settings/credit-qr"
+            element={
+              <PrivateRoute>
+                <ProtectedLayout>
+                  <SettingsCreditQR />
                 </ProtectedLayout>
               </PrivateRoute>
             }

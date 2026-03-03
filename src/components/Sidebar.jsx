@@ -75,6 +75,11 @@ export default function Sidebar() {
                   List Franchise
                 </NavLink>
               </li>
+              <li className="mb-1">
+                <NavLink to="/franchise/credits" className={subLinkClass}>
+                  Franchise Credits
+                </NavLink>
+              </li>
 
               {/* <li className="mb-1">
                 <NavLink to="/franchise-applications" className={subLinkClass}>
@@ -416,6 +421,16 @@ export default function Sidebar() {
               <li className="mb-1">
                 <NavLink to="/settings/social" className={subLinkClass}>
                   Social Links
+                </NavLink>
+              </li>
+              <li className="mb-1">
+                <NavLink to="/settings/credit-pricing" className={subLinkClass}>
+                  Credit Pricing
+                </NavLink>
+              </li>
+              <li className="mb-1">
+                <NavLink to="/settings/credit-qr" className={subLinkClass}>
+                  Credit QR
                 </NavLink>
               </li>
               {/*

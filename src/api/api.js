@@ -28,4 +28,50 @@ export const updateSocialLinks = async (socialLinks) => {
   return res.data;
 };
 
-export default API;
+export const getCreditSettings = async () => {
+  const res = await API.get("/settings/credit");
+  return res.data?.data || null;
+};
+
+export const updateCreditPricing = async (pricing) => {
+  const res = await API.put("/settings/credit-pricing", pricing);
+  return res.data;
+};
+
+export const uploadCreditTopupQR = async (formData) => {
+  const res = await API.post("/settings/credit-topup-qr", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return res.data;
+};
+
+export const deleteCreditTopupQR = async () => {
+  const res = await API.delete("/settings/credit-topup-qr");
+  return res.data;
+};
+
+export const updateCreditTopupInstructions = async (data) => {
+  const res = await API.put("/settings/credit-topup-instructions", data);
+  return res.data;
+};
+
+/* ===================== CREDITS ===================== */
+
+export const getAllFranchiseCredits = async () => {
+  const res = await API.get("/credits/admin/franchises");
+  return res.data;
+};
+
+export const addCreditsToFranchise = async (data) => {
+  const res = await API.post("/credits/admin/add", data);
+  return res.data;
+};
+
+export const getFranchiseTransactions = async (franchiseId, page = 1, limit = 10) => {
+  const res = await API.get(`/credits/admin/transactions/${franchiseId}?page=${page}&limit=${limit}`);
+  return res.data;
+};
+
+export default API; 
