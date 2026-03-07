@@ -40,7 +40,7 @@ function imgUrl(filenameOrUrl) {
   return `${API_ORIGIN}${path}`;
 }
 
-export default function StudentTable({ students, onEdit, onDelete }) {
+export default function StudentTable({ students, onEdit, onDelete, onView }) {
   const [sortOrder, setSortOrder] = useState("asc");
 
   const sortedStudents = useMemo(
@@ -269,6 +269,15 @@ export default function StudentTable({ students, onEdit, onDelete }) {
                       </td>
 
                   <td className="text-center">
+                    {onView && (
+                      <button
+                        type="button"
+                        onClick={() => onView(s)}
+                        className="btn btn-sm btn-outline-info me-2"
+                      >
+                        <i className="bi bi-eye" /> View
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={() => onEdit && onEdit(s)}

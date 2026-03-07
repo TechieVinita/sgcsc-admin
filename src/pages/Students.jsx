@@ -26,6 +26,9 @@ export default function Students() {
   const [editError, setEditError] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
 
+  // view details modal state
+  const [viewing, setViewing] = useState(null);
+
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -92,6 +95,14 @@ export default function Students() {
   const handleOpenEdit = (student) => {
     setEditing(student);
     setEditError("");
+  };
+
+  const handleOpenView = (student) => {
+    setViewing(student);
+  };
+
+  const closeView = () => {
+    setViewing(null);
   };
 
   const closeEdit = () => {
@@ -294,6 +305,7 @@ export default function Students() {
               students={filteredStudents}
               onEdit={handleOpenEdit}
               onDelete={handleDelete}
+              onView={handleOpenView}
             />
           </div>
         </div>
@@ -377,6 +389,12 @@ export default function Students() {
                               </td>
                               <td className="text-center">
                                 <button
+                                  className="btn btn-sm btn-outline-info me-2"
+                                  onClick={() => handleOpenView(s)}
+                                >
+                                  View
+                                </button>
+                                <button
                                   className="btn btn-sm btn-outline-primary me-2"
                                   onClick={() => handleOpenEdit(s)}
                                 >
@@ -411,6 +429,95 @@ export default function Students() {
         saving={savingEdit}
         error={editError}
       />
+
+      {/* View Details Modal - Student Information */}
+      {viewing && (
+        <div className="modal d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+          <div className="modal-dialog modal-dialog-centered modal-lg">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">
+                  Student Details - {viewing.name || viewing.studentName || "Unknown"}
+                </h5>
+                <button type="button" className="btn-close" onClick={closeView}></button>
+              </div>
+              <div className="modal-body">
+                <div className="row">
+                  {/* Personal Information */}
+                  <div className="col-md-6 mb-3">
+                    <h6 className="border-bottom pb-2 mb-3">Personal Information</h6>
+                    <p className="mb-1"><strong>Name:</strong> {viewing.name || viewing.studentName || "-"}</p>
+                    <p className="mb-1"><strong>Father's Name:</strong> {viewing.fatherName || "-"}</p>
+                    <p className="mb-1"><strong>Mother's Name:</strong> {viewing.motherName || "-"}</p>
+                    <p className="mb-1"><strong>Gender:</strong> {viewing.gender || "-"}</p>
+                    <p className="mb-1"><strong>Date of Birth:</strong> {viewing.dob ? new Date(viewing.dob).toLocaleDateString('en-IN') : "-"}</p>
+                  </div>
+                  
+                  {/* Contact Information */}
+                  <div className="col-md-6 mb-3">
+                    <h6 className="border-bottom pb-2 mb-3">Contact Information</h6>
+                    <p className="mb-1"><strong>Email:</strong> {viewing.email || "-"}</p>
+                    <p className="mb-1"><strong>Mobile:</strong> {viewing.mobile || viewing.contact || "-"}</p>
+                    <p className="mb-1"><strong>State:</strong> {viewing.state || "-"}</p>
+                    <p className="mb-1"><strong>District:</strong> {viewing.district || "-"}</p>
+                    <p className="mb-1"><strong>Address:</strong> {viewing.address || "-"}</p>
+                  </div>
+
+                  {/* Academic Information */}
+                  <div className="col-md-6 mb-3">
+                    <h6 className="border-bottom pb-2 mb-3">Academic Information</h6>
+                    <p className="mb-1"><strong>Roll Number:</strong> {viewing.rollNumber || "-"}</p>
+                    <p className="mb-1"><strong>Enrollment No:</strong> {viewing.enrollmentNo || viewing.enrollment || "-"}</p>
+                    <p className="mb-1"><strong>Course:</strong> {viewing.courseName || (viewing.course && viewing.course.title) || "-"}</p>
+                    <p className="mb-1"><strong>Exam Passed:</strong> {viewing.examPassed || "-"}</p>
+                    <p className="mb-1"><strong>Board:</strong> {viewing.board || "-"}</p>
+                    <p className="mb-1"><strong>Marks/Grade:</strong> {viewing.marksOrGrade || "-"}</p>
+                  </div>
+
+                  {/* Fee Details */}
+                  <div className="col-md-6 mb-3">
+                    <h6 className="border-bottom pb-2 mb-3">Fee Details</h6>
+                    {(() => {
+                      const feeDetails = viewing.courses && Array.isArray(viewing.courses) && viewing.courses.length > 0
+                        ? {
+                            fee: viewing.courses.reduce((sum, c) => sum + (Number(c.feeAmount) || 0), 0),
+                            paid: viewing.courses.reduce((sum, c) => sum + (Number(c.amountPaid) || 0), 0),
+                          }
+                        : { fee: Number(viewing.feeAmount) || 0, paid: Number(viewing.amountPaid) || 0 };
+                      const pending = feeDetails.fee - feeDetails.paid;
+                      return (
+                        <>
+                          <p className="mb-1"><strong>Total Fee:</strong> ₹{feeDetails.fee}</p>
+                          <p className="mb-1"><strong>Amount Paid:</strong> ₹{feeDetails.paid}</p>
+                          <p className="mb-1">
+                            <strong>Pending:</strong>{" "}
+                            <span className={pending > 0 ? "text-danger" : "text-success"}>
+                              ₹{pending}
+                            </span>
+                          </p>
+                          <p className="mb-1"><strong>Fees Paid:</strong> {viewing.feesPaid ? "Yes" : "No"}</p>
+                        </>
+                      );
+                    })()}
+                  </div>
+
+                  {/* Center Information */}
+                  <div className="col-12 mb-3">
+                    <h6 className="border-bottom pb-2 mb-3">Center Information</h6>
+                    <p className="mb-1"><strong>Center:</strong> {viewing.centerName || viewing.franchiseName || viewing.instituteName || viewing.center || "-"}</p>
+                    <p className="mb-1"><strong>Session:</strong> {viewing.sessionStart && viewing.sessionEnd ? `${new Date(viewing.sessionStart).toLocaleDateString('en-IN')} - ${new Date(viewing.sessionEnd).toLocaleDateString('en-IN')}` : "-"}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button className="btn btn-secondary" onClick={closeView}>
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

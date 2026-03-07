@@ -289,6 +289,11 @@ export default function AddStudent() {
       return false;
     }
 
+    if (!form.enrollmentNo.trim()) {
+      setError("Enrollment number is required.");
+      return false;
+    }
+
     if (!form.centerName.trim()) {
       setError("Center Name is required.");
       return false;
@@ -485,7 +490,7 @@ export default function AddStudent() {
             </div>
             <div className="col-lg-4">
               <label className="form-label">
-                Enrollment Number
+                Enrollment Number <span className="text-danger">*</span>
               </label>
               <input
                 type="text"
@@ -493,7 +498,8 @@ export default function AddStudent() {
                 name="enrollmentNo"
                 value={form.enrollmentNo}
                 onChange={handleChange}
-                placeholder="Optional (defaults to roll number)"
+                placeholder="Enter enrollment number"
+                required
               />
             </div>
 
