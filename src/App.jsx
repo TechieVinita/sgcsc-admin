@@ -67,6 +67,7 @@ const AssignmentList = lazy(() => import("./pages/AssignmentList"));
 const SettingsSocial = lazy(() => import("./pages/SettingsSocial"));
 const SettingsCreditPricing = lazy(() => import("./pages/SettingsCreditPricing"));
 const SettingsCreditQR = lazy(() => import("./pages/SettingsCreditQR"));
+const FeeReceipt = lazy(() => import("./pages/FeeReceipt"));
 // const SettingsBranding = lazy(() => import("./pages/SettingsBranding"));
 
 /* ----------------------------------------------------- */
@@ -179,6 +180,18 @@ export default function App() {
               <PrivateRoute>
                 <ProtectedLayout>
                   <StudentDetail />
+                </ProtectedLayout>
+              </PrivateRoute>
+            }
+          />
+
+          {/* Fee Receipt */}
+          <Route
+            path="/fee-receipt"
+            element={
+              <PrivateRoute>
+                <ProtectedLayout>
+                  <FeeReceipt />
                 </ProtectedLayout>
               </PrivateRoute>
             }

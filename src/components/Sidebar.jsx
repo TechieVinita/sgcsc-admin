@@ -120,6 +120,11 @@ export default function Sidebar() {
                   Student List
                 </NavLink>
               </li>
+              <li className="mb-1">
+                <NavLink to="/fee-receipt" className={subLinkClass}>
+                  Fee Receipt
+                </NavLink>
+              </li>
             </ul>
           )}
         </li>
