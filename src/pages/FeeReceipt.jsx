@@ -19,6 +19,48 @@ export default function FeeReceipt() {
   // Month selection - all months selected by default
   const [selectedMonths, setSelectedMonths] = useState([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
   
+  // Per-month fee details
+  const [monthlyData, setMonthlyData] = useState({});
+  
+  // Initialize monthly data when months are selected
+  const initializeMonthlyData = (monthsArray) => {
+    const newData = {};
+    const year = getSessionYear().toString().slice(-2);
+    monthsArray.forEach(index => {
+      const monthNum = index + 1;
+      newData[index] = {
+        date: `01-${monthNum.toString().padStart(2, '0')}-${year}`,
+        paid: monthlyFee,
+        due: dueAmount
+      };
+    });
+    setMonthlyData(newData);
+  };
+  
+  // Update monthly data for a specific month
+  const updateMonthlyData = (monthIndex, field, value) => {
+    setMonthlyData(prev => ({
+      ...prev,
+      [monthIndex]: {
+        ...prev[monthIndex],
+        [field]: value
+      }
+    }));
+  };
+  
+  // Calculate totals from monthly data
+  const calculateTotals = () => {
+    let totalPaid = 0;
+    let totalDue = 0;
+    Object.values(monthlyData).forEach(data => {
+      totalPaid += Number(data.paid) || 0;
+      totalDue += Number(data.due) || 0;
+    });
+    return { totalPaid, totalDue };
+  };
+  
+  const { totalPaid, totalDue } = calculateTotals();
+  
   const printRef = useRef();
 
   // Month names
@@ -145,14 +187,18 @@ export default function FeeReceipt() {
     return new Date(sessionStart).getFullYear();
   };
 
-  // Calculate total from selected months
-  const totalPaid = monthlyFee * selectedMonths.length;
-  const totalDue = dueAmount * selectedMonths.length;
+  // Legacy - removed in favor of per-month data
 
   const generateWhatsAppLink = () => {
     if (!selectedStudent) return "#";
+    const { totalPaid, totalDue } = calculateTotals();
     const text = `FEE%20RECEIPT%0AStudent:%20${selectedStudent.name}%0AReceipt%20No:%20${receiptNo}%0ATotal%20Paid:%20Rs.%20${totalPaid}%0ADue:%20Rs.%20${totalDue}`;
     return `https://api.whatsapp.com/send?phone=${whatsappNumber}&text=${text}`;
+  };
+  
+  // Apply default values to all selected months
+  const applyDefaultToAll = () => {
+    initializeMonthlyData(selectedMonths);
   };
 
   return (
@@ -245,7 +291,24 @@ export default function FeeReceipt() {
                           type="checkbox"
                           id={`month-${index}`}
                           checked={selectedMonths.includes(index)}
-                          onChange={() => toggleMonth(index)}
+                          onChange={() => {
+                            toggleMonth(index);
+                            // Initialize data for newly selected month
+                            setTimeout(() => {
+                              if (!selectedMonths.includes(index)) {
+                                const year = getSessionYear().toString().slice(-2);
+                                const monthNum = index + 1;
+                                setMonthlyData(prev => ({
+                                  ...prev,
+                                  [index]: {
+                                    date: `01-${monthNum.toString().padStart(2, '0')}-${year}`,
+                                    paid: monthlyFee,
+                                    due: dueAmount
+                                  }
+                                }));
+                              }
+                            }, 0);
+                          }}
                         />
                         <label className="form-check-label" htmlFor={`month-${index}`}>
                           {month}
@@ -253,41 +316,108 @@ export default function FeeReceipt() {
                       </div>
                     ))}
                   </div>
-                  <button className="btn btn-sm btn-outline-primary me-2" onClick={selectAllMonths}>
+                  <button className="btn btn-sm btn-outline-primary me-2" onClick={() => { selectAllMonths(); setTimeout(initializeMonthlyData([0,1,2,3,4,5,6,7,8,9,10,11]), 0); }}>
                     Select All
                   </button>
-                  <button className="btn btn-sm btn-outline-secondary" onClick={clearAllMonths}>
+                  <button className="btn btn-sm btn-outline-secondary" onClick={() => { clearAllMonths(); setMonthlyData({}); }}>
                     Clear All
                   </button>
                 </div>
               </div>
               
-              <div className="row">
-                <div className="col-md-2 mb-3">
-                  <label className="form-label">Monthly Fee (₹)</label>
-                  <input
-                    type="number"
-                    className="form-control"
-                    value={monthlyFee}
-                    onChange={(e) => setMonthlyFee(Number(e.target.value))}
-                  />
-                </div>
-                <div className="col-md-2 mb-3">
-                  <label className="form-label">Due Amount (₹)</label>
-                  <input
-                    type="number"
-                    className="form-control"
-                    value={dueAmount}
-                    onChange={(e) => setDueAmount(Number(e.target.value))}
-                  />
-                </div>
-                <div className="col-md-4 mb-3">
-                  <label className="form-label">Selected Months: {selectedMonths.length}</label>
-                  <div className="form-control-plaintext">
-                    <strong>Total: ₹{totalPaid}</strong>
+              {/* Default values for new months */}
+              <div className="row mb-3">
+                <div className="col-12">
+                  <label className="form-label">Default Values for New Months:</label>
+                  <div className="row">
+                    <div className="col-md-3 mb-2">
+                      <label className="form-label">Monthly Fee (₹)</label>
+                      <input
+                        type="number"
+                        className="form-control"
+                        value={monthlyFee}
+                        onChange={(e) => setMonthlyFee(Number(e.target.value))}
+                      />
+                    </div>
+                    <div className="col-md-3 mb-2">
+                      <label className="form-label">Due Amount (₹)</label>
+                      <input
+                        type="number"
+                        className="form-control"
+                        value={dueAmount}
+                        onChange={(e) => setDueAmount(Number(e.target.value))}
+                      />
+                    </div>
+                    <div className="col-md-3 mb-2 d-flex align-items-end">
+                      <button className="btn btn-secondary" onClick={applyDefaultToAll}>
+                        Apply to All Months
+                      </button>
+                    </div>
+                    <div className="col-md-3 mb-2">
+                      <label className="form-label">Total:</label>
+                      <div className="form-control-plaintext">
+                        <strong>Paid: ₹{totalPaid} | Due: ₹{totalDue}</strong>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className="col-md-4 mb-3 d-flex align-items-end">
+              </div>
+              
+              {/* Per-month details */}
+              {selectedMonths.length > 0 && (
+                <div className="row mb-3">
+                  <div className="col-12">
+                    <label className="form-label"><strong>Monthly Details (click to edit):</strong></label>
+                    <div className="table-responsive">
+                      <table className="table table-bordered table-sm">
+                        <thead className="table-light">
+                          <tr>
+                            <th>Month</th>
+                            <th>Date</th>
+                            <th>Paid (₹)</th>
+                            <th>Due (₹)</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {selectedMonths.map((monthIndex) => (
+                            <tr key={months[monthIndex]}>
+                              <td>{months[monthIndex]}</td>
+                              <td>
+                                <input
+                                  type="text"
+                                  className="form-control form-control-sm"
+                                  value={monthlyData[monthIndex]?.date || ''}
+                                  onChange={(e) => updateMonthlyData(monthIndex, 'date', e.target.value)}
+                                  placeholder="DD-MM-YY"
+                                />
+                              </td>
+                              <td>
+                                <input
+                                  type="number"
+                                  className="form-control form-control-sm"
+                                  value={monthlyData[monthIndex]?.paid || 0}
+                                  onChange={(e) => updateMonthlyData(monthIndex, 'paid', e.target.value)}
+                                />
+                              </td>
+                              <td>
+                                <input
+                                  type="number"
+                                  className="form-control form-control-sm"
+                                  value={monthlyData[monthIndex]?.due || 0}
+                                  onChange={(e) => updateMonthlyData(monthIndex, 'due', e.target.value)}
+                                />
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              <div className="row">
+                <div className="col-md-8 mb-3">
                   <button className="btn btn-primary me-2" onClick={handlePrint}>
                     Print Receipt
                   </button>
@@ -365,7 +495,7 @@ export default function FeeReceipt() {
             letter-spacing: 1px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
           }
-          .photo img, .qr img {
+          .photo img {
             width: 90px;
             height: 90px;
             border: 1px solid #000;
@@ -412,7 +542,7 @@ export default function FeeReceipt() {
                 />
               </div>
 
-              <div className="details">
+              <div className="details" style={{ flex: 1 }}>
                 <div className="row">
                   <span className="label">Student's Name</span>: {selectedStudent.name || "N/A"}
                 </div>
@@ -434,13 +564,6 @@ export default function FeeReceipt() {
 
                 <div className="fee-title">STUDENT'S FEE RECEIPT</div>
               </div>
-
-              <div className="qr">
-                <img 
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=Fee%20Receipt%20${receiptNo}`} 
-                  alt="QR Code"
-                />
-              </div>
             </div>
 
             {/* TABLE - Only selected months */}
@@ -455,15 +578,13 @@ export default function FeeReceipt() {
               </thead>
               <tbody>
                 {selectedMonths.map((monthIndex) => {
-                  const year = getSessionYear().toString().slice(-2);
-                  const monthNum = monthIndex + 1;
-                  const date = `01-${monthNum.toString().padStart(2, '0')}-${year}`;
+                  const data = monthlyData[monthIndex] || {};
                   return (
                     <tr key={months[monthIndex]}>
                       <td>{months[monthIndex]}</td>
-                      <td>{date}</td>
-                      <td>{monthlyFee}</td>
-                      <td>{dueAmount}</td>
+                      <td>{data.date || '-'}</td>
+                      <td>{data.paid || 0}</td>
+                      <td>{data.due || 0}</td>
                     </tr>
                   );
                 })}

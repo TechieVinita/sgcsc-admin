@@ -57,22 +57,79 @@ export default function StudentDetail() {
           {loading ? <div>Loading...</div> : student && (
             <>
               <div className="card mb-4 p-3">
-                <h4>{student.name} <small className="text-muted">({student.rollNo})</small></h4>
-                <div><strong>Course:</strong> {student.course?.title || student.course || '—'}</div>
+                <h4>{student.name} <small className="text-muted">({student.rollNumber || student.rollNo})</small></h4>
+                <div><strong>Course:</strong> {student.course?.title || student.courseName || student.course || '—'}</div>
                 <div><strong>Semester:</strong> {student.semester}</div>
                 <div><strong>Email:</strong> {student.email || '—'}</div>
-                <div><strong>Contact:</strong> {student.contact || '—'}</div>
+                <div><strong>Contact:</strong> {student.mobile || student.contact || '—'}</div>
                 <hr />
                 <h6 className="text-muted">Fee Details</h6>
-                <div><strong>Total Fee:</strong> ₹{student.feeAmount || 0}</div>
-                <div><strong>Amount Paid:</strong> ₹{student.amountPaid || 0}</div>
-                <div>
-                  <strong>Pending Amount:</strong>{' '}
-                  <span className={((student.feeAmount || 0) - (student.amountPaid || 0)) > 0 ? 'text-danger' : 'text-success'}>
-                    ₹{((student.feeAmount || 0) - (student.amountPaid || 0))}
-                  </span>
-                </div>
-                <div><strong>Fees Paid:</strong> {student.feesPaid ? 'Yes' : 'No'}</div>
+                
+                {/* Course-wise Fee Breakdown */}
+                {student.courses && student.courses.length > 0 ? (
+                  <div className="table-responsive">
+                    <table className="table table-bordered table-sm">
+                      <thead className="table-light">
+                        <tr>
+                          <th>Course Name</th>
+                          <th>Total Fee (₹)</th>
+                          <th>Paid (₹)</th>
+                          <th>Due (₹)</th>
+                          <th>Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {student.courses.map((c, idx) => {
+                          const courseFee = Number(c.feeAmount) || 0;
+                          const coursePaid = Number(c.amountPaid) || 0;
+                          const courseDue = courseFee - coursePaid;
+                          return (
+                            <tr key={idx}>
+                              <td>{c.courseName || 'N/A'}</td>
+                              <td>{courseFee}</td>
+                              <td>{coursePaid}</td>
+                              <td className={courseDue > 0 ? 'text-danger' : 'text-success'}>
+                                {courseDue}
+                              </td>
+                              <td>
+                                {courseDue <= 0 ? (
+                                  <span className="badge bg-success">Paid</span>
+                                ) : (
+                                  <span className="badge bg-warning text-dark">Pending</span>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                        <tr className="table-secondary">
+                          <th>Total</th>
+                          <th>₹{student.feeAmount || 0}</th>
+                          <th>₹{student.amountPaid || 0}</th>
+                          <th className={((student.feeAmount || 0) - (student.amountPaid || 0)) > 0 ? 'text-danger' : 'text-success'}>
+                            ₹{((student.feeAmount || 0) - (student.amountPaid || 0))}
+                          </th>
+                          <th>{(student.feeAmount || 0) - (student.amountPaid || 0) <= 0 ? (
+                            <span className="badge bg-success">All Paid</span>
+                          ) : (
+                            <span className="badge bg-warning text-dark">Pending</span>
+                          )}</th>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <>
+                    <div><strong>Total Fee:</strong> ₹{student.feeAmount || 0}</div>
+                    <div><strong>Amount Paid:</strong> ₹{student.amountPaid || 0}</div>
+                    <div>
+                      <strong>Pending Amount:</strong>{' '}
+                      <span className={((student.feeAmount || 0) - (student.amountPaid || 0)) > 0 ? 'text-danger' : 'text-success'}>
+                        ₹{((student.feeAmount || 0) - (student.amountPaid || 0))}
+                      </span>
+                    </div>
+                    <div><strong>Fees Paid:</strong> {student.feesPaid ? 'Yes' : 'No'}</div>
+                  </>
+                )}
               </div>
 
               <div className="card mb-4 p-3">
