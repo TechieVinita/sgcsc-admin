@@ -19,6 +19,7 @@ function CertificateModal({ show, onClose, onSaved, initial }) {
   const [enrollmentNumber, setEnrollmentNumber] = useState('');
   const [certificateNumber, setCertificateNumber] = useState('');
   const [issueDate, setIssueDate] = useState('');
+  const [renewalDate, setRenewalDate] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -45,6 +46,11 @@ function CertificateModal({ show, onClose, onSaved, initial }) {
           ? new Date(initial.issueDate).toISOString().slice(0, 10)
           : ''
       );
+      setRenewalDate(
+        initial.renewalDate
+          ? new Date(initial.renewalDate).toISOString().slice(0, 10)
+          : ''
+      );
     } else {
       setName('');
       setFatherName('');
@@ -55,6 +61,7 @@ function CertificateModal({ show, onClose, onSaved, initial }) {
       setEnrollmentNumber('');
       setCertificateNumber('');
       setIssueDate('');
+      setRenewalDate('');
     }
   }, [show, initial]);
 
@@ -97,6 +104,10 @@ function CertificateModal({ show, onClose, onSaved, initial }) {
       setError('Issue Date is required.');
       return false;
     }
+    if (!renewalDate) {
+      setError('Renewal Date is required.');
+      return false;
+    }
     return true;
   };
 
@@ -118,6 +129,7 @@ function CertificateModal({ show, onClose, onSaved, initial }) {
         enrollmentNumber: enrollmentNumber.trim(),
         certificateNumber: certificateNumber.trim(),
         issueDate,
+        renewalDate,
       };
 
       let saved;
@@ -275,6 +287,17 @@ function CertificateModal({ show, onClose, onSaved, initial }) {
                     className="form-control"
                     value={issueDate}
                     onChange={(e) => setIssueDate(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="col-md-6">
+                  <label className="form-label">Renewal Date *</label>
+                  <input
+                    type="date"
+                    className="form-control"
+                    value={renewalDate}
+                    onChange={(e) => setRenewalDate(e.target.value)}
                     required
                   />
                 </div>
@@ -496,6 +519,7 @@ function CertificateViewModal({ show, onClose, certificate }) {
                   <p><strong>Enrollment No:</strong> {certificate.enrollmentNumber}</p>
                   <p><strong>Certificate No:</strong> {certificate.certificateNumber}</p>
                   <p><strong>Issue Date:</strong> {fmtDate(certificate.issueDate)}</p>
+                  <p><strong>Renewal Date:</strong> {fmtDate(certificate.renewalDate)}</p>
                 </div>
               </div>
             </div>
@@ -660,6 +684,7 @@ export default function CertificateList() {
                         <th>Enrollment No</th>
                         <th>Certificate No</th>
                         <th>Issue Date</th>
+                        <th>Renewal Date</th>
                         <th className="text-center">Actions</th>
                       </tr>
                     </thead>
@@ -673,6 +698,7 @@ export default function CertificateList() {
                           <td>{c.enrollmentNumber}</td>
                           <td>{c.certificateNumber}</td>
                           <td>{fmtDate(c.issueDate)}</td>
+                          <td>{fmtDate(c.renewalDate)}</td>
                           <td className="text-center">
                             <button
                               className="btn btn-sm btn-outline-success me-2"
