@@ -5,7 +5,7 @@ import API from "../api/axiosInstance";
 export default function FeeReceipt() {
   const [students, setStudents] = useState([]);
   const [selectedStudent, setSelectedStudent] = useState(null);
-  const [loading, setLoading] = useState(false);
+  
   const [searchTerm, setSearchTerm] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
   
@@ -20,10 +20,25 @@ export default function FeeReceipt() {
   const [selectedMonths, setSelectedMonths] = useState([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
   
   // Per-month fee details
-  const [monthlyData, setMonthlyData] = useState({});
-  
-  // Initialize monthly data when months are selected
-  const initializeMonthlyData = (monthsArray) => {
+   const [monthlyData, setMonthlyData] = useState({});
+   
+   // Add new state for course selection
+   const [availableCourses, setAvailableCourses] = useState([]);
+   const [selectedCourse, setSelectedCourse] = useState(null);
+
+   const setFeeDetailsFromCourse = (course) => {
+        const totalFee = Number(course.feeAmount) || 0;
+        const totalPaid = Number(course.amountPaid) || 0;
+        setMonthlyFee(Math.ceil(totalFee / 12));
+        setDueAmount(totalFee - totalPaid);
+        setSelectedCourse(course);
+        // Reset monthly data and selected months when course changes
+        setMonthlyData({});
+        setSelectedMonths([]);
+   };
+   
+   // Initialize monthly data when months are selected
+   const initializeMonthlyData = (monthsArray) => {
     const newData = {};
     const year = getSessionYear().toString().slice(-2);
     monthsArray.forEach(index => {
@@ -97,33 +112,36 @@ export default function FeeReceipt() {
     return name.includes(term) || roll.includes(term) || mobile.includes(term);
   });
 
-  const handleSelectStudent = (student) => {
-    setSelectedStudent(student);
-    setSearchTerm(student.name || "");
-    setShowDropdown(false);
-    
-    // Set session start from student's sessionStart or joinDate
-    if (student.sessionStart) {
-      setSessionStart(new Date(student.sessionStart).toISOString().slice(0, 10));
-    } else if (student.joinDate) {
-      setSessionStart(new Date(student.joinDate).toISOString().slice(0, 10));
-    } else {
-      setSessionStart(new Date().toISOString().slice(0, 10));
-    }
-    
-    // Calculate fee details from student data
-    if (student.courses && student.courses.length > 0) {
-      const totalFee = student.courses.reduce((sum, c) => sum + (Number(c.feeAmount) || 0), 0);
-      const totalPaid = student.courses.reduce((sum, c) => sum + (Number(c.amountPaid) || 0), 0);
-      if (totalFee > 0) {
-        setMonthlyFee(Math.ceil(totalFee / 12));
-        setDueAmount(totalFee - totalPaid);
+    const handleSelectStudent = (student) => {
+      setSelectedStudent(student);
+      setSearchTerm(student.name || "");
+      setShowDropdown(false);
+      
+      // Set session start from student's sessionStart or joinDate
+      if (student.sessionStart) {
+        setSessionStart(new Date(student.sessionStart).toISOString().slice(0, 10));
+      } else if (student.joinDate) {
+        setSessionStart(new Date(student.joinDate).toISOString().slice(0, 10));
+      } else {
+        setSessionStart(new Date().toISOString().slice(0, 10));
       }
-    } else if (student.feeAmount) {
-      setMonthlyFee(Math.ceil(student.feeAmount / 12));
-      setDueAmount(student.feeAmount - (student.amountPaid || 0));
-    }
-  };
+      
+      // Set available courses for the student
+      const courses = student.courses || [];
+      setAvailableCourses(courses);
+      // If there are courses, select the first one and set fee details
+      if (courses.length > 0) {
+        setFeeDetailsFromCourse(courses[0]);
+      } else {
+        setSelectedCourse(null);
+        // Reset fee details to 0 if no course
+        setMonthlyFee(0);
+        setDueAmount(0);
+        // Also reset monthly data and selected months
+        setMonthlyData({});
+        setSelectedMonths([]);
+      }
+    };
 
   // Toggle month selection
   const toggleMonth = (monthIndex) => {
@@ -276,7 +294,34 @@ export default function FeeReceipt() {
               />
             </div>
           </div>
-          
+           
+          {/* Course Selection */}
+          {selectedStudent && availableCourses.length > 0 && (
+            <div className="row mb-3">
+              <div className="col-md-4 mb-3">
+                <label className="form-label">Select Course</label>
+                <select
+                  className="form-control"
+                  value={selectedCourse ? selectedCourse._id : ""}
+                  onChange={(e) => {
+                    const courseId = e.target.value;
+                    const course = availableCourses.find(c => c._id === courseId);
+                    if (course) {
+                      setFeeDetailsFromCourse(course);
+                    }
+                  }}
+                >
+                  <option value="">Select a course</option>
+                  {availableCourses.map(course => (
+                    <option key={course._id} value={course._id}>
+                      {course.courseName} - ₹{course.feeAmount}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+           
           {/* Month Selection */}
           {selectedStudent && (
             <>
@@ -538,7 +583,7 @@ export default function FeeReceipt() {
               <div className="photo">
                 <img 
                   src={selectedStudent.photo || "https://via.placeholder.com/90"} 
-                  alt="Student Photo"
+                  alt="Student"
                 />
               </div>
 
