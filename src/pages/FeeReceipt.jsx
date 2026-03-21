@@ -5,6 +5,7 @@ import API from "../api/axiosInstance";
 export default function FeeReceipt() {
   const [students, setStudents] = useState([]);
   const [selectedStudent, setSelectedStudent] = useState(null);
+  const [selectedCourse, setSelectedCourse] = useState(null);
   
   const [searchTerm, setSearchTerm] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
@@ -20,24 +21,9 @@ export default function FeeReceipt() {
   const [selectedMonths, setSelectedMonths] = useState([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
   
   // Per-month fee details
-   const [monthlyData, setMonthlyData] = useState({});
-   
-   // Add new state for course selection
-   const [availableCourses, setAvailableCourses] = useState([]);
-   const [selectedCourse, setSelectedCourse] = useState(null);
-
-   const setFeeDetailsFromCourse = (course) => {
-        const totalFee = Number(course.feeAmount) || 0;
-        const totalPaid = Number(course.amountPaid) || 0;
-        setMonthlyFee(Math.ceil(totalFee / 12));
-        setDueAmount(totalFee - totalPaid);
-        setSelectedCourse(course);
-        // Reset monthly data and selected months when course changes
-        setMonthlyData({});
-        setSelectedMonths([]);
-   };
-   
-   // Initialize monthly data when months are selected
+  const [monthlyData, setMonthlyData] = useState({});
+  
+  // Initialize monthly data when months are selected
    const initializeMonthlyData = (monthsArray) => {
     const newData = {};
     const year = getSessionYear().toString().slice(-2);
@@ -126,20 +112,34 @@ export default function FeeReceipt() {
         setSessionStart(new Date().toISOString().slice(0, 10));
       }
       
-      // Set available courses for the student
-      const courses = student.courses || [];
-      setAvailableCourses(courses);
-      // If there are courses, select the first one and set fee details
-      if (courses.length > 0) {
-        setFeeDetailsFromCourse(courses[0]);
+      // Handle multiple courses - set first course as selected by default
+      if (student.courses && student.courses.length > 0) {
+        setSelectedCourse(student.courses[0]);
+        const totalFee = student.courses.reduce((sum, c) => sum + (Number(c.feeAmount) || 0), 0);
+        const totalPaid = student.courses.reduce((sum, c) => sum + (Number(c.amountPaid) || 0), 0);
+        if (totalFee > 0) {
+          setMonthlyFee(Math.ceil(totalFee / 12));
+          setDueAmount(totalFee - totalPaid);
+        }
       } else {
         setSelectedCourse(null);
-        // Reset fee details to 0 if no course
-        setMonthlyFee(0);
-        setDueAmount(0);
-        // Also reset monthly data and selected months
-        setMonthlyData({});
-        setSelectedMonths([]);
+        if (student.feeAmount) {
+          setMonthlyFee(Math.ceil(student.feeAmount / 12));
+          setDueAmount(student.feeAmount - (student.amountPaid || 0));
+        }
+      }
+    };
+
+    // Handle course selection change
+    const handleCourseChange = (courseIndex) => {
+      if (selectedStudent && selectedStudent.courses && selectedStudent.courses[courseIndex]) {
+        const course = selectedStudent.courses[courseIndex];
+        setSelectedCourse(course);
+        // Update fee details based on selected course
+        if (course.feeAmount) {
+          setMonthlyFee(Math.ceil(course.feeAmount / 12));
+          setDueAmount(course.feeAmount - (course.amountPaid || 0));
+        }
       }
     };
 
@@ -295,26 +295,19 @@ export default function FeeReceipt() {
             </div>
           </div>
            
-          {/* Course Selection */}
-          {selectedStudent && availableCourses.length > 0 && (
+          {/* Course Selection - Only show if student has multiple courses */}
+          {selectedStudent && selectedStudent.courses && selectedStudent.courses.length > 1 && (
             <div className="row mb-3">
-              <div className="col-md-4 mb-3">
-                <label className="form-label">Select Course</label>
+              <div className="col-md-6">
+                <label className="form-label">Select Course for Fee Receipt:</label>
                 <select
-                  className="form-control"
-                  value={selectedCourse ? selectedCourse._id : ""}
-                  onChange={(e) => {
-                    const courseId = e.target.value;
-                    const course = availableCourses.find(c => c._id === courseId);
-                    if (course) {
-                      setFeeDetailsFromCourse(course);
-                    }
-                  }}
+                  className="form-select"
+                  value={selectedStudent.courses.findIndex(c => c._id === selectedCourse?._id)}
+                  onChange={(e) => handleCourseChange(Number(e.target.value))}
                 >
-                  <option value="">Select a course</option>
-                  {availableCourses.map(course => (
-                    <option key={course._id} value={course._id}>
-                      {course.courseName} - ₹{course.feeAmount}
+                  {selectedStudent.courses.map((course, index) => (
+                    <option key={index} value={index}>
+                      {course.courseName} - ₹{course.feeAmount || 0} (Paid: ₹{course.amountPaid || 0})
                     </option>
                   ))}
                 </select>
@@ -598,7 +591,7 @@ export default function FeeReceipt() {
                   <span className="label">Date of Birth</span>: {formatDate(selectedStudent.dob)}
                 </div>
                 <div className="row">
-                  <span className="label">Course Name</span>: {selectedStudent.courseName || (selectedStudent.courses && selectedStudent.courses[0]?.courseName) || "N/A"}
+                  <span className="label">Course Name</span>: {selectedCourse?.courseName || selectedStudent.courseName || "N/A"}
                 </div>
                 <div className="row">
                   <span className="label">Session Start</span>: {formatDate(sessionStart)}
