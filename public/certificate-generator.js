@@ -27,7 +27,7 @@ var CertificateGenerator = (() => {
       // { x, y } as % of image dimensions. font is px at full resolution.
       applicantName: { x: 50,  y: 49.5, font: 'bold 29px serif',      color: '#000000', align: 'left' },
       atcCodeMid:   { x: 50,  y: 53.5, font: '24px sans-serif',     color: '#000000', align: 'left' },
-      atcCodeBot:   { x: 30,  y: 88, font: '12px sans-serif',     color: '#000000', align: 'left' },
+      atcCodeBot:   { x: 30,  y: 87.5, font: '12px sans-serif',     color: '#000000', align: 'left' },
       dateOfIssue:  { x: 30,  y: 89.5, font: '12px sans-serif',     color: '#000000', align: 'left' },
       dateOfRenewal:{ x: 30,  y: 91.5, font: '12px sans-serif',     color: '#000000', align: 'left' },
     }
