@@ -315,7 +315,7 @@ export default function Sidebar() {
           )}
         </li>
 
-        {/* 9. Certificate --------------------------------------------------- */}
+        {/* 9. Student Certificate -------------------------------------------- */}
         <li className="nav-item mb-2">
           <button
             type="button"
@@ -324,7 +324,7 @@ export default function Sidebar() {
           >
             <span className="d-flex align-items-center gap-2">
               <FaCertificate />
-              Certificate
+              Student Certificate
             </span>
             {openMenu === "certificates" ? (
               <FaChevronDown />
@@ -337,12 +337,12 @@ export default function Sidebar() {
             <ul className="btn-toggle-nav list-unstyled ps-4 pt-2 pb-1">
               <li className="mb-1">
                 <NavLink to="/certificates/create" className={subLinkClass}>
-                  Add Certificate
+                  Generate Certificate
                 </NavLink>
               </li>
               <li className="mb-1">
                 <NavLink to="/certificates" end className={subLinkClass}>
-                  List Certificate
+                  List Certificates
                 </NavLink>
               </li>
             </ul>

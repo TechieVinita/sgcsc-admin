@@ -2,6 +2,80 @@
 import { useEffect, useMemo, useState } from 'react';
 import API from "../api/axiosInstance";
 
+// Certificate Generator Global Reference
+let certificateGenerator = null;
+
+// Initialize Certificate Generator function
+const initCertificateGenerator = async () => {
+  if (certificateGenerator) return certificateGenerator;
+  
+  // Ensure canvas is available before loading template
+  const canvasElement = document.getElementById('certCanvas');
+  if (!canvasElement) {
+    console.warn('Canvas element not found in DOM yet. Waiting...');
+    // Wait for canvas to be available
+    await new Promise(resolve => setTimeout(resolve, 500));
+  }
+  
+  // Check if already available on window
+  if (window.CertificateGenerator) {
+    certificateGenerator = window.CertificateGenerator;
+    try {
+      await certificateGenerator.loadTemplate('/student-certificate-template.jpeg');
+      console.log('Certificate template loaded successfully');
+      return certificateGenerator;
+    } catch (err) {
+      console.warn('Certificate template not found. Please upload a template to /public/student-certificate-template.jpeg');
+      return certificateGenerator;
+    }
+  }
+  
+  // Script not loaded yet, dynamically load it
+  return new Promise((resolve) => {
+    // Load jspdf if not present
+    if (!window.jspdf) {
+      const jspdfScript = document.createElement('script');
+      jspdfScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+      jspdfScript.onload = () => {
+        // Load certificate-generator
+        const certScript = document.createElement('script');
+        certScript.src = '/certificate-generator.js';
+        certScript.onload = async () => {
+          if (window.CertificateGenerator) {
+            certificateGenerator = window.CertificateGenerator;
+            try {
+              await certificateGenerator.loadTemplate('/student-certificate-template.jpeg');
+              console.log('Certificate template loaded successfully');
+            } catch (err) {
+              console.warn('Certificate template not found. Please upload a template to /public/student-certificate-template.jpeg');
+            }
+          }
+          resolve(certificateGenerator);
+        };
+        document.body.appendChild(certScript);
+      };
+      document.body.appendChild(jspdfScript);
+    } else if (!window.CertificateGenerator) {
+      // jspdf loaded but certificate-generator not loaded
+      const certScript = document.createElement('script');
+      certScript.src = '/certificate-generator.js';
+      certScript.onload = async () => {
+        if (window.CertificateGenerator) {
+          certificateGenerator = window.CertificateGenerator;
+          try {
+            await certificateGenerator.loadTemplate('/student-certificate-template.jpeg');
+            console.log('Certificate template loaded successfully');
+          } catch (err) {
+            console.warn('Certificate template not found. Please upload a template to /public/student-certificate-template.jpeg');
+          }
+        }
+        resolve(certificateGenerator);
+      };
+      document.body.appendChild(certScript);
+    }
+  });
+};
+
 function fmtDate(d) {
   if (!d) return '-';
   const dt = new Date(d);
@@ -16,10 +90,12 @@ function CertificateModal({ show, onClose, onSaved, initial }) {
   const [sessionFrom, setSessionFrom] = useState('');
   const [sessionTo, setSessionTo] = useState('');
   const [grade, setGrade] = useState('');
+  const [courseDuration, setCourseDuration] = useState('');
+  const [coursePeriodFrom, setCoursePeriodFrom] = useState('');
+  const [coursePeriodTo, setCoursePeriodTo] = useState('');
   const [enrollmentNumber, setEnrollmentNumber] = useState('');
   const [certificateNumber, setCertificateNumber] = useState('');
   const [issueDate, setIssueDate] = useState('');
-  const [renewalDate, setRenewalDate] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -39,16 +115,14 @@ function CertificateModal({ show, onClose, onSaved, initial }) {
       setSessionFrom(initial.sessionFrom ? String(initial.sessionFrom) : '');
       setSessionTo(initial.sessionTo ? String(initial.sessionTo) : '');
       setGrade(initial.grade || '');
+      setCourseDuration(initial.courseDuration || '');
+      setCoursePeriodFrom(initial.coursePeriodFrom ? new Date(initial.coursePeriodFrom).toISOString().slice(0, 10) : '');
+      setCoursePeriodTo(initial.coursePeriodTo ? new Date(initial.coursePeriodTo).toISOString().slice(0, 10) : '');
       setEnrollmentNumber(initial.enrollmentNumber || '');
       setCertificateNumber(initial.certificateNumber || '');
       setIssueDate(
         initial.issueDate
           ? new Date(initial.issueDate).toISOString().slice(0, 10)
-          : ''
-      );
-      setRenewalDate(
-        initial.renewalDate
-          ? new Date(initial.renewalDate).toISOString().slice(0, 10)
           : ''
       );
     } else {
@@ -58,10 +132,12 @@ function CertificateModal({ show, onClose, onSaved, initial }) {
       setSessionFrom('');
       setSessionTo('');
       setGrade('');
+      setCourseDuration('');
+      setCoursePeriodFrom('');
+      setCoursePeriodTo('');
       setEnrollmentNumber('');
       setCertificateNumber('');
       setIssueDate('');
-      setRenewalDate('');
     }
   }, [show, initial]);
 
@@ -92,6 +168,18 @@ function CertificateModal({ show, onClose, onSaved, initial }) {
       setError('Grade is required.');
       return false;
     }
+    if (!courseDuration.trim()) {
+      setError('Course Duration is required.');
+      return false;
+    }
+    if (!coursePeriodFrom) {
+      setError('Course Period From is required.');
+      return false;
+    }
+    if (!coursePeriodTo) {
+      setError('Course Period To is required.');
+      return false;
+    }
     if (!enrollmentNumber.trim()) {
       setError('Enrollment Number is required.');
       return false;
@@ -102,10 +190,6 @@ function CertificateModal({ show, onClose, onSaved, initial }) {
     }
     if (!issueDate) {
       setError('Issue Date is required.');
-      return false;
-    }
-    if (!renewalDate) {
-      setError('Renewal Date is required.');
       return false;
     }
     return true;
@@ -119,6 +203,48 @@ function CertificateModal({ show, onClose, onSaved, initial }) {
     setSaving(true);
 
     try {
+      // Generate certificate image data URL for storing
+      let certificateImage = null;
+      await initCertificateGenerator();
+      if (certificateGenerator) {
+        try {
+          const studentNameCombined = fatherName 
+            ? `${name} S/O, D/O, W/O ${fatherName}` 
+            : name;
+          
+          // Try to get student photo from the enrollment number lookup
+          let studentPhoto = '';
+          try {
+            const res = await API.get('/students');
+            const allStudents = Array.isArray(res.data) ? res.data : Array.isArray(res.data?.data) ? res.data.data : [];
+            const student = allStudents.find(s => 
+              (s.enrollmentNumber || s.rollNumber || '').toLowerCase() === enrollmentNumber.trim().toLowerCase()
+            );
+            if (student && student.photo) {
+              studentPhoto = student.photo;
+            }
+          } catch (lookupErr) {
+            console.warn('Could not lookup student photo:', lookupErr);
+          }
+          
+          const studentData = {
+            atcCode: certificateNumber.trim(),
+            studentNameCombined: studentNameCombined,
+            courseName: courseName.trim(),
+            grade: grade.trim(),
+            courseDuration: courseDuration.trim(),
+            coursePeriodFrom: coursePeriodFrom,
+            coursePeriodTo: coursePeriodTo,
+            certificateNumber: certificateNumber.trim(),
+            dateOfIssue: issueDate,
+            photo: studentPhoto
+          };
+          certificateImage = await certificateGenerator.getDataURL(studentData);
+        } catch (imgErr) {
+          console.warn('Could not generate certificate image:', imgErr);
+        }
+      }
+
       const payload = {
         name: name.trim(),
         fatherName: fatherName.trim(),
@@ -126,10 +252,13 @@ function CertificateModal({ show, onClose, onSaved, initial }) {
         sessionFrom: parseInt(sessionFrom),
         sessionTo: parseInt(sessionTo),
         grade: grade.trim(),
+        courseDuration: courseDuration.trim(),
+        coursePeriodFrom: coursePeriodFrom,
+        coursePeriodTo: coursePeriodTo,
         enrollmentNumber: enrollmentNumber.trim(),
         certificateNumber: certificateNumber.trim(),
         issueDate,
-        renewalDate,
+        certificateImage,
       };
 
       let saved;
@@ -290,17 +419,6 @@ function CertificateModal({ show, onClose, onSaved, initial }) {
                     required
                   />
                 </div>
-
-                <div className="col-md-6">
-                  <label className="form-label">Renewal Date *</label>
-                  <input
-                    type="date"
-                    className="form-control"
-                    value={renewalDate}
-                    onChange={(e) => setRenewalDate(e.target.value)}
-                    required
-                  />
-                </div>
               </div>
             </div>
 
@@ -333,149 +451,226 @@ function CertificateViewModal({ show, onClose, certificate }) {
   if (!show || !certificate) return null;
 
   const handlePrint = () => {
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Certificate - ${certificate.certificateNumber}</title>
-          <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { font-family: 'Times New Roman', serif; padding: 20px; }
-            .certificate {
-              border: 5px double #1a365d;
-              padding: 40px;
-              max-width: 800px;
-              margin: 0 auto;
-              text-align: center;
-              background: #fff;
-            }
-            .certificate h1 {
-              font-size: 32px;
-              color: #1a365d;
-              margin-bottom: 10px;
-              text-transform: uppercase;
-            }
-            .certificate h2 {
-              font-size: 24px;
-              color: #2d3748;
-              margin: 20px 0;
-              font-weight: normal;
-            }
-            .certificate .subtitle {
-              font-size: 18px;
-              color: #4a5568;
-              margin-bottom: 30px;
-            }
-            .certificate .content {
-              font-size: 16px;
-              line-height: 2;
-              color: #2d3748;
-            }
-            .certificate .name {
-              font-size: 28px;
-              font-weight: bold;
-              color: #1a365d;
-              margin: 20px 0;
-              text-decoration: underline;
-            }
-            .certificate .details {
-              margin: 30px 0;
-            }
-            .certificate .details table {
-              width: 100%;
-              border-collapse: collapse;
-            }
-            .certificate .details td {
-              padding: 8px;
-              text-align: left;
-            }
-            .certificate .details td:first-child {
-              font-weight: bold;
-              width: 40%;
-            }
-            .certificate .footer {
-              margin-top: 40px;
-              display: flex;
-              justify-content: space-between;
-            }
-            .certificate .signature {
-              text-align: center;
-              width: 200px;
-            }
-            .certificate .signature-line {
-              border-top: 1px solid #000;
-              margin-top: 50px;
-              padding-top: 5px;
-            }
-            @media print {
-              body { padding: 0; }
-              .certificate { border: none; }
-            }
-          </style>
-        </head>
-        <body>
-          <div id="certificate-print">
-            <div class="certificate">
-              <h1>Certificate of Completion</h1>
-              <div class="subtitle">This is to certify that</div>
-              
-              <div class="name">${certificate.name}</div>
-              
-              <div class="content">
-                Son/Daughter of <strong>${certificate.fatherName}</strong>
-                <br /><br />
-                has successfully completed the course
-              </div>
-              
-              <h2>${certificate.courseName}</h2>
-              
-              <div class="details">
-                <table>
-                  <tbody>
-                    <tr>
-                      <td>Session:</td>
-                      <td>${certificate.sessionFrom} - ${certificate.sessionTo}</td>
-                    </tr>
-                    <tr>
-                      <td>Grade:</td>
-                      <td>${certificate.grade}</td>
-                    </tr>
-                    <tr>
-                      <td>Enrollment Number:</td>
-                      <td>${certificate.enrollmentNumber}</td>
-                    </tr>
-                    <tr>
-                      <td>Certificate Number:</td>
-                      <td>${certificate.certificateNumber}</td>
-                    </tr>
-                    <tr>
-                      <td>Issue Date:</td>
-                      <td>${fmtDate(certificate.issueDate)}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              
-              <div class="footer">
-                <div class="signature">
-                  <div class="signature-line">Director</div>
+    // If we have a certificate image, open it in new window for printing
+    if (certificate.certificateImage) {
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Certificate - ${certificate.certificateNumber}</title>
+            <style>
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              body { margin: 0; padding: 0; }
+              img { max-width: 100%; height: auto; }
+              @media print {
+                body { margin: 0; }
+              }
+            </style>
+          </head>
+          <body>
+            <img src="${certificate.certificateImage}" />
+            <script>
+              window.onload = function() {
+                window.print();
+              };
+            </script>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+    } else {
+      // Fallback to original HTML certificate
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Certificate - ${certificate.certificateNumber}</title>
+            <style>
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              body { font-family: 'Times New Roman', serif; padding: 20px; }
+              .certificate {
+                border: 5px double #1a365d;
+                padding: 40px;
+                max-width: 800px;
+                margin: 0 auto;
+                text-align: center;
+                background: #fff;
+              }
+              .certificate h1 {
+                font-size: 32px;
+                color: #1a365d;
+                margin-bottom: 10px;
+                text-transform: uppercase;
+              }
+              .certificate h2 {
+                font-size: 24px;
+                color: #2d3748;
+                margin: 20px 0;
+                font-weight: normal;
+              }
+              .certificate .subtitle {
+                font-size: 18px;
+                color: #4a5568;
+                margin-bottom: 30px;
+              }
+              .certificate .content {
+                font-size: 16px;
+                line-height: 2;
+                color: #2d3748;
+              }
+              .certificate .name {
+                font-size: 28px;
+                font-weight: bold;
+                color: #1a365d;
+                margin: 20px 0;
+                text-decoration: underline;
+              }
+              .certificate .details {
+                margin: 30px 0;
+              }
+              .certificate .details table {
+                width: 100%;
+                border-collapse: collapse;
+              }
+              .certificate .details td {
+                padding: 8px;
+                text-align: left;
+              }
+              .certificate .details td:first-child {
+                font-weight: bold;
+                width: 40%;
+              }
+              .certificate .footer {
+                margin-top: 40px;
+                display: flex;
+                justify-content: space-between;
+              }
+              .certificate .signature {
+                text-align: center;
+                width: 200px;
+              }
+              .certificate .signature-line {
+                border-top: 1px solid #000;
+                margin-top: 50px;
+                padding-top: 5px;
+              }
+              @media print {
+                body { padding: 0; }
+                .certificate { border: none; }
+              }
+            </style>
+          </head>
+          <body>
+            <div id="certificate-print">
+              <div class="certificate">
+                <h1>Certificate of Completion</h1>
+                <div class="subtitle">This is to certify that</div>
+                
+                <div class="name">${certificate.name}</div>
+                
+                <div class="content">
+                  Son/Daughter of <strong>${certificate.fatherName}</strong>
+                  <br /><br />
+                  has successfully completed the course
                 </div>
-                <div class="signature">
-                  <div class="signature-line">Principal</div>
+                
+                <h2>${certificate.courseName}</h2>
+                
+                <div class="details">
+                  <table>
+                    <tbody>
+                      <tr>
+                        <td>Session:</td>
+                        <td>${certificate.sessionFrom} - ${certificate.sessionTo}</td>
+                      </tr>
+                      <tr>
+                        <td>Grade:</td>
+                        <td>${certificate.grade}</td>
+                      </tr>
+                      <tr>
+                        <td>Enrollment Number:</td>
+                        <td>${certificate.enrollmentNumber}</td>
+                      </tr>
+                      <tr>
+                        <td>Certificate Number:</td>
+                        <td>${certificate.certificateNumber}</td>
+                      </tr>
+                      <tr>
+                        <td>Issue Date:</td>
+                        <td>${fmtDate(certificate.issueDate)}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                
+                <div class="footer">
+                  <div class="signature">
+                    <div class="signature-line">Director</div>
+                  </div>
+                  <div class="signature">
+                    <div class="signature-line">Principal</div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-          <script>
-            window.onload = function() {
-              window.print();
-              window.close();
-            };
-          </script>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
+            <script>
+              window.onload = function() {
+                window.print();
+                window.close();
+              };
+            </script>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+    }
+  };
+
+  const handleDownload = () => {
+    if (certificate.certificateImage) {
+      // Load jsPDF if not already loaded
+      if (!window.jspdf) {
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+        script.onload = () => downloadAsPDF();
+        document.body.appendChild(script);
+      } else {
+        downloadAsPDF();
+      }
+    } else {
+      alert('No certificate image available to download');
+    }
+  };
+
+  const downloadAsPDF = async () => {
+    try {
+      const { jsPDF } = window.jspdf;
+      
+      // Load the certificate image
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+        img.src = certificate.certificateImage;
+      });
+      
+      // Create PDF with same dimensions as the image
+      const pdf = new jsPDF({
+        orientation: img.width > img.height ? 'landscape' : 'portrait',
+        unit: 'px',
+        format: [img.width, img.height]
+      });
+      
+      // Add the image to PDF
+      pdf.addImage(certificate.certificateImage, 'JPEG', 0, 0, img.width, img.height);
+      
+      // Download as PDF
+      pdf.save(`certificate_${certificate.certificateNumber}.pdf`);
+    } catch (err) {
+      console.error('Error creating PDF:', err);
+      alert('Failed to create PDF');
+    }
   };
 
   return (
@@ -485,7 +680,7 @@ function CertificateViewModal({ show, onClose, certificate }) {
       role="dialog"
       style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}
     >
-      <div className="modal-dialog modal-lg" role="document">
+      <div className="modal-dialog modal-xl" role="document" style={{ maxWidth: '90%' }}>
         <div className="modal-content">
           <div className="modal-header">
             <h5 className="modal-title">View Certificate - {certificate.certificateNumber}</h5>
@@ -497,32 +692,46 @@ function CertificateViewModal({ show, onClose, certificate }) {
           </div>
           <div className="modal-body">
             <div className="text-center mb-3">
-              <button className="btn btn-primary" onClick={handlePrint}>
+              <button className="btn btn-primary me-2" onClick={handlePrint}>
                 Print Certificate
               </button>
+              {certificate.certificateImage && (
+                <button className="btn btn-success" onClick={handleDownload}>
+                  Download Certificate
+                </button>
+              )}
             </div>
-            <div id="certificate-print" className="certificate-preview p-4 border">
+            {certificate.certificateImage ? (
               <div className="text-center">
-                <h5 className="text-uppercase fw-bold">Certificate of Completion</h5>
-                <p className="text-muted">This is to certify that</p>
-                <h4 className="fw-bold text-primary mb-3">{certificate.name}</h4>
-                <p className="mb-2">Son/Daughter of <strong>{certificate.fatherName}</strong></p>
-                <p className="mb-2">has successfully completed the course</p>
-                <h5 className="fw-bold mb-3">{certificate.courseName}</h5>
+                <img 
+                  src={certificate.certificateImage} 
+                  alt="Certificate" 
+                  style={{ maxWidth: '100%', height: 'auto', border: '1px solid #ccc' }}
+                />
               </div>
-              <div className="row mt-3">
-                <div className="col-md-6">
-                  <p><strong>Session:</strong> {certificate.sessionFrom}-{certificate.sessionTo}</p>
-                  <p><strong>Grade:</strong> {certificate.grade}</p>
+            ) : (
+              <div id="certificate-print" className="certificate-preview p-4 border">
+                <div className="text-center">
+                  <h5 className="text-uppercase fw-bold">Certificate of Completion</h5>
+                  <p className="text-muted">This is to certify that</p>
+                  <h4 className="fw-bold text-primary mb-3">{certificate.name}</h4>
+                  <p className="mb-2">Son/Daughter of <strong>{certificate.fatherName}</strong></p>
+                  <p className="mb-2">has successfully completed the course</p>
+                  <h5 className="fw-bold mb-3">{certificate.courseName}</h5>
                 </div>
-                <div className="col-md-6">
-                  <p><strong>Enrollment No:</strong> {certificate.enrollmentNumber}</p>
-                  <p><strong>Certificate No:</strong> {certificate.certificateNumber}</p>
-                  <p><strong>Issue Date:</strong> {fmtDate(certificate.issueDate)}</p>
-                  <p><strong>Renewal Date:</strong> {fmtDate(certificate.renewalDate)}</p>
+                <div className="row mt-3">
+                  <div className="col-md-6">
+                    <p><strong>Session:</strong> {certificate.sessionFrom}-{certificate.sessionTo}</p>
+                    <p><strong>Grade:</strong> {certificate.grade}</p>
+                  </div>
+                  <div className="col-md-6">
+                    <p><strong>Enrollment No:</strong> {certificate.enrollmentNumber}</p>
+                    <p><strong>Certificate No:</strong> {certificate.certificateNumber}</p>
+                    <p><strong>Issue Date:</strong> {fmtDate(certificate.issueDate)}</p>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
           <div className="modal-footer">
             <button type="button" className="btn btn-secondary" onClick={onClose}>
@@ -591,10 +800,6 @@ export default function CertificateList() {
     }
   };
 
-  const handleEdit = (cert) => {
-    setEditing(cert);
-    setShowModal(true);
-  };
 
   const handleView = (cert) => {
     setViewingCert(cert);
@@ -627,7 +832,7 @@ export default function CertificateList() {
         <div className="container-fluid p-4">
           <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
             <div>
-              <h2 className="mb-0">Certificates</h2>
+              <h2 className="mb-0">Student Certificates</h2>
               <div className="small text-muted">
                 View, search, edit and delete certificates
               </div>
@@ -647,15 +852,6 @@ export default function CertificateList() {
                 disabled={loading}
               >
                 {loading ? 'Refreshing…' : 'Refresh'}
-              </button>
-              <button
-                className="btn btn-primary"
-                onClick={() => {
-                  setEditing(null);
-                  setShowModal(true);
-                }}
-              >
-                + Add
               </button>
             </div>
           </div>
@@ -707,12 +903,6 @@ export default function CertificateList() {
                               View
                             </button>
                             <button
-                              className="btn btn-sm btn-outline-primary me-2"
-                              onClick={() => handleEdit(c)}
-                            >
-                              Edit
-                            </button>
-                            <button
                               className="btn btn-sm btn-outline-danger"
                               onClick={() =>
                                 handleDelete(c._id || c.id)
@@ -750,6 +940,9 @@ export default function CertificateList() {
         }}
         certificate={viewingCert}
       />
+
+      {/* Hidden canvas for certificate rendering */}
+      <canvas id="certCanvas" style={{ display: 'none' }}></canvas>
     </div>
   );
 }

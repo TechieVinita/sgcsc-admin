@@ -14,9 +14,11 @@ export default function CertificateCreate() {
   const [sessionFrom, setSessionFrom] = useState('');
   const [sessionTo, setSessionTo] = useState('');
   const [grade, setGrade] = useState('');
+  const [courseDuration, setCourseDuration] = useState('');
+  const [coursePeriodFrom, setCoursePeriodFrom] = useState('');
+  const [coursePeriodTo, setCoursePeriodTo] = useState('');
   const [certificateNumber, setCertificateNumber] = useState('');
   const [issueDate, setIssueDate] = useState('');
-  const [renewalDate, setRenewalDate] = useState('');
   
   // State management
   const [courses, setCourses] = useState([]);
@@ -29,6 +31,7 @@ export default function CertificateCreate() {
   // Certificate preview state
   const [previewUrl, setPreviewUrl] = useState(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
+  const [studentPhoto, setStudentPhoto] = useState('');
   const canvasRef = useRef(null);
 
   const currentYear = new Date().getFullYear();
@@ -38,15 +41,23 @@ export default function CertificateCreate() {
   const initCertificateGenerator = async () => {
     if (certificateGenerator) return certificateGenerator;
     
+    // Ensure canvas is available before loading template
+    const canvasElement = document.getElementById('certCanvas');
+    if (!canvasElement) {
+      console.warn('Canvas element not found in DOM yet. Waiting...');
+      // Wait for canvas to be available
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+    
     // Check if already available on window
     if (window.CertificateGenerator) {
       certificateGenerator = window.CertificateGenerator;
       try {
-        await certificateGenerator.loadTemplate('/template.jpeg');
+        await certificateGenerator.loadTemplate('/student-certificate-template.jpeg');
         console.log('Certificate template loaded successfully');
         return certificateGenerator;
       } catch (err) {
-        console.warn('Certificate template not found. Please upload a template to /public/template.jpeg');
+        console.warn('Certificate template not found. Please upload a template to /public/student-certificate-template.jpeg');
         return certificateGenerator;
       }
     }
@@ -65,10 +76,10 @@ export default function CertificateCreate() {
             if (window.CertificateGenerator) {
               certificateGenerator = window.CertificateGenerator;
               try {
-                await certificateGenerator.loadTemplate('/template.jpeg');
+                await certificateGenerator.loadTemplate('/student-certificate-template.jpeg');
                 console.log('Certificate template loaded successfully');
               } catch (err) {
-                console.warn('Certificate template not found. Please upload a template to /public/template.jpeg');
+                console.warn('Certificate template not found. Please upload a template to /public/student-certificate-template.jpeg');
               }
             }
             resolve(certificateGenerator);
@@ -84,10 +95,10 @@ export default function CertificateCreate() {
           if (window.CertificateGenerator) {
             certificateGenerator = window.CertificateGenerator;
             try {
-              await certificateGenerator.loadTemplate('/template.jpeg');
+              await certificateGenerator.loadTemplate('/student-certificate-template.jpeg');
               console.log('Certificate template loaded successfully');
             } catch (err) {
-              console.warn('Certificate template not found. Please upload a template to /public/template.jpeg');
+              console.warn('Certificate template not found. Please upload a template to /public/student-certificate-template.jpeg');
             }
           }
           resolve(certificateGenerator);
@@ -139,6 +150,8 @@ export default function CertificateCreate() {
         // Auto-fill student details
         setName(student.name || '');
         setFatherName(student.fatherName || '');
+        // Store the student photo for certificate generation
+        setStudentPhoto(student.photo || '');
         
         // Use the student's courses array if available, otherwise use courseName
         if (student.courses && student.courses.length > 0) {
@@ -216,7 +229,7 @@ export default function CertificateCreate() {
     }
     if (!fatherName.trim()) {
       setMessageType('danger');
-      setMessage("Father's Name is required.");
+      setMessage("Parent's Name is required.");
       return false;
     }
     if (!courseName.trim()) {
@@ -239,6 +252,21 @@ export default function CertificateCreate() {
       setMessage('Grade is required.');
       return false;
     }
+    if (!courseDuration.trim()) {
+      setMessageType('danger');
+      setMessage('Course Duration is required.');
+      return false;
+    }
+    if (!coursePeriodFrom) {
+      setMessageType('danger');
+      setMessage('Course Period From is required.');
+      return false;
+    }
+    if (!coursePeriodTo) {
+      setMessageType('danger');
+      setMessage('Course Period To is required.');
+      return false;
+    }
     if (!certificateNumber.trim()) {
       setMessageType('danger');
       setMessage('Certificate Number is required.');
@@ -247,11 +275,6 @@ export default function CertificateCreate() {
     if (!issueDate) {
       setMessageType('danger');
       setMessage('Issue Date is required.');
-      return false;
-    }
-    if (!renewalDate) {
-      setMessageType('danger');
-      setMessage('Renewal Date is required.');
       return false;
     }
     return true;
@@ -263,8 +286,49 @@ export default function CertificateCreate() {
 
     if (!validate()) return;
 
+    // Initialize generator if not already done
+    if (!certificateGenerator) {
+      setMessage('Loading certificate generator...');
+      setMessageType('info');
+      await initCertificateGenerator();
+      
+      if (!certificateGenerator) {
+        setMessageType('danger');
+        setMessage('Failed to load certificate generator. Please check console for details.');
+        setSaving(false);
+        return;
+      }
+    }
+
     setSaving(true);
     try {
+      // Generate certificate image data URL for storing
+      let certificateImage = null;
+      if (certificateGenerator) {
+        try {
+          const studentNameCombined = `${name.trim()} S/O, D/O, W/O ${fatherName.trim()}`;
+          const studentData = {
+            atcCode: certificateNumber.trim(),
+            studentNameCombined: studentNameCombined,
+            courseName: courseName.trim(),
+            grade: grade.trim(),
+            courseDuration: courseDuration.trim(),
+            coursePeriodFrom: coursePeriodFrom,
+            coursePeriodTo: coursePeriodTo,
+            certificateNumber: certificateNumber.trim(),
+            dateOfIssue: issueDate,
+            photo: studentPhoto
+          };
+          console.log('Generating certificate with data:', studentData);
+          certificateImage = await certificateGenerator.getDataURL(studentData);
+          console.log('Certificate image generated successfully, length:', certificateImage ? certificateImage.length : 0);
+        } catch (imgErr) {
+          console.error('Failed to generate certificate image:', imgErr);
+        }
+      } else {
+        console.warn('Certificate generator not available');
+      }
+
       const payload = {
         name: name.trim(),
         fatherName: fatherName.trim(),
@@ -272,10 +336,13 @@ export default function CertificateCreate() {
         sessionFrom: parseInt(sessionFrom),
         sessionTo: parseInt(sessionTo),
         grade: grade.trim(),
+        courseDuration: courseDuration.trim(),
+        coursePeriodFrom: coursePeriodFrom,
+        coursePeriodTo: coursePeriodTo,
         enrollmentNumber: enrollmentNumber.trim(),
         certificateNumber: certificateNumber.trim(),
         issueDate,
-        renewalDate,
+        certificateImage,
       };
 
       await API.post('/certificates', payload);
@@ -291,9 +358,11 @@ export default function CertificateCreate() {
       setSessionFrom('');
       setSessionTo('');
       setGrade('');
+      setCourseDuration('');
+      setCoursePeriodFrom('');
+      setCoursePeriodTo('');
       setCertificateNumber('');
       setIssueDate('');
-      setRenewalDate('');
       setPreviewUrl(null);
     } catch (err) {
       console.error('create certificate error:', err);
@@ -323,11 +392,20 @@ export default function CertificateCreate() {
     
     setLoadingPreview(true);
     try {
+      // Combine name with all relations (S/O, D/O, W/O) and parent's name in a single line
+      const studentNameCombined = `${name.trim()} S/O, D/O, W/O ${fatherName.trim()}`;
+      
       const studentData = {
-        name: name.trim(),
         atcCode: certificateNumber.trim(),
+        studentNameCombined: studentNameCombined,
+        courseName: courseName.trim(),
+        grade: grade.trim(),
+        courseDuration: courseDuration.trim(),
+        coursePeriodFrom: coursePeriodFrom,
+        coursePeriodTo: coursePeriodTo,
+        certificateNumber: certificateNumber.trim(),
         dateOfIssue: issueDate,
-        dateOfRenewal: renewalDate
+        photo: studentPhoto
       };
       
       const url = await certificateGenerator.getPreviewURL(studentData);
@@ -361,11 +439,20 @@ export default function CertificateCreate() {
     }
     
     try {
+      // Combine name with all relations (S/O, D/O, W/O) and parent's name in a single line
+      const studentNameCombined = `${name.trim()} S/O, D/O, W/O ${fatherName.trim()}`;
+      
       const studentData = {
-        name: name.trim(),
         atcCode: certificateNumber.trim(),
+        studentNameCombined: studentNameCombined,
+        courseName: courseName.trim(),
+        grade: grade.trim(),
+        courseDuration: courseDuration.trim(),
+        coursePeriodFrom: coursePeriodFrom,
+        coursePeriodTo: coursePeriodTo,
+        certificateNumber: certificateNumber.trim(),
         dateOfIssue: issueDate,
-        dateOfRenewal: renewalDate
+        photo: studentPhoto
       };
       
       certificateGenerator.download(studentData);
@@ -382,7 +469,7 @@ export default function CertificateCreate() {
     <div className="d-flex min-vh-100 bg-light">
       <div className="flex-grow-1">
         <div className="container-fluid p-4">
-          <h2 className="mb-4 fw-bold">Create Certificate</h2>
+          <h2 className="mb-4 fw-bold">Student Certificate Generation</h2>
 
           {message && (
             <div
@@ -440,7 +527,7 @@ export default function CertificateCreate() {
                 </div>
 
                 <div className="col-md-6">
-                  <label className="form-label">Father's Name *</label>
+                  <label className="form-label">Parent's Name *</label>
                   <input
                     type="text"
                     className="form-control"
@@ -515,6 +602,40 @@ export default function CertificateCreate() {
                 </div>
 
                 <div className="col-md-6">
+                  <label className="form-label">Course Duration *</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={courseDuration}
+                    onChange={(e) => setCourseDuration(e.target.value)}
+                    placeholder="e.g., 1 Year, 2 Years"
+                    required
+                  />
+                </div>
+
+                <div className="col-md-6">
+                  <label className="form-label">Course Period From *</label>
+                  <input
+                    type="date"
+                    className="form-control"
+                    value={coursePeriodFrom}
+                    onChange={(e) => setCoursePeriodFrom(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="col-md-6">
+                  <label className="form-label">Course Period To *</label>
+                  <input
+                    type="date"
+                    className="form-control"
+                    value={coursePeriodTo}
+                    onChange={(e) => setCoursePeriodTo(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="col-md-6">
                   <label className="form-label">Certificate Number *</label>
                   <input
                     type="text"
@@ -532,17 +653,6 @@ export default function CertificateCreate() {
                     className="form-control"
                     value={issueDate}
                     onChange={(e) => setIssueDate(e.target.value)}
-                    required
-                  />
-                </div>
-
-                <div className="col-md-6">
-                  <label className="form-label">Renewal Date *</label>
-                  <input
-                    type="date"
-                    className="form-control"
-                    value={renewalDate}
-                    onChange={(e) => setRenewalDate(e.target.value)}
                     required
                   />
                 </div>
@@ -565,14 +675,14 @@ export default function CertificateCreate() {
                       <p className="text-muted small mb-3">
                         Fill all fields above, then click Preview to see or Download to save the certificate.
                         <br />
-                        <span className="text-warning">Note: Upload a template.jpeg to /public folder for this feature to work.</span>
+                        <span className="text-warning">Note: Upload a student-certificate-template.jpeg to /public folder for this feature to work.</span>
                       </p>
                       <div className="d-flex gap-2">
                         <button
                           type="button"
                           className="btn btn-outline-primary"
                           onClick={handlePreview}
-                          disabled={loadingPreview || !name || !certificateNumber || !issueDate}
+                          disabled={loadingPreview || !name || !fatherName || !courseName || !grade || !courseDuration || !coursePeriodFrom || !coursePeriodTo || !certificateNumber || !issueDate}
                         >
                           {loadingPreview ? 'Generating...' : 'Preview Certificate'}
                         </button>
@@ -580,7 +690,7 @@ export default function CertificateCreate() {
                           type="button"
                           className="btn btn-success"
                           onClick={handleDownload}
-                          disabled={!name || !certificateNumber || !issueDate}
+                          disabled={!name || !fatherName || !courseName || !grade || !courseDuration || !coursePeriodFrom || !coursePeriodTo || !certificateNumber || !issueDate}
                         >
                           Download Certificate (PDF)
                         </button>
