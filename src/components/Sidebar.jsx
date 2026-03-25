@@ -290,6 +290,31 @@ export default function Sidebar() {
           )}
         </li>
 
+        {/* 8b. ID Card ---------------------------------------------------- */}
+        <li className="nav-item mb-2">
+          <button
+            type="button"
+            className="btn btn-toggle w-100 text-start d-flex justify-content-between align-items-center text-dark"
+            onClick={() => toggleMenu("idcard")}
+          >
+            <span className="d-flex align-items-center gap-2">
+              <FaIdCard />
+              ID Card
+            </span>
+            {openMenu === "idcard" ? <FaChevronDown /> : <FaChevronRight />}
+          </button>
+
+          {openMenu === "idcard" && (
+            <ul className="btn-toggle-nav list-unstyled ps-4 pt-2 pb-1">
+              <li className="mb-1">
+                <NavLink to="/id-cards" className={subLinkClass}>
+                  List ID Cards
+                </NavLink>
+              </li>
+            </ul>
+          )}
+        </li>
+
         {/* 9. Certificate --------------------------------------------------- */}
         <li className="nav-item mb-2">
           <button

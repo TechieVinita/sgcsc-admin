@@ -2,6 +2,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import API from "../api/axiosInstance";
 
+// eslint-disable-next-line no-undef
+const AdmitCardGenerator = window.AdmitCardGenerator;
+
 function fmtDate(d) {
   if (!d) return '-';
   const dt = new Date(d);
@@ -564,9 +567,10 @@ export default function AdmitCardList() {
     setLoading(true);
     setMsg('');
     try {
-      const [cardsData, coursesData] = await Promise.all([
+      const [cardsData, coursesData, studentsData] = await Promise.all([
         API.unwrap(API.get('/admit-cards')),
         API.unwrap(API.get('/courses')),
+        API.unwrap(API.get('/students')),
       ]);
 
       const cardArr = Array.isArray(cardsData)
@@ -581,7 +585,31 @@ export default function AdmitCardList() {
         ? coursesData.data
         : [];
 
-      setCards(cardArr);
+      const studentArr = Array.isArray(studentsData)
+        ? studentsData
+        : Array.isArray(studentsData?.data)
+        ? studentsData.data
+        : [];
+
+      // Create a map of student name -> photo for quick lookup
+      const studentPhotoMap = {};
+      studentArr.forEach(s => {
+        if (s.name) {
+          studentPhotoMap[s.name.toLowerCase()] = s.photo || null;
+        }
+        // Also map by rollNumber
+        if (s.rollNumber) {
+          studentPhotoMap[s.rollNumber.toLowerCase()] = s.photo || null;
+        }
+      });
+
+      // Add student photo to each admit card
+      const cardsWithPhotos = cardArr.map(card => ({
+        ...card,
+        studentPhoto: card.studentName ? studentPhotoMap[card.studentName.toLowerCase()] || null : null
+      }));
+
+      setCards(cardsWithPhotos);
       setCourses(courseArr);
     } catch (err) {
       console.error('fetch admit cards', err);
@@ -594,6 +622,60 @@ export default function AdmitCardList() {
   useEffect(() => {
     loadAll();
   }, []);
+
+  // Initialize Admit Card Generator on mount
+  const [templateLoaded, setTemplateLoaded] = useState(false);
+  const [templateError, setTemplateError] = useState(null);
+  
+  useEffect(() => {
+    const initGenerator = async () => {
+      if (typeof AdmitCardGenerator !== 'undefined') {
+        try {
+          console.log('Loading admit card template...');
+          await AdmitCardGenerator.loadTemplate('/admit-card-template.jpeg');
+          console.log('Admit card template loaded successfully');
+          setTemplateLoaded(true);
+        } catch (err) {
+          console.error('Failed to load admit card template:', err);
+          setTemplateError(err.message);
+        }
+      } else {
+        console.warn('AdmitCardGenerator not defined');
+      }
+    };
+    initGenerator();
+  }, []);
+
+  // Function to handle download using template-based generator
+  const handleTemplateDownload = (card) => {
+    console.log('handleTemplateDownload called:', { templateLoaded, templateError, card });
+    if (typeof AdmitCardGenerator !== 'undefined' && templateLoaded) {
+      try {
+        AdmitCardGenerator.download({
+          rollNumber: card.rollNumber,
+          studentName: card.studentName,
+          fatherName: card.fatherName,
+          motherName: card.motherName,
+          courseName: card.courseName,
+          instituteName: card.instituteName,
+          examCenterAddress: card.examCenterAddress,
+          examDate: card.examDate,
+          examTime: card.examTime,
+          reportingTime: card.reportingTime,
+          examDuration: card.examDuration,
+          photo: card.studentPhoto || null
+        });
+      } catch (err) {
+        console.error('Error generating PDF:', err);
+        // Fallback to HTML-based generation
+        generateAdmitCardPDF(card);
+      }
+    } else {
+      console.warn('Template not loaded, using fallback');
+      // Fallback to HTML-based generation
+      generateAdmitCardPDF(card);
+    }
+  };
 
   const filteredCards = useMemo(() => {
     if (!search.trim()) return cards;
@@ -627,7 +709,7 @@ export default function AdmitCardList() {
   };
 
   const handleDownload = (card) => {
-    generateAdmitCardPDF(card);
+    handleTemplateDownload(card);
   };
 
   const handleSaved = (saved) => {
@@ -757,6 +839,9 @@ export default function AdmitCardList() {
         initial={editing}
         courses={courses}
       />
+      
+      {/* Hidden canvas for template-based admit card generation */}
+      <canvas id="admitCardCanvas" style={{ display: 'none' }}></canvas>
     </div>
   );
 }

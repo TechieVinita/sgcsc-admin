@@ -1,6 +1,6 @@
 // src/pages/CertificateCreate.jsx
 import { useState, useEffect, useRef } from 'react';
-import API, { getCourses, getStudentByEnrollment } from "../api/api";
+import API, { getCourses } from "../api/api";
 
 // Certificate Generator Global Reference
 let certificateGenerator = null;

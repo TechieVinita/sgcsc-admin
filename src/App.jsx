@@ -49,6 +49,9 @@ const ResultsList = lazy(() => import("./pages/ResultsList"));
 const AdmitCardCreate = lazy(() => import("./pages/AdmitCardCreate"));
 const AdmitCardList = lazy(() => import("./pages/AdmitCardList"));
 
+/* ID Card */
+const IDCardList = lazy(() => import("./pages/IDCardList"));
+
 /* Certificate */
 const CertificateCreate = lazy(() => import("./pages/CertificateCreate"));
 const CertificateList = lazy(() => import("./pages/CertificateList"));
@@ -322,6 +325,18 @@ export default function App() {
               <PrivateRoute>
                 <ProtectedLayout>
                   <AdmitCardCreate />
+                </ProtectedLayout>
+              </PrivateRoute>
+            }
+          />
+
+          {/* ID Card */}
+          <Route
+            path="/id-cards"
+            element={
+              <PrivateRoute>
+                <ProtectedLayout>
+                  <IDCardList />
                 </ProtectedLayout>
               </PrivateRoute>
             }
