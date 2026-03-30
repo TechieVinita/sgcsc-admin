@@ -19,10 +19,12 @@ export default function SubjectList() {
     name: c.title || c.name || "Untitled course",
   });
 
-  const getSubjectCourseId = (s) =>
-    typeof s.course === "object"
-      ? String(s.course._id)
+  const getSubjectCourseId = (s) => {
+    if (!s.course) return "";
+    return typeof s.course === "object"
+      ? String(s.course._id || "")
       : String(s.course || s.courseId || "");
+  };
 
   /* ----------------------------------------------------
      Load data

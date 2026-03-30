@@ -349,6 +349,40 @@ export default function Sidebar() {
           )}
         </li>
 
+        {/* 9b. Marksheet -------------------------------------------- */}
+        <li className="nav-item mb-2">
+          <button
+            type="button"
+            className="btn btn-toggle w-100 text-start d-flex justify-content-between align-items-center text-dark"
+            onClick={() => toggleMenu("marksheets")}
+          >
+            <span className="d-flex align-items-center gap-2">
+              <FaClipboardList />
+              Marksheet
+            </span>
+            {openMenu === "marksheets" ? (
+              <FaChevronDown />
+            ) : (
+              <FaChevronRight />
+            )}
+          </button>
+
+          {openMenu === "marksheets" && (
+            <ul className="btn-toggle-nav list-unstyled ps-4 pt-2 pb-1">
+              <li className="mb-1">
+                <NavLink to="/marksheets/create" className={subLinkClass}>
+                  Generate Marksheet
+                </NavLink>
+              </li>
+              <li className="mb-1">
+                <NavLink to="/marksheets" end className={subLinkClass}>
+                  List Marksheets
+                </NavLink>
+              </li>
+            </ul>
+          )}
+        </li>
+
         {/* 10. Study Material ---------------------------------------------- */}
         {/*
         <li className="nav-item mb-2">

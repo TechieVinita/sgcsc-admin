@@ -56,6 +56,10 @@ const IDCardList = lazy(() => import("./pages/IDCardList"));
 const CertificateCreate = lazy(() => import("./pages/CertificateCreate"));
 const CertificateList = lazy(() => import("./pages/CertificateList"));
 
+/* Marksheet */
+const MarksheetCreate = lazy(() => import("./pages/MarksheetCreate"));
+const MarksheetList = lazy(() => import("./pages/MarksheetList"));
+
 /* Study Material */
 // const StudyUpload = lazy(() => import("./pages/StudyUpload"));
 // const StudyList = lazy(() => import("./pages/StudyList"));
@@ -359,6 +363,28 @@ export default function App() {
               <PrivateRoute>
                 <ProtectedLayout>
                   <CertificateCreate />
+                </ProtectedLayout>
+              </PrivateRoute>
+            }
+          />
+
+          {/* Marksheet */}
+          <Route
+            path="/marksheets"
+            element={
+              <PrivateRoute>
+                <ProtectedLayout>
+                  <MarksheetList />
+                </ProtectedLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/marksheets/create"
+            element={
+              <PrivateRoute>
+                <ProtectedLayout>
+                  <MarksheetCreate />
                 </ProtectedLayout>
               </PrivateRoute>
             }
