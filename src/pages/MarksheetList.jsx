@@ -466,23 +466,30 @@ export default function MarksheetList() {
                           <td>{m.instituteName || '-'}</td>
                           <td>{m.percentage ? `${m.percentage.toFixed(2)}%` : '-'}</td>
                           <td>{m.overallGrade || '-'}</td>
-                          <td className="text-center">
-                            <button
-                              className="btn btn-sm btn-outline-success me-2"
-                              onClick={() => handleDownload(m)}
-                              title="Download/Print Marksheet"
-                            >
-                              Download
-                            </button>
-                            <button
-                              className="btn btn-sm btn-outline-danger"
-                              onClick={() =>
-                                handleDelete(m._id || m.id)
-                              }
-                            >
-                              Delete
-                            </button>
-                          </td>
+                           <td className="text-center">
+                             <button
+                               className="btn btn-sm btn-outline-info me-2"
+                               onClick={() => generateMarksheetPDF(m)}
+                               title="View Marksheet"
+                             >
+                               View
+                             </button>
+                             <button
+                               className="btn btn-sm btn-outline-success me-2"
+                               onClick={() => handleDownload(m)}
+                               title="Download/Print Marksheet"
+                             >
+                               Download
+                             </button>
+                             <button
+                               className="btn btn-sm btn-outline-danger"
+                               onClick={() =>
+                                 handleDelete(m._id || m.id)
+                               }
+                             >
+                               Delete
+                             </button>
+                           </td>
                         </tr>
                       ))}
                     </tbody>

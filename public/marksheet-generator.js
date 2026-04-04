@@ -25,27 +25,27 @@ var MarksheetGenerator = (() => {
 
     fields: {
       // { x, y } as % of image dimensions. font is px at full resolution.
-      enrollmentNo:       { x: 30,  y: 15, font: 'bold 12px serif',      color: '#000000', align: 'left' },
-      rollNumber:         { x: 30,  y: 18, font: 'bold 12px serif',      color: '#000000', align: 'left' },
-      studentName:        { x: 30,  y: 21, font: 'bold 12px serif',      color: '#000000', align: 'left' },
-      fatherName:         { x: 30,  y: 24, font: '12px serif',           color: '#000000', align: 'left' },
-      motherName:         { x: 30,  y: 27, font: '12px serif',           color: '#000000', align: 'left' },
-      dob:                { x: 30,  y: 30, font: '12px serif',           color: '#000000', align: 'left' },
-      courseName:         { x: 30,  y: 33, font: '12px serif',           color: '#000000', align: 'left' },
-      courseDuration:     { x: 30,  y: 36, font: '12px serif',           color: '#000000', align: 'left' },
-      coursePeriod:       { x: 30,  y: 39, font: '12px serif',           color: '#000000', align: 'left' },
-      instituteName:      { x: 30,  y: 42, font: '12px serif',           color: '#000000', align: 'left' },
-      
+      enrollmentNo:       { x: 30,  y: 15, font: 'bold 60px serif',      color: '#000000', align: 'left' },
+      rollNumber:         { x: 30,  y: 18, font: 'bold 60px serif',      color: '#000000', align: 'left' },
+      studentName:        { x: 30,  y: 21, font: 'bold 60px serif',      color: '#000000', align: 'left' },
+      fatherName:         { x: 30,  y: 24, font: '60px serif',           color: '#000000', align: 'left' },
+      motherName:         { x: 30,  y: 27, font: '60px serif',           color: '#000000', align: 'left' },
+      dob:                { x: 30,  y: 30, font: '60px serif',           color: '#000000', align: 'left' },
+      courseName:         { x: 30,  y: 33, font: '60px serif',           color: '#000000', align: 'left' },
+      courseDuration:     { x: 30,  y: 36, font: '60px serif',           color: '#000000', align: 'left' },
+      coursePeriod:       { x: 30,  y: 39, font: '60px serif',           color: '#000000', align: 'left' },
+      instituteName:      { x: 30,  y: 42, font: '60px serif',           color: '#000000', align: 'left' },
+
       // Subject marks will be rendered dynamically
       subjectsStartY:     48,  // Starting Y position for subjects table
-      subjectRowHeight:   3,   // Height of each subject row
-      
+      subjectRowHeight:   15,   // Height of each subject row (increased 5x)
+
       // Summary fields
-      totalTheoryMarks:   { x: 30,  y: 75, font: 'bold 12px serif',      color: '#000000', align: 'left' },
-      totalPracticalMarks:{ x: 30,  y: 78, font: 'bold 12px serif',      color: '#000000', align: 'left' },
-      totalCombinedMarks: { x: 30,  y: 81, font: 'bold 12px serif',      color: '#000000', align: 'left' },
-      percentage:         { x: 30,  y: 84, font: 'bold 12px serif',      color: '#000000', align: 'left' },
-      overallGrade:       { x: 30,  y: 87, font: 'bold 12px serif',      color: '#000000', align: 'left' },
+      totalTheoryMarks:   { x: 30,  y: 75, font: 'bold 60px serif',      color: '#000000', align: 'left' },
+      totalPracticalMarks:{ x: 30,  y: 78, font: 'bold 60px serif',      color: '#000000', align: 'left' },
+      totalCombinedMarks: { x: 30,  y: 81, font: 'bold 60px serif',      color: '#000000', align: 'left' },
+      percentage:         { x: 30,  y: 84, font: 'bold 60px serif',      color: '#000000', align: 'left' },
+      overallGrade:       { x: 30,  y: 87, font: 'bold 60px serif',      color: '#000000', align: 'left' },
     }
   };
 
@@ -137,55 +137,55 @@ var MarksheetGenerator = (() => {
         
         // Draw subject number
         _ctx.save();
-        _ctx.font = '12px serif';
+        _ctx.font = '60px serif';
         _ctx.fillStyle = '#000000';
         _ctx.textAlign = 'left';
         _ctx.fillText(`${index + 1}.`, _pct(10, W), y);
         _ctx.restore();
-        
+
         // Draw subject name
         _ctx.save();
-        _ctx.font = '12px serif';
+        _ctx.font = '60px serif';
         _ctx.fillStyle = '#000000';
         _ctx.textAlign = 'left';
         _ctx.fillText(subject.subjectName || '-', _pct(15, W), y);
         _ctx.restore();
-        
+
         // Draw theory marks
         _ctx.save();
-        _ctx.font = '12px serif';
+        _ctx.font = '60px serif';
         _ctx.fillStyle = '#000000';
         _ctx.textAlign = 'center';
         _ctx.fillText(`${subject.theoryMarks || 0}`, _pct(45, W), y);
         _ctx.restore();
-        
+
         // Draw practical marks
         _ctx.save();
-        _ctx.font = '12px serif';
+        _ctx.font = '60px serif';
         _ctx.fillStyle = '#000000';
         _ctx.textAlign = 'center';
         _ctx.fillText(`${subject.practicalMarks || 0}`, _pct(55, W), y);
         _ctx.restore();
-        
+
         // Draw combined marks
         _ctx.save();
-        _ctx.font = '12px serif';
+        _ctx.font = '60px serif';
         _ctx.fillStyle = '#000000';
         _ctx.textAlign = 'center';
         _ctx.fillText(`${subject.combinedMarks || 0}`, _pct(65, W), y);
         _ctx.restore();
-        
+
         // Draw max marks
         _ctx.save();
-        _ctx.font = '12px serif';
+        _ctx.font = '60px serif';
         _ctx.fillStyle = '#000000';
         _ctx.textAlign = 'center';
         _ctx.fillText(`${subject.maxCombinedMarks || 0}`, _pct(75, W), y);
         _ctx.restore();
-        
+
         // Draw grade
         _ctx.save();
-        _ctx.font = '12px serif';
+        _ctx.font = '60px serif';
         _ctx.fillStyle = '#000000';
         _ctx.textAlign = 'center';
         _ctx.fillText(subject.grade || '-', _pct(85, W), y);

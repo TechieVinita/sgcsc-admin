@@ -56,6 +56,12 @@ const IDCardList = lazy(() => import("./pages/IDCardList"));
 const CertificateCreate = lazy(() => import("./pages/CertificateCreate"));
 const CertificateList = lazy(() => import("./pages/CertificateList"));
 
+/* Franchise Certificates */
+const FranchiseCertificateList = lazy(() => import("./pages/FranchiseCertificateList"));
+
+/* Typing Certificates */
+const TypingCertificateList = lazy(() => import("./pages/TypingCertificateList"));
+
 /* Marksheet */
 const MarksheetCreate = lazy(() => import("./pages/MarksheetCreate"));
 const MarksheetList = lazy(() => import("./pages/MarksheetList"));
@@ -363,6 +369,30 @@ export default function App() {
               <PrivateRoute>
                 <ProtectedLayout>
                   <CertificateCreate />
+                </ProtectedLayout>
+              </PrivateRoute>
+            }
+          />
+
+          {/* Franchise Certificates */}
+          <Route
+            path="/franchise-certificates"
+            element={
+              <PrivateRoute>
+                <ProtectedLayout>
+                  <FranchiseCertificateList />
+                </ProtectedLayout>
+              </PrivateRoute>
+            }
+          />
+
+          {/* Typing Certificates */}
+          <Route
+            path="/typing-certificates"
+            element={
+              <PrivateRoute>
+                <ProtectedLayout>
+                  <TypingCertificateList />
                 </ProtectedLayout>
               </PrivateRoute>
             }

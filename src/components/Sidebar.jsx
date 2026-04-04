@@ -349,6 +349,64 @@ export default function Sidebar() {
           )}
         </li>
 
+        {/* 9a. Franchise Certificate -------------------------------------------- */}
+        <li className="nav-item mb-2">
+          <button
+            type="button"
+            className="btn btn-toggle w-100 text-start d-flex justify-content-between align-items-center text-dark"
+            onClick={() => toggleMenu("franchise-certificates")}
+          >
+            <span className="d-flex align-items-center gap-2">
+              <FaCertificate />
+              Franchise Certificate
+            </span>
+            {openMenu === "franchise-certificates" ? (
+              <FaChevronDown />
+            ) : (
+              <FaChevronRight />
+            )}
+          </button>
+
+          {openMenu === "franchise-certificates" && (
+            <ul className="btn-toggle-nav list-unstyled ps-4 pt-2 pb-1">
+              <li className="mb-1">
+                <NavLink to="/franchise-certificates" className={subLinkClass}>
+                  List Franchise Certificates
+                </NavLink>
+              </li>
+            </ul>
+          )}
+        </li>
+
+        {/* 9b. Typing Certificate -------------------------------------------- */}
+        <li className="nav-item mb-2">
+          <button
+            type="button"
+            className="btn btn-toggle w-100 text-start d-flex justify-content-between align-items-center text-dark"
+            onClick={() => toggleMenu("typing-certificates")}
+          >
+            <span className="d-flex align-items-center gap-2">
+              <FaCertificate />
+              Typing Certificate
+            </span>
+            {openMenu === "typing-certificates" ? (
+              <FaChevronDown />
+            ) : (
+              <FaChevronRight />
+            )}
+          </button>
+
+          {openMenu === "typing-certificates" && (
+            <ul className="btn-toggle-nav list-unstyled ps-4 pt-2 pb-1">
+              <li className="mb-1">
+                <NavLink to="/typing-certificates" className={subLinkClass}>
+                  List Typing Certificates
+                </NavLink>
+              </li>
+            </ul>
+          )}
+        </li>
+
         {/* 9b. Marksheet -------------------------------------------- */}
         <li className="nav-item mb-2">
           <button
