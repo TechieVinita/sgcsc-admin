@@ -78,7 +78,7 @@ export default function MarksheetCreate() {
   useEffect(() => {
     // Skip if subjects were just set by course selection
     if (subjects.length > 0 && subjects[0].subjectName) return;
-    
+
     const num = parseInt(numberOfSubjects) || 1;
     const newSubjects = [];
     for (let i = 0; i < num; i++) {
@@ -89,7 +89,7 @@ export default function MarksheetCreate() {
       }
     }
     setSubjects(newSubjects);
-  }, [numberOfSubjects]);
+  }, [numberOfSubjects, subjects]);
 
   // Calculate totals
   const calculateTotals = () => {
