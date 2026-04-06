@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import {
-  FaHome,
   FaBuilding,
   FaUserGraduate,
   FaBook,
@@ -10,7 +9,6 @@ import {
   FaClipboardList,
   FaIdCard,
   FaCertificate,
-  // FaBookOpen,
   FaCog,
   FaChevronDown,
   FaChevronRight,
@@ -22,11 +20,6 @@ export default function Sidebar() {
   const toggleMenu = (menu) => {
     setOpenMenu((prev) => (prev === menu ? null : menu));
   };
-
-  const mainLinkClass = ({ isActive }) =>
-    `nav-link d-flex align-items-center gap-2 ${
-      isActive ? "active bg-primary text-white" : "text-dark"
-    } rounded py-2`;
 
   const subLinkClass = ({ isActive }) =>
     `nav-link small d-flex align-items-center ${
@@ -41,15 +34,8 @@ export default function Sidebar() {
       <h2 className="fs-4 fw-bold mb-4 text-primary">Admin Panel</h2>
 
       <ul className="nav nav-pills flex-column mb-auto">
-        {/* 1. Dashboard ----------------------------------------------------- */}
-        <li className="nav-item mb-2">
-          <NavLink to="/dashboard" className={mainLinkClass}>
-            <FaHome />
-            <span>Dashboard</span>
-          </NavLink>
-        </li>
 
-        {/* 2. Franchise ----------------------------------------------------- */}
+        {/* Franchise */}
         <li className="nav-item mb-2">
           <button
             type="button"
@@ -62,37 +48,28 @@ export default function Sidebar() {
             </span>
             {openMenu === "franchise" ? <FaChevronDown /> : <FaChevronRight />}
           </button>
-
           {openMenu === "franchise" && (
             <ul className="btn-toggle-nav list-unstyled ps-4 pt-2 pb-1">
               <li className="mb-1">
-                <NavLink to="/franchise/create" className={subLinkClass}>
-                  Create Franchise
-                </NavLink>
+                <NavLink to="/franchise/create" className={subLinkClass}>Create Franchise</NavLink>
               </li>
               <li className="mb-1">
-                <NavLink to="/franchise/list" end className={subLinkClass}>
-                  List Franchise
-                </NavLink>
+                <NavLink to="/franchise/list" end className={subLinkClass}>List Franchise</NavLink>
               </li>
               <li className="mb-1">
-                <NavLink to="/franchise/credits" className={subLinkClass}>
-                  Franchise Credits
-                </NavLink>
+                <NavLink to="/franchise/credits" className={subLinkClass}>Franchise Credits</NavLink>
               </li>
-
-              {/* <li className="mb-1">
-                <NavLink to="/franchise-applications" className={subLinkClass}>
-                  Franchise Applications
-                </NavLink>
-              </li> */}
-
-
+              <li className="mb-1">
+                <NavLink to="/franchise-certificates/create" className={subLinkClass}>Create Franchise Certificate</NavLink>
+              </li>
+              <li className="mb-1">
+                <NavLink to="/franchise-certificates" className={subLinkClass}>List Franchise Certificates</NavLink>
+              </li>
             </ul>
           )}
         </li>
 
-        {/* 3. Students ------------------------------------------------------ */}
+        {/* Students */}
         <li className="nav-item mb-2">
           <button
             type="button"
@@ -105,31 +82,22 @@ export default function Sidebar() {
             </span>
             {openMenu === "students" ? <FaChevronDown /> : <FaChevronRight />}
           </button>
-
           {openMenu === "students" && (
             <ul className="btn-toggle-nav list-unstyled ps-4 pt-2 pb-1">
               <li className="mb-1">
-                {/* You can decide later if this opens a separate page
-                    or the list page with a pre-opened modal */}
-                <NavLink to="/students/add" className={subLinkClass}>
-                  Add Student
-                </NavLink>
+                <NavLink to="/students/add" className={subLinkClass}>Add Student</NavLink>
               </li>
               <li className="mb-1">
-                <NavLink to="/students" end className={subLinkClass}>
-                  Student List
-                </NavLink>
+                <NavLink to="/students" end className={subLinkClass}>Student List</NavLink>
               </li>
               <li className="mb-1">
-                <NavLink to="/fee-receipt" className={subLinkClass}>
-                  Fee Receipt
-                </NavLink>
+                <NavLink to="/fee-receipt" className={subLinkClass}>Fee Receipt</NavLink>
               </li>
             </ul>
           )}
         </li>
 
-        {/* 4. Courses ------------------------------------------------------- */}
+        {/* Courses */}
         <li className="nav-item mb-2">
           <button
             type="button"
@@ -142,155 +110,25 @@ export default function Sidebar() {
             </span>
             {openMenu === "courses" ? <FaChevronDown /> : <FaChevronRight />}
           </button>
-
           {openMenu === "courses" && (
             <ul className="btn-toggle-nav list-unstyled ps-4 pt-2 pb-1">
               <li className="mb-1">
-                <NavLink to="/courses/create" className={subLinkClass}>
-                  Create Course
-                </NavLink>
+                <NavLink to="/courses/create" className={subLinkClass}>Create Course</NavLink>
               </li>
               <li className="mb-1">
-                <NavLink to="/subjects/create" className={subLinkClass}>
-                  Create Subject
-                </NavLink>
+                <NavLink to="/subjects/create" className={subLinkClass}>Create Subject</NavLink>
               </li>
               <li className="mb-1">
-                <NavLink to="/courses" end className={subLinkClass}>
-                  Course List
-                </NavLink>
+                <NavLink to="/courses" end className={subLinkClass}>Course List</NavLink>
               </li>
               <li className="mb-1">
-                <NavLink to="/subjects" end className={subLinkClass}>
-                  Subjects List
-                </NavLink>
-              </li>
-
-            </ul>
-          )}
-        </li>
-
-        {/* 5. Institute Members -------------------------------------------- */}
-        {/* <li className="nav-item mb-2">
-          <button
-            type="button"
-            className="btn btn-toggle w-100 text-start d-flex justify-content-between align-items-center text-dark"
-            onClick={() => toggleMenu("members")}
-          >
-            <span className="d-flex align-items-center gap-2">
-              <FaUsers />
-              Institute Members
-            </span>
-            {openMenu === "members" ? <FaChevronDown /> : <FaChevronRight />}
-          </button>
-
-          {openMenu === "members" && (
-            <ul className="btn-toggle-nav list-unstyled ps-4 pt-2 pb-1">
-              <li className="mb-1">
-                <NavLink to="/members/add" className={subLinkClass}>
-                  Add Member
-                </NavLink>
-              </li>
-              <li className="mb-1">
-                <NavLink to="/members" className={subLinkClass}>
-                  List Members
-                </NavLink>
-              </li>
-            </ul>
-          )}
-        </li> */}
-
-        {/* 6. Gallery ------------------------------------------------------- */}
-        <li className="nav-item mb-2">
-          <button
-            type="button"
-            className="btn btn-toggle w-100 text-start d-flex justify-content-between align-items-center text-dark"
-            onClick={() => toggleMenu("gallery")}
-          >
-            <span className="d-flex align-items-center gap-2">
-              <FaImages />
-              Gallery
-            </span>
-            {openMenu === "gallery" ? <FaChevronDown /> : <FaChevronRight />}
-          </button>
-
-          {openMenu === "gallery" && (
-            <ul className="btn-toggle-nav list-unstyled ps-4 pt-2 pb-1">
-              <li className="mb-1">
-                <NavLink to="/gallery/categories/create" className={subLinkClass}>
-                  Add Images
-                </NavLink>
-              </li>
-              <li className="mb-1">
-                <NavLink to="/gallery" end className={subLinkClass}>
-                  List Images
-                </NavLink>
+                <NavLink to="/subjects" end className={subLinkClass}>Subjects List</NavLink>
               </li>
             </ul>
           )}
         </li>
 
-        {/* 7. Result -------------------------------------------------------- */}
-        <li className="nav-item mb-2">
-          <button
-            type="button"
-            className="btn btn-toggle w-100 text-start d-flex justify-content-between align-items-center text-dark"
-            onClick={() => toggleMenu("results")}
-          >
-            <span className="d-flex align-items-center gap-2">
-              <FaClipboardList />
-              Result
-            </span>
-            {openMenu === "results" ? <FaChevronDown /> : <FaChevronRight />}
-          </button>
-
-          {openMenu === "results" && (
-            <ul className="btn-toggle-nav list-unstyled ps-4 pt-2 pb-1">
-              <li className="mb-1">
-                <NavLink to="/results/create" className={subLinkClass}>
-                  Add Result
-                </NavLink>
-              </li>
-              <li className="mb-1">
-                <NavLink to="/results" end className={subLinkClass}>
-                  List Result
-                </NavLink>
-              </li>
-            </ul>
-          )}
-        </li>
-
-        {/* 8. Admit Card ---------------------------------------------------- */}
-        <li className="nav-item mb-2">
-          <button
-            type="button"
-            className="btn btn-toggle w-100 text-start d-flex justify-content-between align-items-center text-dark"
-            onClick={() => toggleMenu("admit")}
-          >
-            <span className="d-flex align-items-center gap-2">
-              <FaIdCard />
-              Admit Card
-            </span>
-            {openMenu === "admit" ? <FaChevronDown /> : <FaChevronRight />}
-          </button>
-
-          {openMenu === "admit" && (
-            <ul className="btn-toggle-nav list-unstyled ps-4 pt-2 pb-1">
-              <li className="mb-1">
-                <NavLink to="/admit-cards/create" className={subLinkClass}>
-                  Generate Admit Card
-                </NavLink>
-              </li>
-              <li className="mb-1">
-                <NavLink to="/admit-cards" end className={subLinkClass}>
-                  List Admit Cards
-                </NavLink>
-              </li>
-            </ul>
-          )}
-        </li>
-
-        {/* 8b. ID Card ---------------------------------------------------- */}
+        {/* ID Card */}
         <li className="nav-item mb-2">
           <button
             type="button"
@@ -303,111 +141,66 @@ export default function Sidebar() {
             </span>
             {openMenu === "idcard" ? <FaChevronDown /> : <FaChevronRight />}
           </button>
-
           {openMenu === "idcard" && (
             <ul className="btn-toggle-nav list-unstyled ps-4 pt-2 pb-1">
               <li className="mb-1">
-                <NavLink to="/id-cards" className={subLinkClass}>
-                  List ID Cards
-                </NavLink>
+                <NavLink to="/id-cards" className={subLinkClass}>List ID Cards</NavLink>
               </li>
             </ul>
           )}
         </li>
 
-        {/* 9. Student Certificate -------------------------------------------- */}
+        {/* Admit Card */}
         <li className="nav-item mb-2">
           <button
             type="button"
             className="btn btn-toggle w-100 text-start d-flex justify-content-between align-items-center text-dark"
-            onClick={() => toggleMenu("certificates")}
+            onClick={() => toggleMenu("admit")}
           >
             <span className="d-flex align-items-center gap-2">
-              <FaCertificate />
-              Student Certificate
+              <FaIdCard />
+              Admit Card
             </span>
-            {openMenu === "certificates" ? (
-              <FaChevronDown />
-            ) : (
-              <FaChevronRight />
-            )}
+            {openMenu === "admit" ? <FaChevronDown /> : <FaChevronRight />}
           </button>
-
-          {openMenu === "certificates" && (
+          {openMenu === "admit" && (
             <ul className="btn-toggle-nav list-unstyled ps-4 pt-2 pb-1">
               <li className="mb-1">
-                <NavLink to="/certificates/create" className={subLinkClass}>
-                  Generate Certificate
-                </NavLink>
+                <NavLink to="/admit-cards/create" className={subLinkClass}>Generate Admit Card</NavLink>
               </li>
               <li className="mb-1">
-                <NavLink to="/certificates" end className={subLinkClass}>
-                  List Certificates
-                </NavLink>
+                <NavLink to="/admit-cards" end className={subLinkClass}>List Admit Cards</NavLink>
               </li>
             </ul>
           )}
         </li>
 
-        {/* 9a. Franchise Certificate -------------------------------------------- */}
+        {/* Result */}
         <li className="nav-item mb-2">
           <button
             type="button"
             className="btn btn-toggle w-100 text-start d-flex justify-content-between align-items-center text-dark"
-            onClick={() => toggleMenu("franchise-certificates")}
+            onClick={() => toggleMenu("results")}
           >
             <span className="d-flex align-items-center gap-2">
-              <FaCertificate />
-              Franchise Certificate
+              <FaClipboardList />
+              Result
             </span>
-            {openMenu === "franchise-certificates" ? (
-              <FaChevronDown />
-            ) : (
-              <FaChevronRight />
-            )}
+            {openMenu === "results" ? <FaChevronDown /> : <FaChevronRight />}
           </button>
-
-          {openMenu === "franchise-certificates" && (
+          {openMenu === "results" && (
             <ul className="btn-toggle-nav list-unstyled ps-4 pt-2 pb-1">
               <li className="mb-1">
-                <NavLink to="/franchise-certificates" className={subLinkClass}>
-                  List Franchise Certificates
-                </NavLink>
+                <NavLink to="/results/create" className={subLinkClass}>Add Result</NavLink>
+              </li>
+              <li className="mb-1">
+                <NavLink to="/results" end className={subLinkClass}>List Result</NavLink>
               </li>
             </ul>
           )}
         </li>
 
-        {/* 9b. Typing Certificate -------------------------------------------- */}
-        <li className="nav-item mb-2">
-          <button
-            type="button"
-            className="btn btn-toggle w-100 text-start d-flex justify-content-between align-items-center text-dark"
-            onClick={() => toggleMenu("typing-certificates")}
-          >
-            <span className="d-flex align-items-center gap-2">
-              <FaCertificate />
-              Typing Certificate
-            </span>
-            {openMenu === "typing-certificates" ? (
-              <FaChevronDown />
-            ) : (
-              <FaChevronRight />
-            )}
-          </button>
-
-          {openMenu === "typing-certificates" && (
-            <ul className="btn-toggle-nav list-unstyled ps-4 pt-2 pb-1">
-              <li className="mb-1">
-                <NavLink to="/typing-certificates" className={subLinkClass}>
-                  List Typing Certificates
-                </NavLink>
-              </li>
-            </ul>
-          )}
-        </li>
-
-        {/* 9b. Marksheet -------------------------------------------- */}
+        {/* Marksheet */}
         <li className="nav-item mb-2">
           <button
             type="button"
@@ -418,97 +211,93 @@ export default function Sidebar() {
               <FaClipboardList />
               Marksheet
             </span>
-            {openMenu === "marksheets" ? (
-              <FaChevronDown />
-            ) : (
-              <FaChevronRight />
-            )}
+            {openMenu === "marksheets" ? <FaChevronDown /> : <FaChevronRight />}
           </button>
-
           {openMenu === "marksheets" && (
             <ul className="btn-toggle-nav list-unstyled ps-4 pt-2 pb-1">
               <li className="mb-1">
-                <NavLink to="/marksheets/create" className={subLinkClass}>
-                  Generate Marksheet
-                </NavLink>
+                <NavLink to="/marksheets/create" className={subLinkClass}>Generate Marksheet</NavLink>
               </li>
               <li className="mb-1">
-                <NavLink to="/marksheets" end className={subLinkClass}>
-                  List Marksheets
-                </NavLink>
+                <NavLink to="/marksheets" end className={subLinkClass}>List Marksheets</NavLink>
               </li>
             </ul>
           )}
         </li>
 
-        {/* 10. Study Material ---------------------------------------------- */}
-        {/*
+        {/* Typing Certificate */}
         <li className="nav-item mb-2">
           <button
             type="button"
             className="btn btn-toggle w-100 text-start d-flex justify-content-between align-items-center text-dark"
-            onClick={() => toggleMenu("study")}
+            onClick={() => toggleMenu("typing-certificates")}
           >
             <span className="d-flex align-items-center gap-2">
-              <FaBookOpen />
-              Study Material
+              <FaCertificate />
+              Typing Certificate
             </span>
-            {openMenu === "study" ? <FaChevronDown /> : <FaChevronRight />}
+            {openMenu === "typing-certificates" ? <FaChevronDown /> : <FaChevronRight />}
           </button>
-
-          {openMenu === "study" && (
+          {openMenu === "typing-certificates" && (
             <ul className="btn-toggle-nav list-unstyled ps-4 pt-2 pb-1">
               <li className="mb-1">
-                <NavLink to="/study-material/upload" className={subLinkClass}>
-                  Upload
-                </NavLink>
+                <NavLink to="/typing-certificates" className={subLinkClass}>List Typing Certificates</NavLink>
               </li>
-              <li className="mb-1">
-                <NavLink to="/study-material" className={subLinkClass}>
-                  List
-                </NavLink>
-              </li>
-
             </ul>
           )}
         </li>
-        */}
 
-        {/* 11. Assignment --------------------------------------------------- */}
-        {/* <li className="nav-item mb-2">
+        {/* Student Certificate */}
+        <li className="nav-item mb-2">
           <button
             type="button"
             className="btn btn-toggle w-100 text-start d-flex justify-content-between align-items-center text-dark"
-            onClick={() => toggleMenu("assignments")}
+            onClick={() => toggleMenu("certificates")}
           >
             <span className="d-flex align-items-center gap-2">
-              <FaTasks />
-              Assignment
+              <FaCertificate />
+              Student Certificate
             </span>
-            {openMenu === "assignments" ? (
-              <FaChevronDown />
-            ) : (
-              <FaChevronRight />
-            )}
+            {openMenu === "certificates" ? <FaChevronDown /> : <FaChevronRight />}
           </button>
-
-          {openMenu === "assignments" && (
+          {openMenu === "certificates" && (
             <ul className="btn-toggle-nav list-unstyled ps-4 pt-2 pb-1">
               <li className="mb-1">
-                <NavLink to="/assignments/upload" className={subLinkClass}>
-                  Upload
-                </NavLink>
+                <NavLink to="/certificates/create" className={subLinkClass}>Generate Certificate</NavLink>
               </li>
               <li className="mb-1">
-                <NavLink to="/assignments" className={subLinkClass}>
-                  List
-                </NavLink>
+                <NavLink to="/certificates" end className={subLinkClass}>List Certificates</NavLink>
               </li>
             </ul>
           )}
-        </li> */}
+        </li>
 
-        {/* 12. Settings (placeholders for now) ------------------------------ */}
+        {/* Gallery */}
+        <li className="nav-item mb-2">
+          <button
+            type="button"
+            className="btn btn-toggle w-100 text-start d-flex justify-content-between align-items-center text-dark"
+            onClick={() => toggleMenu("gallery")}
+          >
+            <span className="d-flex align-items-center gap-2">
+              <FaImages />
+              Gallery
+            </span>
+            {openMenu === "gallery" ? <FaChevronDown /> : <FaChevronRight />}
+          </button>
+          {openMenu === "gallery" && (
+            <ul className="btn-toggle-nav list-unstyled ps-4 pt-2 pb-1">
+              <li className="mb-1">
+                <NavLink to="/gallery/categories/create" className={subLinkClass}>Add Images</NavLink>
+              </li>
+              <li className="mb-1">
+                <NavLink to="/gallery" end className={subLinkClass}>List Images</NavLink>
+              </li>
+            </ul>
+          )}
+        </li>
+
+        {/* Settings */}
         <li className="nav-item mb-2">
           <button
             type="button"
@@ -519,52 +308,26 @@ export default function Sidebar() {
               <FaCog />
               Settings
             </span>
-            {openMenu === "settings" ? (
-              <FaChevronDown />
-            ) : (
-              <FaChevronRight />
-            )}
+            {openMenu === "settings" ? <FaChevronDown /> : <FaChevronRight />}
           </button>
-
           {openMenu === "settings" && (
             <ul className="btn-toggle-nav list-unstyled ps-4 pt-2 pb-1">
-              {/*
               <li className="mb-1">
-                <NavLink to="/settings/header" className={subLinkClass}>
-                  Header
-                </NavLink>
+                <NavLink to="/settings/social" className={subLinkClass}>Social Links</NavLink>
               </li>
               <li className="mb-1">
-                <NavLink to="/settings/footer" className={subLinkClass}>
-                  Footer
-                </NavLink>
-              </li>
-              */}
-              <li className="mb-1">
-                <NavLink to="/settings/social" className={subLinkClass}>
-                  Social Links
-                </NavLink>
+                <NavLink to="/settings/credit-pricing" className={subLinkClass}>Credit Pricing</NavLink>
               </li>
               <li className="mb-1">
-                <NavLink to="/settings/credit-pricing" className={subLinkClass}>
-                  Credit Pricing
-                </NavLink>
+                <NavLink to="/settings/credit-qr" className={subLinkClass}>Credit QR</NavLink>
               </li>
               <li className="mb-1">
-                <NavLink to="/settings/credit-qr" className={subLinkClass}>
-                  Credit QR
-                </NavLink>
+                <NavLink to="/settings/template-config" className={subLinkClass}>Template Config</NavLink>
               </li>
-              {/*
-              <li className="mb-1">
-                <NavLink to="/settings/branding" className={subLinkClass}>
-                  Logo & Branding
-                </NavLink>
-              </li>
-              */}
             </ul>
           )}
         </li>
+
       </ul>
     </div>
   );

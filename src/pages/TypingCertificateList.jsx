@@ -22,6 +22,7 @@ const initTypingCertificateGenerator = async () => {
     typingCertificateGenerator = window.TypingCertificateGenerator;
     try {
       await typingCertificateGenerator.loadTemplate('/typing-certificate-template.jpeg');
+      typingCertificateGenerator.fetchConfigFromAPI();
       console.log('Typing certificate template loaded successfully');
       return typingCertificateGenerator;
     } catch (err) {
@@ -46,6 +47,7 @@ const initTypingCertificateGenerator = async () => {
             typingCertificateGenerator = window.TypingCertificateGenerator;
             try {
               await typingCertificateGenerator.loadTemplate('/typing-certificate-template.jpeg');
+              typingCertificateGenerator.fetchConfigFromAPI();
               console.log('Typing certificate template loaded successfully');
               resolve(typingCertificateGenerator);
             } catch (err) {
@@ -70,6 +72,7 @@ const initTypingCertificateGenerator = async () => {
           typingCertificateGenerator = window.TypingCertificateGenerator;
           try {
             await typingCertificateGenerator.loadTemplate('/typing-certificate-template.jpeg');
+            typingCertificateGenerator.fetchConfigFromAPI();
             console.log('Typing certificate template loaded successfully');
             resolve(typingCertificateGenerator);
           } catch (err) {

@@ -57,6 +57,16 @@ export const updateCreditTopupInstructions = async (data) => {
   return res.data;
 };
 
+export const getCertificateTemplateConfig = async () => {
+  const res = await API.get("/settings/certificate-template");
+  return res.data?.data || null;
+};
+
+export const updateCertificateTemplateConfig = async (templateConfig) => {
+  const res = await API.put("/settings/certificate-template", { templateConfig });
+  return res.data;
+};
+
 /* ===================== CREDITS ===================== */
 
 export const getAllFranchiseCredits = async () => {

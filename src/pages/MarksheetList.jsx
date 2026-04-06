@@ -319,6 +319,7 @@ export default function MarksheetList() {
         try {
           console.log('Loading marksheet template...');
           await MarksheetGenerator.loadTemplate('/marksheet-template.jpeg');
+          MarksheetGenerator.fetchConfigFromAPI();
           console.log('Marksheet template loaded successfully');
           setTemplateLoaded(true);
         } catch (err) {

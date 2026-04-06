@@ -349,6 +349,25 @@ var MarksheetGenerator = (() => {
      */
     getConfig() {
       return JSON.parse(JSON.stringify(CONFIG));
+    },
+
+    /**
+     * Fetch configuration from API and apply to fields.
+     * @param {string} apiBaseUrl — base URL for API (default '/api/settings')
+     */
+    async fetchConfigFromAPI(apiBaseUrl = '/api/settings') {
+      try {
+        const response = await fetch(`${apiBaseUrl}/certificate-template`);
+        const data = await response.json();
+        if (data.success && data.data && data.data.marksheet) {
+          CONFIG.fields = { ...CONFIG.fields, ...data.data.marksheet };
+          console.log('Template config loaded from API:', CONFIG.fields);
+          return true;
+        }
+      } catch (err) {
+        console.warn('Failed to fetch template config from API:', err);
+      }
+      return false;
     }
   };
 })();
