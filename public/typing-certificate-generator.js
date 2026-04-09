@@ -31,13 +31,18 @@ var TypingCertificateGenerator = (() => {
 
     fields: {
       // { x, y } as % of image dimensions. font is px at full resolution.
-      studentName:        { x: 50,  y: 40, font: 'bold 120px serif',      color: '#000000', align: 'center' },
-      fatherHusbandName:  { x: 30,  y: 52, font: '100px serif',          color: '#000000', align: 'left' },
-      motherName:         { x: 70,  y: 52, font: '100px serif',          color: '#000000', align: 'left' },
-      enrollmentNumber:   { x: 30,  y: 60, font: '100px serif',          color: '#000000', align: 'left' },
-      computerTyping:     { x: 70,  y: 60, font: '100px serif',          color: '#000000', align: 'left' },
-      certificateNo:      { x: 50,  y: 68, font: 'bold 100px serif',     color: '#000000', align: 'center' },
-      dateOfIssue:        { x: 50,  y: 76, font: '100px serif',          color: '#000000', align: 'center' },
+      studentName:        { x: 58.5, y: 53, font: 'bold 200px serif',      color: '#000000', align: 'center' },
+      fatherHusbandName:  { x: 32,  y: 57, font: 'bold 200px serif',       color: '#000000', align: 'left' },
+      motherName:         { x: 70,  y: 57, font: 'bold 200px serif',       color: '#000000', align: 'left' },
+      enrollmentNumber:   { x: 22.5, y: 77.5, font: 'bold 150px serif',    color: '#000000', align: 'left' },
+      computerTyping:     { x: 22.5, y: 82, font: 'bold 150px serif',      color: '#000000', align: 'left' },
+      certificateNo:      { x: 22.5, y: 86.5, font: 'bold 150px serif',     color: '#000000', align: 'left' },
+      dateOfIssue:        { x: 22.5, y: 90.7, font: 'bold 150px serif',     color: '#000000', align: 'left' },
+      sessionFrom:        { x: 74,  y: 61, font: 'bold 120px serif',       color: '#000000', align: 'left' },
+      sessionTo:          { x: 83,  y: 61, font: 'bold 120px serif',       color: '#000000', align: 'left' },
+      grade:              { x: 86,  y: 65, font: 'bold 200px serif',       color: '#000000', align: 'left' },
+      studyCentre:        { x: 37,  y: 69.4, font: 'bold 200px serif',     color: '#000000', align: 'left' },
+      wordsPerMinute:     { x: 28.5, y: 82, font: 'bold 150px serif',      color: '#000000', align: 'left' },
     }
   };
 
@@ -150,7 +155,7 @@ var TypingCertificateGenerator = (() => {
     _ctx.clearRect(0, 0, _canvas.width, _canvas.height);
     _ctx.drawImage(_templateImg, 0, 0);
 
-    // student = { studentName, fatherHusbandName, motherName, enrollmentNumber, computerTyping, certificateNo, dateOfIssue }
+    // student = { studentName, fatherHusbandName, motherName, enrollmentNumber, computerTyping, certificateNo, dateOfIssue, sessionFrom, sessionTo, grade, studyCentre, wordsPerMinute }
 
     _drawField(CONFIG.fields.studentName,        student.studentName);
     _drawField(CONFIG.fields.fatherHusbandName,  student.fatherHusbandName);
@@ -159,6 +164,11 @@ var TypingCertificateGenerator = (() => {
     _drawField(CONFIG.fields.computerTyping,     student.computerTyping);
     _drawField(CONFIG.fields.certificateNo,      student.certificateNo);
     _drawField(CONFIG.fields.dateOfIssue,        _fmtDate(student.dateOfIssue));
+    _drawField(CONFIG.fields.sessionFrom,        student.sessionFrom);
+    _drawField(CONFIG.fields.sessionTo,          student.sessionTo);
+    _drawField(CONFIG.fields.grade,              student.grade);
+    _drawField(CONFIG.fields.studyCentre,        student.studyCentre);
+    _drawField(CONFIG.fields.wordsPerMinute,     student.wordsPerMinute);
 
     return _canvas.toDataURL('image/jpeg', 0.95);
   }

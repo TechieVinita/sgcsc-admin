@@ -31,12 +31,12 @@ var FranchiseCertificateGenerator = (() => {
 
     fields: {
       // { x, y } as % of image dimensions. font is px at full resolution.
-      franchiseName:     { x: 50,  y: 45, font: 'bold 120px serif',      color: '#000000', align: 'center' },
-      address:           { x: 50,  y: 55, font: '100px serif',           color: '#000000', align: 'center' },
-      applicantName:     { x: 50,  y: 65, font: 'bold 100px serif',     color: '#000000', align: 'center' },
-      atcCode:           { x: 50,  y: 75, font: 'bold 80px serif',       color: '#000000', align: 'center' },
-      dateOfIssue:       { x: 35,  y: 85, font: '80px serif',           color: '#000000', align: 'left' },
-      dateOfRenewal:     { x: 65,  y: 85, font: '80px serif',           color: '#000000', align: 'left' },
+      trainingCentreName: { x: 50,  y: 40, font: 'bold 120px serif',      color: '#000000', align: 'center' },
+      applicantName:      { x: 50,  y: 50, font: '100px serif',          color: '#000000', align: 'center' },
+      atcCode:            { x: 30,  y: 60, font: '100px serif',          color: '#000000', align: 'left' },
+      atcCode2:           { x: 70,  y: 60, font: '100px serif',          color: '#000000', align: 'left' },
+      dateOfIssue:        { x: 30,  y: 70, font: '100px serif',          color: '#000000', align: 'left' },
+      dateOfRenewal:      { x: 70,  y: 70, font: '100px serif',          color: '#000000', align: 'left' },
     }
   };
 
@@ -149,14 +149,14 @@ var FranchiseCertificateGenerator = (() => {
     _ctx.clearRect(0, 0, _canvas.width, _canvas.height);
     _ctx.drawImage(_templateImg, 0, 0);
 
-    // franchise = { franchiseName, address, applicantName, atcCode, dateOfIssue, dateOfRenewal }
+    // franchise = { trainingCentreName, applicantName, atcCode, atcCode2, dateOfIssue, dateOfRenewal }
 
-    _drawField(CONFIG.fields.franchiseName,     franchise.franchiseName);
-    _drawField(CONFIG.fields.address,           franchise.address);
-    _drawField(CONFIG.fields.applicantName,     franchise.applicantName);
-    _drawField(CONFIG.fields.atcCode,           franchise.atcCode);
-    _drawField(CONFIG.fields.dateOfIssue,       _fmtDate(franchise.dateOfIssue));
-    _drawField(CONFIG.fields.dateOfRenewal,     _fmtDate(franchise.dateOfRenewal));
+    _drawField(CONFIG.fields.trainingCentreName, franchise.trainingCentreName);
+    _drawField(CONFIG.fields.applicantName,      franchise.applicantName);
+    _drawField(CONFIG.fields.atcCode,            franchise.atcCode);
+    _drawField(CONFIG.fields.atcCode2,           franchise.atcCode2);
+    _drawField(CONFIG.fields.dateOfIssue,        _fmtDate(franchise.dateOfIssue));
+    _drawField(CONFIG.fields.dateOfRenewal,      _fmtDate(franchise.dateOfRenewal));
 
     return _canvas.toDataURL('image/jpeg', 0.95);
   }
@@ -167,7 +167,7 @@ var FranchiseCertificateGenerator = (() => {
   async function download(franchise) {
     const dataURL = await getDataURL(franchise);
     const link = document.createElement('a');
-    link.download = `franchise_certificate_${franchise.atcCode || 'unknown'}.jpg`;
+    link.download = `franchise_certificate_${franchise.certificateNumber || 'unknown'}.jpg`;
     link.href = dataURL;
     link.click();
   }

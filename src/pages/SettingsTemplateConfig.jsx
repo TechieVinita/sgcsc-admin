@@ -5,11 +5,10 @@ import { getCertificateTemplateConfig, updateCertificateTemplateConfig } from ".
 const TEMPLATE_TYPES = [
   { key: "typingCertificate", name: "Typing Certificate", fields: [
     "studentName", "fatherHusbandName", "motherName", "enrollmentNumber",
-    "computerTyping", "certificateNo", "dateOfIssue"
+    "computerTyping", "certificateNo", "dateOfIssue", "sessionFrom", "sessionTo", "grade", "studyCentre", "wordsPerMinute"
   ]},
   { key: "franchiseCertificate", name: "Franchise Certificate", fields: [
-    "studentName", "fatherName", "courseName", "session", "grade",
-    "enrollmentNumber", "certificateNumber", "issueDate"
+    "trainingCentreName", "applicantName", "atcCode", "atcCode2", "dateOfIssue", "dateOfRenewal"
   ]},
   { key: "marksheet", name: "Marksheet", fields: [
     "studentName", "enrollmentNumber", "fatherName", "courseName",
@@ -25,15 +24,24 @@ const FIELD_LABELS = {
   computerTyping: "Computer Typing",
   certificateNo: "Certificate No",
   dateOfIssue: "Date of Issue",
+  sessionFrom: "Session From",
+  sessionTo: "Session To",
+  grade: "Grade",
+  studyCentre: "Study Centre",
+  wordsPerMinute: "Words Per Minute",
   fatherName: "Father Name",
   courseName: "Course Name",
   session: "Session",
-  grade: "Grade",
   certificateNumber: "Certificate Number",
   issueDate: "Issue Date",
   examRollNo: "Exam Roll No",
   examDate: "Exam Date",
-  centerName: "Center Name"
+  centerName: "Center Name",
+  trainingCentreName: "Training Centre Name",
+  applicantName: "Applicant Name",
+  atcCode: "ATC Code",
+  atcCode2: "ATC Code",
+  dateOfRenewal: "Date of Renewal"
 };
 
 const SAMPLE_DATA = {
@@ -44,17 +52,20 @@ const SAMPLE_DATA = {
     enrollmentNumber: "EN/2024/001",
     computerTyping: "English/Hindi Typing",
     certificateNo: "TC/2024/0001",
-    dateOfIssue: "2024-03-15"
+    dateOfIssue: "2024-03-15",
+    sessionFrom: "2020",
+    sessionTo: "2021",
+    grade: "A+",
+    studyCentre: "xyz",
+    wordsPerMinute: "50"
   },
   franchiseCertificate: {
-    studentName: "John Doe",
-    fatherName: "Robert Doe",
-    courseName: "Certificate in Computer Application",
-    session: "2023-2024",
-    grade: "First Division",
-    enrollmentNumber: "EN/2024/001",
-    certificateNumber: "FC/2024/0001",
-    issueDate: "2024-03-15"
+    trainingCentreName: "Main Training Centre",
+    applicantName: "John Doe",
+    atcCode: "ATC12345",
+    atcCode2: "ATC12345",
+    dateOfIssue: "2024-03-15",
+    dateOfRenewal: "2025-03-15"
   },
   marksheet: {
     studentName: "John Doe",

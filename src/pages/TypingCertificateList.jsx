@@ -104,6 +104,11 @@ function TypingCertificateModal({ show, onClose, onSaved, initial }) {
   const [computerTyping, setComputerTyping] = useState('');
   const [certificateNo, setCertificateNo] = useState('');
   const [dateOfIssue, setDateOfIssue] = useState('');
+  const [sessionFrom, setSessionFrom] = useState('');
+  const [sessionTo, setSessionTo] = useState('');
+  const [grade, setGrade] = useState('');
+  const [studyCentre, setStudyCentre] = useState('');
+  const [wordsPerMinute, setWordsPerMinute] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -125,6 +130,11 @@ function TypingCertificateModal({ show, onClose, onSaved, initial }) {
           ? new Date(initial.dateOfIssue).toISOString().slice(0, 10)
           : ''
       );
+      setSessionFrom(initial.sessionFrom || '');
+      setSessionTo(initial.sessionTo || '');
+      setGrade(initial.grade || '');
+      setStudyCentre(initial.studyCentre || '');
+      setWordsPerMinute(initial.wordsPerMinute || '');
     } else {
       setStudentName('');
       setFatherHusbandName('');
@@ -133,6 +143,11 @@ function TypingCertificateModal({ show, onClose, onSaved, initial }) {
       setComputerTyping('');
       setCertificateNo('');
       setDateOfIssue('');
+      setSessionFrom('');
+      setSessionTo('');
+      setGrade('');
+      setStudyCentre('');
+      setWordsPerMinute('');
     }
   }, [show, initial]);
 
@@ -167,6 +182,26 @@ function TypingCertificateModal({ show, onClose, onSaved, initial }) {
       setError('Date of Issue is required.');
       return false;
     }
+    if (!sessionFrom.trim()) {
+      setError('Session From is required.');
+      return false;
+    }
+    if (!sessionTo.trim()) {
+      setError('Session To is required.');
+      return false;
+    }
+    if (!grade.trim()) {
+      setError('Grade is required.');
+      return false;
+    }
+    if (!studyCentre.trim()) {
+      setError('Study Centre is required.');
+      return false;
+    }
+    if (!wordsPerMinute.trim()) {
+      setError('Words Per Minute is required.');
+      return false;
+    }
     return true;
   };
 
@@ -197,6 +232,11 @@ function TypingCertificateModal({ show, onClose, onSaved, initial }) {
             computerTyping: computerTyping.trim(),
             certificateNo: certificateNo.trim(),
             dateOfIssue: dateOfIssue,
+            sessionFrom: sessionFrom.trim(),
+            sessionTo: sessionTo.trim(),
+            grade: grade.trim(),
+            studyCentre: studyCentre.trim(),
+            wordsPerMinute: wordsPerMinute.trim(),
           };
           certificateImage = await typingCertificateGenerator.getDataURL(certificateData);
         } catch (imgErr) {
@@ -217,6 +257,11 @@ function TypingCertificateModal({ show, onClose, onSaved, initial }) {
         computerTyping: computerTyping.trim(),
         certificateNo: certificateNo.trim(),
         dateOfIssue,
+        sessionFrom: sessionFrom.trim(),
+        sessionTo: sessionTo.trim(),
+        grade: grade.trim(),
+        studyCentre: studyCentre.trim(),
+        wordsPerMinute: wordsPerMinute.trim(),
         certificateImage,
       };
 
@@ -341,6 +386,66 @@ function TypingCertificateModal({ show, onClose, onSaved, initial }) {
                     className="form-control"
                     value={dateOfIssue}
                     onChange={(e) => setDateOfIssue(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="col-md-6">
+                  <label className="form-label">Session From *</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={sessionFrom}
+                    onChange={(e) => setSessionFrom(e.target.value)}
+                    placeholder="e.g., 2020"
+                    required
+                  />
+                </div>
+
+                <div className="col-md-6">
+                  <label className="form-label">Session To *</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={sessionTo}
+                    onChange={(e) => setSessionTo(e.target.value)}
+                    placeholder="e.g., 2021"
+                    required
+                  />
+                </div>
+
+                <div className="col-md-6">
+                  <label className="form-label">Grade *</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={grade}
+                    onChange={(e) => setGrade(e.target.value)}
+                    placeholder="e.g., A+"
+                    required
+                  />
+                </div>
+
+                <div className="col-md-6">
+                  <label className="form-label">Study Centre *</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={studyCentre}
+                    onChange={(e) => setStudyCentre(e.target.value)}
+                    placeholder="e.g., xyz"
+                    required
+                  />
+                </div>
+
+                <div className="col-md-6">
+                  <label className="form-label">Words Per Minute *</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={wordsPerMinute}
+                    onChange={(e) => setWordsPerMinute(e.target.value)}
+                    placeholder="e.g., 50"
                     required
                   />
                 </div>
@@ -505,6 +610,26 @@ function TypingCertificateViewModal({ show, onClose, certificate }) {
                         <td>Date of Issue:</td>
                         <td>${fmtDate(certificate.dateOfIssue)}</td>
                       </tr>
+                      <tr>
+                        <td>Session From:</td>
+                        <td>${certificate.sessionFrom}</td>
+                      </tr>
+                      <tr>
+                        <td>Session To:</td>
+                        <td>${certificate.sessionTo}</td>
+                      </tr>
+                      <tr>
+                        <td>Grade:</td>
+                        <td>${certificate.grade}</td>
+                      </tr>
+                      <tr>
+                        <td>Study Centre:</td>
+                        <td>${certificate.studyCentre}</td>
+                      </tr>
+                      <tr>
+                        <td>Words Per Minute:</td>
+                        <td>${certificate.wordsPerMinute}</td>
+                      </tr>
                     </tbody>
                   </table>
                 </div>
@@ -619,11 +744,16 @@ function TypingCertificateViewModal({ show, onClose, certificate }) {
                     <p><strong>Father/Husband Name:</strong> {certificate.fatherHusbandName}</p>
                     <p><strong>Mother Name:</strong> {certificate.motherName}</p>
                     <p><strong>Enrollment No:</strong> {certificate.enrollmentNumber}</p>
+                    <p><strong>Session From:</strong> {certificate.sessionFrom}</p>
+                    <p><strong>Session To:</strong> {certificate.sessionTo}</p>
                   </div>
                   <div className="col-md-6">
                     <p><strong>Computer Typing:</strong> {certificate.computerTyping}</p>
                     <p><strong>Certificate No:</strong> {certificate.certificateNo}</p>
                     <p><strong>Date of Issue:</strong> {fmtDate(certificate.dateOfIssue)}</p>
+                    <p><strong>Grade:</strong> {certificate.grade}</p>
+                    <p><strong>Study Centre:</strong> {certificate.studyCentre}</p>
+                    <p><strong>Words Per Minute:</strong> {certificate.wordsPerMinute}</p>
                   </div>
                 </div>
               </div>
@@ -781,6 +911,8 @@ export default function TypingCertificateList() {
                         <th>Enrollment No</th>
                         <th>Certificate No</th>
                         <th>Computer Typing</th>
+                        <th>Session From</th>
+                        <th>Grade</th>
                         <th>Date of Issue</th>
                         <th className="text-center">Actions</th>
                       </tr>
@@ -793,6 +925,8 @@ export default function TypingCertificateList() {
                           <td>{c.enrollmentNumber}</td>
                           <td>{c.certificateNo}</td>
                           <td>{c.computerTyping}</td>
+                          <td>{c.sessionFrom}</td>
+                          <td>{c.grade}</td>
                           <td>{fmtDate(c.dateOfIssue)}</td>
                           <td className="text-center">
                             <button
