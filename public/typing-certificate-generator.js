@@ -31,7 +31,7 @@ var TypingCertificateGenerator = (() => {
 
     fields: {
       // { x, y } as % of image dimensions. font is px at full resolution.
-      studentName:        { x: 58.5, y: 53, font: 'bold 200px serif',      color: '#000000', align: 'center' },
+      studentName:        { x: 58.5, y: 52.6, font: 'bold 200px serif',     color: '#000000', align: 'center' },
       fatherHusbandName:  { x: 32,  y: 57, font: 'bold 200px serif',       color: '#000000', align: 'left' },
       motherName:         { x: 70,  y: 57, font: 'bold 200px serif',       color: '#000000', align: 'left' },
       enrollmentNumber:   { x: 22.5, y: 77.5, font: 'bold 150px serif',    color: '#000000', align: 'left' },
