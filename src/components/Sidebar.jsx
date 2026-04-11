@@ -175,31 +175,6 @@ export default function Sidebar() {
           )}
         </li>
 
-        {/* Result */}
-        <li className="nav-item mb-2">
-          <button
-            type="button"
-            className="btn btn-toggle w-100 text-start d-flex justify-content-between align-items-center text-dark"
-            onClick={() => toggleMenu("results")}
-          >
-            <span className="d-flex align-items-center gap-2">
-              <FaClipboardList />
-              Result
-            </span>
-            {openMenu === "results" ? <FaChevronDown /> : <FaChevronRight />}
-          </button>
-          {openMenu === "results" && (
-            <ul className="btn-toggle-nav list-unstyled ps-4 pt-2 pb-1">
-              <li className="mb-1">
-                <NavLink to="/results/create" className={subLinkClass}>Add Result</NavLink>
-              </li>
-              <li className="mb-1">
-                <NavLink to="/results" end className={subLinkClass}>List Result</NavLink>
-              </li>
-            </ul>
-          )}
-        </li>
-
         {/* Marksheet */}
         <li className="nav-item mb-2">
           <button

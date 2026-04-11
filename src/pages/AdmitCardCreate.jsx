@@ -206,7 +206,7 @@ export default function AdmitCardCreate() {
         if (selectedStudent.name) setStudentName(selectedStudent.name);
         if (selectedStudent.fatherName) setFatherName(selectedStudent.fatherName);
         if (selectedStudent.motherName) setMotherName(selectedStudent.motherName);
-        if (selectedStudent.rollNo) setRollNumber(selectedStudent.rollNo);
+        if (selectedStudent.rollNumber) setRollNumber(selectedStudent.rollNumber);
       }
     }
   };
@@ -256,7 +256,7 @@ export default function AdmitCardCreate() {
                       {students.map((s) => (
                         <option key={s._id || s.id} value={s._id || s.id}>
                           {s.name || s.fullName || 'Student'}{' '}
-                          {s.rollNo ? `(${s.rollNo})` : ''}
+                          {s.rollNumber ? `(${s.rollNumber})` : ''}
                         </option>
                       ))}
                     </select>
@@ -272,6 +272,7 @@ export default function AdmitCardCreate() {
                       onChange={(e) => setRollNumber(e.target.value)}
                       placeholder="Enter roll number"
                       required
+                      readOnly
                     />
                   </div>
 
@@ -285,6 +286,7 @@ export default function AdmitCardCreate() {
                       onChange={(e) => setStudentName(e.target.value)}
                       placeholder="Enter student name"
                       required
+                      readOnly
                     />
                   </div>
 

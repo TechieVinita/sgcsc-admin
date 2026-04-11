@@ -40,6 +40,14 @@ export default function AddResults() {
         setStudents(list);
       } catch (err) {
         console.error("fetch students error:", err);
+        if (err?.response?.status === 401) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          localStorage.removeItem("admin_token");
+          localStorage.removeItem("admin_user");
+          window.location.href = "/login";
+          return;
+        }
         setMessageType("danger");
         setMessage("Failed to load students list");
       } finally {
@@ -65,6 +73,14 @@ export default function AddResults() {
         setCourses(list);
       } catch (err) {
         console.error("fetch courses error:", err);
+        if (err?.response?.status === 401) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          localStorage.removeItem("admin_token");
+          localStorage.removeItem("admin_user");
+          window.location.href = "/login";
+          return;
+        }
         setMessageType("danger");
         setMessage("Failed to load courses list");
       } finally {
@@ -85,6 +101,14 @@ export default function AddResults() {
         setAllSubjects(list);
       } catch (err) {
         console.error("fetch subjects error:", err);
+        if (err?.response?.status === 401) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          localStorage.removeItem("admin_token");
+          localStorage.removeItem("admin_user");
+          window.location.href = "/login";
+          return;
+        }
         setMessageType("danger");
         setMessage("Failed to load subjects");
       } finally {
@@ -97,7 +121,7 @@ export default function AddResults() {
 
   /* ================= FILTER SUBJECTS BY COURSE (CLIENT-SIDE) ================= */
   const getSubjectCourseId = (s) =>
-    typeof s.course === "object"
+    s.course && typeof s.course === "object"
       ? String(s.course._id)
       : String(s.course || s.courseId || "");
 
@@ -218,6 +242,15 @@ export default function AddResults() {
       setRemarks("");
     } catch (err) {
       console.error("add result error:", err);
+      if (err?.response?.status === 401) {
+        // Token expired or invalid, clear storage and redirect to login
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        localStorage.removeItem("admin_token");
+        localStorage.removeItem("admin_user");
+        window.location.href = "/login";
+        return;
+      }
       setMessageType("danger");
       setMessage(err.response?.data?.message || err.userMessage || "Failed to add result");
     } finally {

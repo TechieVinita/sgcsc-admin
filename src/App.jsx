@@ -41,9 +41,7 @@ const AddGalleryCategory = lazy(() => import("./pages/AddGalleryImage"));
 const Members = lazy(() => import("./pages/Members"));
 const AddMember = lazy(() => import("./pages/AddMember"));
 
-/* Results */
-const AddResults = lazy(() => import("./pages/AddResults"));
-const ResultsList = lazy(() => import("./pages/ResultsList"));
+
 
 /* Admit Card */
 const AdmitCardCreate = lazy(() => import("./pages/AdmitCardCreate"));
@@ -297,27 +295,7 @@ export default function App() {
             }
           />
 
-          {/* Results */}
-          <Route
-            path="/results"
-            element={
-              <PrivateRoute>
-                <ProtectedLayout>
-                  <ResultsList />
-                </ProtectedLayout>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/results/create"
-            element={
-              <PrivateRoute>
-                <ProtectedLayout>
-                  <AddResults />
-                </ProtectedLayout>
-              </PrivateRoute>
-            }
-          />
+
 
           {/* Admit Card */}
           <Route

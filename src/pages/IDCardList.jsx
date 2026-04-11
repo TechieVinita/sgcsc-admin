@@ -32,6 +32,63 @@ function IDCardModal({ show, onClose, onSaved, initial }) {
   const [loadingStudent, setLoadingStudent] = useState(false);
   const [studentId, setStudentId] = useState(null);
   const [studentPhoto, setStudentPhoto] = useState(null);
+  const [students, setStudents] = useState([]);
+  const [loadingStudents, setLoadingStudents] = useState(false);
+
+  // Fetch students for dropdown
+  useEffect(() => {
+    const fetchStudents = async () => {
+      setLoadingStudents(true);
+      try {
+        const res = await API.get('/students');
+        const list = Array.isArray(res.data?.data) ? res.data.data : [];
+        setStudents(list);
+      } catch (err) {
+        console.error('fetch students error:', err);
+      } finally {
+        setLoadingStudents(false);
+      }
+    };
+
+    if (show) {
+      fetchStudents();
+    }
+  }, [show]);
+
+  // Handle student selection from dropdown
+  const handleStudentSelect = (studentId) => {
+    const student = students.find(s => s._id === studentId);
+    if (!student) return;
+
+    setStudentName(student.name || '');
+    setFatherName(student.fatherName || '');
+    setMotherName(student.motherName || '');
+    setEnrollmentNo(student.enrollmentNo || student.rollNumber || '');
+    setDateOfBirth(student.dob ? new Date(student.dob).toISOString().slice(0, 10) : '');
+    setContactNo(student.mobile || '');
+    setAddress(student.address || '');
+    setMobileNo(student.mobile || '');
+    setCenterName(student.centerName || '');
+    setStudentId(student._id || null);
+    setStudentPhoto(student.photo || null);
+
+    // Handle multiple courses - set as dropdown if more than one
+    if (student.courses && student.courses.length > 0) {
+      const courseNames = student.courses.map(c => c.courseName || c.course || c.name || '').filter(Boolean);
+      setAvailableCourses(courseNames);
+      if (courseNames.length === 1) {
+        setCourseName(courseNames[0] || '');
+      } else if (courseNames.length > 1) {
+        setCourseName('');
+      }
+    } else if (student.courseName) {
+      setAvailableCourses([student.courseName]);
+      setCourseName(student.courseName);
+    } else {
+      setAvailableCourses([]);
+      setCourseName('');
+    }
+  };
 
   // Auto-fill student data by enrollment number
   const handleEnrollmentLookup = async (enrollmentNumber) => {
@@ -220,6 +277,28 @@ function IDCardModal({ show, onClose, onSaved, initial }) {
               {error && <div className="alert alert-danger">{error}</div>}
 
               <div className="row">
+                <div className="col-md-12 mb-3">
+                  <label className="form-label">Select Student *</label>
+                  <select
+                    className="form-select"
+                    value={studentId || ''}
+                    onChange={(e) => handleStudentSelect(e.target.value)}
+                    disabled={loadingStudents}
+                    required
+                  >
+                    <option value="">
+                      {loadingStudents ? "Loading students..." : "Select a student"}
+                    </option>
+                    {students.map((s) => (
+                      <option key={s._id} value={s._id}>
+                        {s.name} ({s.rollNumber || s.enrollmentNo}) - {s.courseName || "No Course"}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="row">
                 <div className="col-md-6 mb-3">
                   <label className="form-label">Student Name *</label>
                   <input
@@ -228,6 +307,7 @@ function IDCardModal({ show, onClose, onSaved, initial }) {
                     value={studentName}
                     onChange={(e) => setStudentName(e.target.value)}
                     required
+                    readOnly
                   />
                 </div>
                 <div className="col-md-6 mb-3">

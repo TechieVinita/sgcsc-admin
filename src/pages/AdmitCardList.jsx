@@ -26,6 +26,9 @@ function AdmitCardModal({ show, onClose, onSaved, initial, courses }) {
   const [examDuration, setExamDuration] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [students, setStudents] = useState([]);
+  const [loadingStudents, setLoadingStudents] = useState(false);
+  const [studentId, setStudentId] = useState(null);
 
   useEffect(() => {
     if (!show) return;
@@ -59,8 +62,46 @@ function AdmitCardModal({ show, onClose, onSaved, initial, courses }) {
       setExamTime('');
       setReportingTime('');
       setExamDuration('');
+      setStudentId(null);
     }
   }, [show, initial]);
+
+  // Fetch students for dropdown
+  useEffect(() => {
+    const fetchStudents = async () => {
+      setLoadingStudents(true);
+      try {
+        const res = await API.get('/students');
+        const list = Array.isArray(res.data?.data) ? res.data.data : [];
+        setStudents(list);
+      } catch (err) {
+        console.error('fetch students error:', err);
+      } finally {
+        setLoadingStudents(false);
+      }
+    };
+
+    if (show) {
+      fetchStudents();
+    }
+  }, [show]);
+
+  // Handle student selection from dropdown
+  const handleStudentSelect = (studentId) => {
+    const student = students.find(s => s._id === studentId);
+    if (!student) return;
+
+    console.log('Selected student:', student);
+    console.log('Student rollNumber:', student.rollNumber);
+    console.log('Setting rollNumber to:', student.rollNumber || '');
+
+    setRollNumber(student.rollNumber || '');
+    setStudentName(student.name || '');
+    setFatherName(student.fatherName || '');
+    setMotherName(student.motherName || '');
+    setCourseName(student.courseName || '');
+    setStudentId(student._id);
+  };
 
   if (!show) return null;
 
@@ -180,32 +221,54 @@ function AdmitCardModal({ show, onClose, onSaved, initial, courses }) {
                 </div>
               )}
 
-              <div className="row g-3">
-                <div className="col-12">
-                  <h6 className="text-primary">Student Details</h6>
-                </div>
+               <div className="row g-3">
+                 <div className="col-12">
+                   <h6 className="text-primary">Student Details</h6>
+                 </div>
 
-                <div className="col-md-6">
-                  <label className="form-label">Roll Number *</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={rollNumber}
-                    onChange={(e) => setRollNumber(e.target.value)}
-                    required
-                  />
-                </div>
+                 <div className="col-12">
+                   <label className="form-label">Select Student *</label>
+                    <select
+                      className="form-select"
+                      value={studentId || ''}
+                      onChange={(e) => handleStudentSelect(e.target.value)}
+                      disabled={loadingStudents}
+                      required
+                    >
+                     <option value="">
+                       {loadingStudents ? "Loading students..." : "Select a student"}
+                     </option>
+                      {students.map((s) => (
+                        <option key={s._id} value={s._id}>
+                          {s.name} ({s.rollNumber || s.enrollmentNo}) - {s.courseName || "No Course"}
+                        </option>
+                      ))}
+                   </select>
+                 </div>
 
-                <div className="col-md-6">
-                  <label className="form-label">Student Name *</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={studentName}
-                    onChange={(e) => setStudentName(e.target.value)}
-                    required
-                  />
-                </div>
+                 <div className="col-md-6">
+                   <label className="form-label">Roll Number *</label>
+                   <input
+                     type="text"
+                     className="form-control"
+                     value={rollNumber}
+                     onChange={(e) => setRollNumber(e.target.value)}
+                     required
+                     readOnly
+                   />
+                 </div>
+
+                 <div className="col-md-6">
+                   <label className="form-label">Student Name *</label>
+                   <input
+                     type="text"
+                     className="form-control"
+                     value={studentName}
+                     onChange={(e) => setStudentName(e.target.value)}
+                     required
+                     readOnly
+                   />
+                 </div>
 
                 <div className="col-md-6">
                   <label className="form-label">Father Name *</label>
@@ -218,16 +281,17 @@ function AdmitCardModal({ show, onClose, onSaved, initial, courses }) {
                   />
                 </div>
 
-                <div className="col-md-6">
-                  <label className="form-label">Mother Name *</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={motherName}
-                    onChange={(e) => setMotherName(e.target.value)}
-                    required
-                  />
-                </div>
+                  <div className="col-md-6">
+                    <label className="form-label">Roll Number *</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={rollNumber}
+                      onChange={(e) => setRollNumber(e.target.value)}
+                      required
+                      readOnly
+                    />
+                  </div>
 
                 <div className="col-12 mt-3">
                   <h6 className="text-primary">Course & Institute Details</h6>
