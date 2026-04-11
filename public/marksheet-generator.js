@@ -25,27 +25,22 @@ var MarksheetGenerator = (() => {
 
     fields: {
       // { x, y } as % of image dimensions. font is px at full resolution.
-      enrollmentNo:       { x: 30,  y: 15, font: 'bold 60px serif',      color: '#000000', align: 'left' },
-      rollNumber:         { x: 30,  y: 18, font: 'bold 60px serif',      color: '#000000', align: 'left' },
-      studentName:        { x: 30,  y: 21, font: 'bold 60px serif',      color: '#000000', align: 'left' },
-      fatherName:         { x: 30,  y: 24, font: '60px serif',           color: '#000000', align: 'left' },
-      motherName:         { x: 30,  y: 27, font: '60px serif',           color: '#000000', align: 'left' },
-      dob:                { x: 30,  y: 30, font: '60px serif',           color: '#000000', align: 'left' },
-      courseName:         { x: 30,  y: 33, font: '60px serif',           color: '#000000', align: 'left' },
-      courseDuration:     { x: 30,  y: 36, font: '60px serif',           color: '#000000', align: 'left' },
-      coursePeriod:       { x: 30,  y: 39, font: '60px serif',           color: '#000000', align: 'left' },
-      instituteName:      { x: 30,  y: 42, font: '60px serif',           color: '#000000', align: 'left' },
+      enrollmentNo:       { x: 30,  y: 15, font: 'bold 150px serif',      color: '#000000', align: 'left' },
+      rollNumber:         { x: 73,  y: 28.5, font: 'bold 150px serif',    color: '#000000', align: 'left' },
+      studentName:        { x: 30,  y: 25.5, font: 'bold 150px serif',    color: '#000000', align: 'left' },
+      fatherName:         { x: 30,  y: 28.4, font: '150px serif',         color: '#000000', align: 'left' },
+      motherName:         { x: 30,  y: 31.3, font: '150px serif',         color: '#000000', align: 'left' },
+      dob:                { x: 73,  y: 31.2, font: '150px serif',         color: '#000000', align: 'left' },
+      courseName:         { x: 30,  y: 37, font: '150px serif',           color: '#000000', align: 'left' },
+      courseDuration:     { x: 73,  y: 25.5, font: '150px serif',        color: '#000000', align: 'left' },
+      coursePeriodFrom:   { x: 30,  y: 34, font: '150px serif',           color: '#000000', align: 'left' },
+      coursePeriodTo:     { x: 49,  y: 34, font: '150px serif',           color: '#000000', align: 'left' },
+      instituteName:      { x: 30,  y: 39.8, font: '150px serif',        color: '#000000', align: 'left' },
+      dateOfIssue:        { x: 19,  y: 92.5, font: '150px serif',        color: '#000000', align: 'left' },
 
       // Subject marks will be rendered dynamically
-      subjectsStartY:     48,  // Starting Y position for subjects table
+      subjectsStartY:     55,  // Starting Y position for subjects table
       subjectRowHeight:   15,   // Height of each subject row (increased 5x)
-
-      // Summary fields
-      totalTheoryMarks:   { x: 30,  y: 75, font: 'bold 60px serif',      color: '#000000', align: 'left' },
-      totalPracticalMarks:{ x: 30,  y: 78, font: 'bold 60px serif',      color: '#000000', align: 'left' },
-      totalCombinedMarks: { x: 30,  y: 81, font: 'bold 60px serif',      color: '#000000', align: 'left' },
-      percentage:         { x: 30,  y: 84, font: 'bold 60px serif',      color: '#000000', align: 'left' },
-      overallGrade:       { x: 30,  y: 87, font: 'bold 60px serif',      color: '#000000', align: 'left' },
     }
   };
 
@@ -102,17 +97,24 @@ var MarksheetGenerator = (() => {
 
   // ─────────────────────────────────────────────
   // Core render function
-  // marksheet = { enrollmentNo, studentName, fatherName, motherName, courseName, instituteName, rollNumber, dob, coursePeriodFrom, coursePeriodTo, courseDuration, subjects, totalTheoryMarks, totalPracticalMarks, totalCombinedMarks, maxTotalMarks, percentage, overallGrade }
+  // marksheet = { enrollmentNo, studentName, fatherName, motherName, courseName, instituteName, rollNumber, dob, coursePeriodFrom, coursePeriodTo, courseDuration, subjects, dateOfIssue }
   // ─────────────────────────────────────────────
   async function _render(marksheet) {
-    if (!_templateImg) throw new Error('Template not loaded. Call MarksheetGenerator.loadTemplate() first.');
     if (!_initCanvas()) throw new Error('Canvas not found. Make sure <canvas id="marksheetCanvas"> exists.');
 
-    _canvas.width  = _templateImg.naturalWidth;
-    _canvas.height = _templateImg.naturalHeight;
-
-    // Draw template background
-    _ctx.drawImage(_templateImg, 0, 0);
+    // If template is not loaded, create a default white background
+    if (!_templateImg) {
+      console.warn('Template not loaded, using default white background');
+      _canvas.width = 2480; // A4 width at 300 DPI
+      _canvas.height = 3508; // A4 height at 300 DPI
+      _ctx.fillStyle = '#FFFFFF';
+      _ctx.fillRect(0, 0, _canvas.width, _canvas.height);
+    } else {
+      _canvas.width  = _templateImg.naturalWidth;
+      _canvas.height = _templateImg.naturalHeight;
+      // Draw template background
+      _ctx.drawImage(_templateImg, 0, 0);
+    }
 
     // Draw student details
     _drawField(CONFIG.fields.enrollmentNo, marksheet.enrollmentNo);
@@ -123,21 +125,23 @@ var MarksheetGenerator = (() => {
     _drawField(CONFIG.fields.dob, _fmtDate(marksheet.dob));
     _drawField(CONFIG.fields.courseName, marksheet.courseName);
     _drawField(CONFIG.fields.courseDuration, marksheet.courseDuration);
-    _drawField(CONFIG.fields.coursePeriod, `${_fmtDate(marksheet.coursePeriodFrom)} to ${_fmtDate(marksheet.coursePeriodTo)}`);
+    _drawField(CONFIG.fields.coursePeriodFrom, _fmtDate(marksheet.coursePeriodFrom));
+    _drawField(CONFIG.fields.coursePeriodTo, _fmtDate(marksheet.coursePeriodTo));
     _drawField(CONFIG.fields.instituteName, marksheet.instituteName);
+    _drawField(CONFIG.fields.dateOfIssue, _fmtDate(marksheet.dateOfIssue));
 
     // Draw subjects table
     if (marksheet.subjects && Array.isArray(marksheet.subjects)) {
       const W = _canvas.width, H = _canvas.height;
       const startY = _pct(CONFIG.fields.subjectsStartY, H);
       const rowHeight = _pct(CONFIG.fields.subjectRowHeight, H);
-      
+
       marksheet.subjects.forEach((subject, index) => {
         const y = startY + (index * rowHeight);
-        
+
         // Draw subject number
         _ctx.save();
-        _ctx.font = '60px serif';
+        _ctx.font = '150px serif';
         _ctx.fillStyle = '#000000';
         _ctx.textAlign = 'left';
         _ctx.fillText(`${index + 1}.`, _pct(10, W), y);
@@ -145,7 +149,7 @@ var MarksheetGenerator = (() => {
 
         // Draw subject name
         _ctx.save();
-        _ctx.font = '60px serif';
+        _ctx.font = '150px serif';
         _ctx.fillStyle = '#000000';
         _ctx.textAlign = 'left';
         _ctx.fillText(subject.subjectName || '-', _pct(15, W), y);
@@ -153,52 +157,29 @@ var MarksheetGenerator = (() => {
 
         // Draw theory marks
         _ctx.save();
-        _ctx.font = '60px serif';
+        _ctx.font = '150px serif';
         _ctx.fillStyle = '#000000';
         _ctx.textAlign = 'center';
-        _ctx.fillText(`${subject.theoryMarks || 0}`, _pct(45, W), y);
+        _ctx.fillText(`${subject.theoryMarks || 0}`, _pct(50, W), y);
         _ctx.restore();
 
         // Draw practical marks
         _ctx.save();
-        _ctx.font = '60px serif';
+        _ctx.font = '150px serif';
         _ctx.fillStyle = '#000000';
         _ctx.textAlign = 'center';
-        _ctx.fillText(`${subject.practicalMarks || 0}`, _pct(55, W), y);
+        _ctx.fillText(`${subject.practicalMarks || 0}`, _pct(65, W), y);
         _ctx.restore();
 
         // Draw combined marks
         _ctx.save();
-        _ctx.font = '60px serif';
+        _ctx.font = '150px serif';
         _ctx.fillStyle = '#000000';
         _ctx.textAlign = 'center';
-        _ctx.fillText(`${subject.combinedMarks || 0}`, _pct(65, W), y);
-        _ctx.restore();
-
-        // Draw max marks
-        _ctx.save();
-        _ctx.font = '60px serif';
-        _ctx.fillStyle = '#000000';
-        _ctx.textAlign = 'center';
-        _ctx.fillText(`${subject.maxCombinedMarks || 0}`, _pct(75, W), y);
-        _ctx.restore();
-
-        // Draw grade
-        _ctx.save();
-        _ctx.font = '60px serif';
-        _ctx.fillStyle = '#000000';
-        _ctx.textAlign = 'center';
-        _ctx.fillText(subject.grade || '-', _pct(85, W), y);
+        _ctx.fillText(`${subject.combinedMarks || 0}`, _pct(80, W), y);
         _ctx.restore();
       });
     }
-
-    // Draw summary fields
-    _drawField(CONFIG.fields.totalTheoryMarks, `Total Theory Marks: ${marksheet.totalTheoryMarks || 0}`);
-    _drawField(CONFIG.fields.totalPracticalMarks, `Total Practical Marks: ${marksheet.totalPracticalMarks || 0}`);
-    _drawField(CONFIG.fields.totalCombinedMarks, `Total Combined Marks: ${marksheet.totalCombinedMarks || 0} / ${marksheet.maxTotalMarks || 0}`);
-    _drawField(CONFIG.fields.percentage, `Percentage: ${marksheet.percentage ? marksheet.percentage.toFixed(2) : 0}%`);
-    _drawField(CONFIG.fields.overallGrade, `Overall Grade: ${marksheet.overallGrade || '-'}`);
 
     return _canvas;
   }
@@ -237,10 +218,19 @@ var MarksheetGenerator = (() => {
         _initCanvas();
         const img = new Image();
         img.crossOrigin = 'anonymous';
-        img.onload  = () => { _templateImg = img; resolve(img); };
-        img.onerror = (e) => { console.error('Image load error:', e); reject(new Error('Failed to load template: ' + (pathOrDataURL || CONFIG.templatePath))); };
+        img.onload  = () => {
+          console.log('Template loaded successfully:', img.naturalWidth, 'x', img.naturalHeight);
+          _templateImg = img;
+          resolve(img);
+        };
+        img.onerror = (e) => {
+          console.error('Template image failed to load from:', pathOrDataURL || CONFIG.templatePath, 'Error:', e);
+          // Don't reject, allow generation with default background
+          _templateImg = null;
+          resolve(null);
+        };
         const src = pathOrDataURL || CONFIG.templatePath;
-        console.log('Loading image from:', src);
+        console.log('Attempting to load marksheet template from:', src);
         img.src = src;
       });
     },
@@ -296,6 +286,21 @@ var MarksheetGenerator = (() => {
           reject(err);
         }
       });
+    },
+
+    /**
+     * Get data URL for preview display.
+     * @param {Object} marksheet — same as download()
+     * @returns {Promise<string>} Data URL
+     */
+    async getDataURL(marksheet) {
+      try {
+        await _render(marksheet);
+        return _canvas.toDataURL('image/jpeg', 0.95);
+      } catch (err) {
+        console.error('MarksheetGenerator.getDataURL error:', err);
+        throw err;
+      }
     },
 
     /**

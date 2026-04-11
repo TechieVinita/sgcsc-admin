@@ -11,8 +11,9 @@ const TEMPLATE_TYPES = [
     "trainingCentreName", "applicantName", "atcCode", "atcCode2", "dateOfIssue", "dateOfRenewal"
   ]},
   { key: "marksheet", name: "Marksheet", fields: [
-    "studentName", "enrollmentNumber", "fatherName", "courseName",
-    "session", "examRollNo", "examDate", "centerName"
+    "enrollmentNo", "rollNumber", "studentName", "fatherName", "motherName",
+    "dob", "courseName", "courseDuration", "coursePeriodFrom", "coursePeriodTo", "instituteName",
+    "subjectsStartY", "subjectRowHeight"
   ]}
 ];
 
@@ -21,6 +22,8 @@ const FIELD_LABELS = {
   fatherHusbandName: "Father/Husband Name",
   motherName: "Mother Name",
   enrollmentNumber: "Enrollment Number",
+  enrollmentNo: "Enrollment No",
+  rollNumber: "Roll Number",
   computerTyping: "Computer Typing",
   certificateNo: "Certificate No",
   dateOfIssue: "Date of Issue",
@@ -37,6 +40,13 @@ const FIELD_LABELS = {
   examRollNo: "Exam Roll No",
   examDate: "Exam Date",
   centerName: "Center Name",
+  dob: "Date of Birth",
+  courseDuration: "Course Duration",
+  coursePeriodFrom: "Course Period From",
+  coursePeriodTo: "Course Period To",
+  instituteName: "Institute Name",
+  subjectsStartY: "Subjects Table Start Y (%)",
+  subjectRowHeight: "Subject Row Height (%)",
   trainingCentreName: "Training Centre Name",
   applicantName: "Applicant Name",
   atcCode: "ATC Code",
@@ -68,14 +78,49 @@ const SAMPLE_DATA = {
     dateOfRenewal: "2025-03-15"
   },
   marksheet: {
+    enrollmentNo: "EN/2024/001",
     studentName: "John Doe",
-    enrollmentNumber: "EN/2024/001",
     fatherName: "Robert Doe",
+    motherName: "Jane Doe",
     courseName: "Certificate in Computer Application",
-    session: "2023-2024",
-    examRollNo: "EX/2024/001",
-    examDate: "2024-03-15",
-    centerName: "Main Exam Center"
+    instituteName: "SGCSC Institute",
+    rollNumber: "EX/2024/001",
+    dob: "2000-01-15",
+    coursePeriodFrom: "2023-04-01",
+    coursePeriodTo: "2024-03-31",
+    courseDuration: "1 Year",
+    subjects: [
+      {
+        subjectName: "Computer Fundamentals",
+        theoryMarks: 80,
+        practicalMarks: 20,
+        combinedMarks: 100,
+        maxCombinedMarks: 100,
+        grade: "A+"
+      },
+      {
+        subjectName: "MS Office",
+        theoryMarks: 75,
+        practicalMarks: 25,
+        combinedMarks: 100,
+        maxCombinedMarks: 100,
+        grade: "A"
+      },
+      {
+        subjectName: "Internet & Email",
+        theoryMarks: 85,
+        practicalMarks: 15,
+        combinedMarks: 100,
+        maxCombinedMarks: 100,
+        grade: "A+"
+      }
+    ],
+    totalTheoryMarks: 240,
+    totalPracticalMarks: 60,
+    totalCombinedMarks: 300,
+    maxTotalMarks: 300,
+    percentage: 100,
+    overallGrade: "A+"
   }
 };
 

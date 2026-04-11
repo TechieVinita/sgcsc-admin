@@ -283,22 +283,20 @@ export default function MarksheetList() {
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
   const [search, setSearch] = useState('');
+  const [templateLoaded, setTemplateLoaded] = useState(false);
+  const [templateError, setTemplateError] = useState(null);
+  const [viewImage, setViewImage] = useState(null);
+  const [showViewModal, setShowViewModal] = useState(false);
 
   const loadAll = async () => {
     setLoading(true);
     setMsg('');
     try {
-      const data = await API.unwrap(API.get('/marksheets'));
-
-      const marksheetArr = Array.isArray(data)
-        ? data
-        : Array.isArray(data?.data)
-        ? data.data
-        : [];
-
-      setMarksheets(marksheetArr);
+      const response = await API.unwrap(API.get('/marksheets'));
+      const marksheetsData = Array.isArray(response) ? response : Array.isArray(response?.data) ? response.data : [];
+      setMarksheets(marksheetsData);
     } catch (err) {
-      console.error('fetch marksheets', err);
+      console.error('load marksheets error:', err);
       setMsg(err.userMessage || 'Failed to load marksheets');
     } finally {
       setLoading(false);
@@ -306,19 +304,17 @@ export default function MarksheetList() {
   };
 
   useEffect(() => {
-    loadAll();
+    loadAll(); // Load marksheets on component mount
   }, []);
 
-  // Initialize Marksheet Generator on mount
-  const [templateLoaded, setTemplateLoaded] = useState(false);
-  const [templateError, setTemplateError] = useState(null);
-  
   useEffect(() => {
     const initGenerator = async () => {
       if (typeof MarksheetGenerator !== 'undefined') {
         try {
           console.log('Loading marksheet template...');
-          await MarksheetGenerator.loadTemplate('/marksheet-template.jpeg');
+          const templateUrl = `${window.location.origin}/marksheet-template.jpeg`;
+          console.log('Template URL:', templateUrl);
+          await MarksheetGenerator.loadTemplate(templateUrl);
           MarksheetGenerator.fetchConfigFromAPI();
           console.log('Marksheet template loaded successfully');
           setTemplateLoaded(true);
@@ -334,10 +330,22 @@ export default function MarksheetList() {
   }, []);
 
   // Function to handle download using template-based generator
-  const handleTemplateDownload = (marksheet) => {
+  const handleTemplateDownload = async (marksheet) => {
     console.log('handleTemplateDownload called:', { templateLoaded, templateError, marksheet });
-    if (typeof MarksheetGenerator !== 'undefined' && templateLoaded) {
+
+    if (typeof MarksheetGenerator !== 'undefined') {
       try {
+        // Ensure template is loaded
+        if (!templateLoaded) {
+          console.log('Loading marksheet template...');
+          const templateUrl = `${window.location.origin}/marksheet-template.jpeg`;
+          console.log('Template URL:', templateUrl);
+          await MarksheetGenerator.loadTemplate(templateUrl);
+          MarksheetGenerator.fetchConfigFromAPI();
+          console.log('Marksheet template loaded successfully');
+        }
+
+        // Generate the PDF
         MarksheetGenerator.download({
           enrollmentNo: marksheet.enrollmentNo,
           studentName: marksheet.studentName,
@@ -359,12 +367,12 @@ export default function MarksheetList() {
           overallGrade: marksheet.overallGrade,
         });
       } catch (err) {
-        console.error('Error generating PDF:', err);
+        console.error('Error generating PDF with template:', err);
         // Fallback to HTML-based generation
         generateMarksheetPDF(marksheet);
       }
     } else {
-      console.warn('Template not loaded, using fallback');
+      console.warn('MarksheetGenerator not available, using fallback');
       // Fallback to HTML-based generation
       generateMarksheetPDF(marksheet);
     }
@@ -398,6 +406,52 @@ export default function MarksheetList() {
 
   const handleDownload = (marksheet) => {
     handleTemplateDownload(marksheet);
+  };
+
+  const handleView = async (marksheet) => {
+    if (typeof MarksheetGenerator !== 'undefined') {
+      try {
+        // Ensure template is loaded
+        if (!templateLoaded) {
+          console.log('Loading marksheet template for view...');
+          const templateUrl = `${window.location.origin}/marksheet-template.jpeg`;
+          await MarksheetGenerator.loadTemplate(templateUrl);
+          MarksheetGenerator.fetchConfigFromAPI();
+        }
+
+        // Generate preview image
+        const dataURL = await MarksheetGenerator.getDataURL({
+          enrollmentNo: marksheet.enrollmentNo,
+          studentName: marksheet.studentName,
+          fatherName: marksheet.fatherName,
+          motherName: marksheet.motherName,
+          courseName: marksheet.courseName,
+          instituteName: marksheet.instituteName,
+          rollNumber: marksheet.rollNumber,
+          dob: marksheet.dob,
+          coursePeriodFrom: marksheet.coursePeriodFrom,
+          coursePeriodTo: marksheet.coursePeriodTo,
+          courseDuration: marksheet.courseDuration,
+          subjects: marksheet.subjects,
+          totalTheoryMarks: marksheet.totalTheoryMarks,
+          totalPracticalMarks: marksheet.totalPracticalMarks,
+          totalCombinedMarks: marksheet.totalCombinedMarks,
+          maxTotalMarks: marksheet.maxTotalMarks,
+          percentage: marksheet.percentage,
+          overallGrade: marksheet.overallGrade,
+        });
+
+        setViewImage(dataURL);
+        setShowViewModal(true);
+      } catch (err) {
+        console.error('Error generating marksheet preview:', err);
+        // Fallback to HTML view
+        generateMarksheetPDF(marksheet);
+      }
+    } else {
+      // Fallback to HTML view
+      generateMarksheetPDF(marksheet);
+    }
   };
 
   return (
@@ -468,13 +522,13 @@ export default function MarksheetList() {
                           <td>{m.percentage ? `${m.percentage.toFixed(2)}%` : '-'}</td>
                           <td>{m.overallGrade || '-'}</td>
                            <td className="text-center">
-                             <button
-                               className="btn btn-sm btn-outline-info me-2"
-                               onClick={() => generateMarksheetPDF(m)}
-                               title="View Marksheet"
-                             >
-                               View
-                             </button>
+                              <button
+                                className="btn btn-sm btn-outline-info me-2"
+                                onClick={() => handleView(m)}
+                                title="View Marksheet"
+                              >
+                                View
+                              </button>
                              <button
                                className="btn btn-sm btn-outline-success me-2"
                                onClick={() => handleDownload(m)}
@@ -504,6 +558,51 @@ export default function MarksheetList() {
       
       {/* Hidden canvas for template-based marksheet generation */}
       <canvas id="marksheetCanvas" style={{ display: 'none' }}></canvas>
+
+      {/* View Modal */}
+      {showViewModal && (
+        <div
+          className="modal d-block"
+          tabIndex="-1"
+          role="dialog"
+          style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+        >
+          <div className="modal-dialog modal-xl modal-dialog-centered" role="document" style={{ maxWidth: '90%', maxHeight: '90vh' }}>
+            <div className="modal-content" style={{ maxHeight: '90vh' }}>
+              <div className="modal-header">
+                <h5 className="modal-title">Marksheet Preview</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setShowViewModal(false)}
+                />
+              </div>
+              <div className="modal-body text-center" style={{ overflow: 'auto', backgroundColor: '#f8f9fa' }}>
+                {viewImage ? (
+                  <img
+                    src={viewImage}
+                    alt="Marksheet Preview"
+                    style={{ maxWidth: '100%', maxHeight: '70vh', objectFit: 'contain' }}
+                  />
+                ) : (
+                  <div className="py-5 text-muted">
+                    <p>Unable to generate preview.</p>
+                  </div>
+                )}
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowViewModal(false)}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

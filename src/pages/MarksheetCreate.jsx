@@ -2,6 +2,40 @@
 import { useEffect, useState } from 'react';
 import API from "../api/axiosInstance";
 
+// Function to get default subjects for a course
+const getDefaultSubjectsForCourse = (course) => {
+  const courseName = (course.name || course.title || '').toLowerCase();
+
+  // Default subjects based on course type
+  if (courseName.includes('computer') || courseName.includes('cca') || courseName.includes('application')) {
+    return [
+      { subjectName: 'Computer Fundamentals', theoryMarks: '', practicalMarks: '', maxTheoryMarks: 70, maxPracticalMarks: 30, grade: '' },
+      { subjectName: 'MS Office', theoryMarks: '', practicalMarks: '', maxTheoryMarks: 70, maxPracticalMarks: 30, grade: '' },
+      { subjectName: 'Internet & Email', theoryMarks: '', practicalMarks: '', maxTheoryMarks: 70, maxPracticalMarks: 30, grade: '' },
+      { subjectName: 'Typing', theoryMarks: '', practicalMarks: '', maxTheoryMarks: 50, maxPracticalMarks: 50, grade: '' },
+    ];
+  } else if (courseName.includes('tally') || courseName.includes('accounting')) {
+    return [
+      { subjectName: 'Financial Accounting', theoryMarks: '', practicalMarks: '', maxTheoryMarks: 80, maxPracticalMarks: 20, grade: '' },
+      { subjectName: 'Tally Basics', theoryMarks: '', practicalMarks: '', maxTheoryMarks: 60, maxPracticalMarks: 40, grade: '' },
+      { subjectName: 'GST & Taxation', theoryMarks: '', practicalMarks: '', maxTheoryMarks: 70, maxPracticalMarks: 30, grade: '' },
+    ];
+  } else if (courseName.includes('typing') || courseName.includes('steno')) {
+    return [
+      { subjectName: 'English Typing', theoryMarks: '', practicalMarks: '', maxTheoryMarks: 40, maxPracticalMarks: 60, grade: '' },
+      { subjectName: 'Hindi Typing', theoryMarks: '', practicalMarks: '', maxTheoryMarks: 40, maxPracticalMarks: 60, grade: '' },
+      { subjectName: 'Speed Building', theoryMarks: '', practicalMarks: '', maxTheoryMarks: 50, maxPracticalMarks: 50, grade: '' },
+    ];
+  } else {
+    // Generic default subjects
+    return [
+      { subjectName: 'Subject 1', theoryMarks: '', practicalMarks: '', maxTheoryMarks: 100, maxPracticalMarks: 0, grade: '' },
+      { subjectName: 'Subject 2', theoryMarks: '', practicalMarks: '', maxTheoryMarks: 100, maxPracticalMarks: 0, grade: '' },
+      { subjectName: 'Subject 3', theoryMarks: '', practicalMarks: '', maxTheoryMarks: 100, maxPracticalMarks: 0, grade: '' },
+    ];
+  }
+};
+
 export default function MarksheetCreate() {
   const [courses, setCourses] = useState([]);
   const [students, setStudents] = useState([]);
@@ -22,7 +56,7 @@ export default function MarksheetCreate() {
   // Subject fields
   const [numberOfSubjects, setNumberOfSubjects] = useState(1);
   const [subjects, setSubjects] = useState([
-    { subjectName: '', theoryMarks: 0, practicalMarks: 0, maxTheoryMarks: 100, maxPracticalMarks: 0, grade: '' }
+    { subjectName: '', theoryMarks: '', practicalMarks: '', maxTheoryMarks: 100, maxPracticalMarks: 0, grade: '' }
   ]);
 
   // Optional links
@@ -85,7 +119,7 @@ export default function MarksheetCreate() {
       if (subjects[i]) {
         newSubjects.push(subjects[i]);
       } else {
-        newSubjects.push({ subjectName: '', theoryMarks: 0, practicalMarks: 0, maxTheoryMarks: 100, maxPracticalMarks: 0, grade: '' });
+        newSubjects.push({ subjectName: '', theoryMarks: '', practicalMarks: '', maxTheoryMarks: 100, maxPracticalMarks: 0, grade: '' });
       }
     }
     setSubjects(newSubjects);
@@ -172,7 +206,7 @@ export default function MarksheetCreate() {
   const handleStudentChange = (e) => {
     const selectedStudentId = e.target.value;
     setStudentId(selectedStudentId);
-    
+
     if (selectedStudentId) {
       const selectedStudent = students.find((s) => (s._id || s.id) === selectedStudentId);
       if (selectedStudent) {
@@ -180,10 +214,10 @@ export default function MarksheetCreate() {
         if (selectedStudent.fatherName) setFatherName(selectedStudent.fatherName);
         if (selectedStudent.motherName) setMotherName(selectedStudent.motherName);
         if (selectedStudent.rollNumber) setRollNumber(selectedStudent.rollNumber);
-        if (selectedStudent.enrollmentNo) setEnrollmentNo(selectedStudent.enrollmentNo);
+        if (selectedStudent.enrollmentNo || selectedStudent.rollNumber) setEnrollmentNo(selectedStudent.enrollmentNo || selectedStudent.rollNumber);
         if (selectedStudent.courseName) setCourseName(selectedStudent.courseName);
         if (selectedStudent.centerName) setInstituteName(selectedStudent.centerName);
-        
+
         if (selectedStudent.dob) {
           const dobDate = new Date(selectedStudent.dob);
           setDob(dobDate.toISOString().split('T')[0]);
@@ -195,23 +229,26 @@ export default function MarksheetCreate() {
   // Handle course selection
   const handleCourseChange = async (e) => {
     const selectedCourseId = e.target.value;
+    console.log('Course selected:', selectedCourseId);
     setCourseId(selectedCourseId);
-    
+
     if (selectedCourseId) {
       const selectedCourse = courses.find((c) => (c._id || c.id) === selectedCourseId);
       if (selectedCourse) {
         setCourseName(selectedCourse.name || selectedCourse.title || '');
-        
-        // Fetch subjects for this course
+
+        // First try to fetch subjects from the separate subjects collection
         try {
+          console.log('Fetching subjects for course:', selectedCourseId);
           const subjectsResponse = await API.unwrap(API.get(`/subjects?course=${selectedCourseId}`));
           const subjectsData = Array.isArray(subjectsResponse) ? subjectsResponse : Array.isArray(subjectsResponse?.data) ? subjectsResponse.data : [];
-          
+          console.log('Subjects response:', subjectsResponse, 'Subjects data:', subjectsData);
+
           if (subjectsData.length > 0) {
             const courseSubjects = subjectsData.map((subject) => ({
               subjectName: subject.name || subject.subjectName || '',
-              theoryMarks: 0,
-              practicalMarks: 0,
+              theoryMarks: '',
+              practicalMarks: '',
               maxTheoryMarks: subject.maxMarks || 100,
               maxPracticalMarks: 0,
               grade: ''
@@ -220,20 +257,43 @@ export default function MarksheetCreate() {
             setNumberOfSubjects(courseSubjects.length);
             setMessageType('success');
             setMessage(`Successfully imported ${courseSubjects.length} subject(s) from the course. You can now enter marks for each subject.`);
+            return; // Successfully loaded subjects, exit
+          }
+        } catch (err) {
+          console.error('Error fetching subjects from subjects collection:', err);
+          // Continue to check embedded subjects
+        }
+
+        // Fallback: Check for embedded subjects in the course
+        console.log('Checking embedded subjects in course:', selectedCourse.subjects);
+        if (selectedCourse.subjects && Array.isArray(selectedCourse.subjects) && selectedCourse.subjects.length > 0) {
+          const courseSubjects = selectedCourse.subjects.map((subject) => ({
+            subjectName: subject.name || '',
+            theoryMarks: '',
+            practicalMarks: '',
+            maxTheoryMarks: subject.hasPractical ? 70 : 100, // Assume 70 theory + 30 practical if hasPractical
+            maxPracticalMarks: subject.hasPractical ? 30 : 0,
+            grade: ''
+          }));
+          setSubjects(courseSubjects);
+          setNumberOfSubjects(courseSubjects.length);
+          setMessageType('success');
+          setMessage(`Successfully imported ${courseSubjects.length} subject(s) from course data. You can now enter marks for each subject.`);
+        } else {
+          // If no subjects found anywhere, provide default subjects for common courses
+          console.log('No subjects found, providing defaults for course:', selectedCourse.name || selectedCourse.title);
+          const defaultSubjects = getDefaultSubjectsForCourse(selectedCourse);
+          if (defaultSubjects.length > 0) {
+            setSubjects(defaultSubjects);
+            setNumberOfSubjects(defaultSubjects.length);
+            setMessageType('info');
+            setMessage(`No subjects found for this course. Using default subjects. You can modify them as needed.`);
           } else {
-            // If no subjects found, reset to empty
             setSubjects([]);
             setNumberOfSubjects(0);
             setMessageType('info');
-            setMessage('No subjects found for this course. You can add subjects manually.');
+            setMessage('No subjects found for this course. You can add subjects manually using the "Add Subject" button below.');
           }
-        } catch (err) {
-          console.error('Error fetching subjects for course:', err);
-          // If error fetching subjects, reset to empty
-          setSubjects([]);
-          setNumberOfSubjects(0);
-          setMessageType('danger');
-          setMessage('Failed to fetch subjects for this course. Please try again or add subjects manually.');
         }
       }
     } else {
@@ -246,11 +306,15 @@ export default function MarksheetCreate() {
   // Handle subject field change
   const handleSubjectChange = (index, field, value) => {
     const newSubjects = [...subjects];
-    // For number fields, ensure we store a number
+    // For number fields, allow empty strings for better UX, convert to number only when not empty
     if (field === 'theoryMarks' || field === 'practicalMarks' || field === 'maxTheoryMarks' || field === 'maxPracticalMarks') {
-      // Allow empty string or convert to number
-      const numValue = value === '' ? 0 : Number(value);
-      newSubjects[index] = { ...newSubjects[index], [field]: isNaN(numValue) ? 0 : numValue };
+      // Allow empty string, or convert to number if it's a valid number
+      if (value === '' || value === null || value === undefined) {
+        newSubjects[index] = { ...newSubjects[index], [field]: '' };
+      } else {
+        const numValue = Number(value);
+        newSubjects[index] = { ...newSubjects[index], [field]: isNaN(numValue) ? '' : numValue };
+      }
     } else {
       newSubjects[index] = { ...newSubjects[index], [field]: value };
     }
@@ -370,7 +434,7 @@ export default function MarksheetCreate() {
       setCoursePeriodTo('');
       setCourseDuration('');
       setNumberOfSubjects(1);
-      setSubjects([{ subjectName: '', theoryMarks: 0, practicalMarks: 0, maxTheoryMarks: 100, maxPracticalMarks: 0, grade: '' }]);
+       setSubjects([{ subjectName: '', theoryMarks: '', practicalMarks: '', maxTheoryMarks: 100, maxPracticalMarks: 0, grade: '' }]);
       setCourseId('');
       setStudentId('');
     } catch (err) {
@@ -611,7 +675,7 @@ export default function MarksheetCreate() {
                         type="button"
                         className="btn btn-outline-primary btn-sm"
                         onClick={() => {
-                          setSubjects([...subjects, { subjectName: '', theoryMarks: 0, practicalMarks: 0, maxTheoryMarks: 100, maxPracticalMarks: 0, grade: '' }]);
+                          setSubjects([...subjects, { subjectName: '', theoryMarks: '', practicalMarks: '', maxTheoryMarks: 100, maxPracticalMarks: 0, grade: '' }]);
                           setNumberOfSubjects(subjects.length + 1);
                         }}
                       >
@@ -625,7 +689,11 @@ export default function MarksheetCreate() {
                     <div className="col-12">
                       <div className="alert alert-info">
                         <i className="bi bi-info-circle me-2"></i>
-                        No subjects loaded. Please select a course above to import subjects, or click "Add Subject" to add subjects manually.
+                        <strong>No subjects loaded.</strong> To get started:
+                        <ol className="mb-0 mt-2">
+                          <li>Select a course above to auto-import subjects (if subjects have been created for that course)</li>
+                          <li>Or click "Add Subject" above to manually add subjects</li>
+                        </ol>
                       </div>
                     </div>
                   )}
