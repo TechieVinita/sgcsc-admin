@@ -2,39 +2,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import API from "../api/axiosInstance";
 
-// Function to get default subjects for a course
-const getDefaultSubjectsForCourse = (course) => {
-  const courseName = (course.name || course.title || '').toLowerCase();
-
-  // Default subjects based on course type
-  if (courseName.includes('computer') || courseName.includes('cca') || courseName.includes('application')) {
-    return [
-      { subjectName: 'Computer Fundamentals', theoryMarks: '', practicalMarks: '', maxTheoryMarks: 70, maxPracticalMarks: 30, grade: '' },
-      { subjectName: 'MS Office', theoryMarks: '', practicalMarks: '', maxTheoryMarks: 70, maxPracticalMarks: 30, grade: '' },
-      { subjectName: 'Internet & Email', theoryMarks: '', practicalMarks: '', maxTheoryMarks: 70, maxPracticalMarks: 30, grade: '' },
-      { subjectName: 'Typing', theoryMarks: '', practicalMarks: '', maxTheoryMarks: 50, maxPracticalMarks: 50, grade: '' },
-    ];
-  } else if (courseName.includes('tally') || courseName.includes('accounting')) {
-    return [
-      { subjectName: 'Financial Accounting', theoryMarks: '', practicalMarks: '', maxTheoryMarks: 80, maxPracticalMarks: 20, grade: '' },
-      { subjectName: 'Tally Basics', theoryMarks: '', practicalMarks: '', maxTheoryMarks: 60, maxPracticalMarks: 40, grade: '' },
-      { subjectName: 'GST & Taxation', theoryMarks: '', practicalMarks: '', maxTheoryMarks: 70, maxPracticalMarks: 30, grade: '' },
-    ];
-  } else if (courseName.includes('typing') || courseName.includes('steno')) {
-    return [
-      { subjectName: 'English Typing', theoryMarks: '', practicalMarks: '', maxTheoryMarks: 40, maxPracticalMarks: 60, grade: '' },
-      { subjectName: 'Hindi Typing', theoryMarks: '', practicalMarks: '', maxTheoryMarks: 40, maxPracticalMarks: 60, grade: '' },
-      { subjectName: 'Speed Building', theoryMarks: '', practicalMarks: '', maxTheoryMarks: 50, maxPracticalMarks: 50, grade: '' },
-    ];
-  } else {
-    // Generic default subjects
-    return [
-      { subjectName: 'Subject 1', theoryMarks: '', practicalMarks: '', maxTheoryMarks: 100, maxPracticalMarks: 0, grade: '' },
-      { subjectName: 'Subject 2', theoryMarks: '', practicalMarks: '', maxTheoryMarks: 100, maxPracticalMarks: 0, grade: '' },
-      { subjectName: 'Subject 3', theoryMarks: '', practicalMarks: '', maxTheoryMarks: 100, maxPracticalMarks: 0, grade: '' },
-    ];
-  }
-};
 
 export default function MarksheetCreate() {
   const [courses, setCourses] = useState([]);
