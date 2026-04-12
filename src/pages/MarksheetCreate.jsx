@@ -237,7 +237,6 @@ export default function MarksheetCreate() {
               grade: ''
             }));
             setSubjects(courseSubjects);
-            setNumberOfSubjects(courseSubjects.length);
             setMessageType('success');
             setMessage(`Successfully imported ${courseSubjects.length} subject(s) from the course. You can now enter marks for each subject.`);
             return; // Successfully loaded subjects, exit
@@ -259,7 +258,6 @@ export default function MarksheetCreate() {
             grade: ''
           }));
           setSubjects(courseSubjects);
-          setNumberOfSubjects(courseSubjects.length);
           setMessageType('success');
           setMessage(`Successfully imported ${courseSubjects.length} subject(s) from course data. You can now enter marks for each subject.`);
         } else {
@@ -268,12 +266,10 @@ export default function MarksheetCreate() {
           const defaultSubjects = getDefaultSubjectsForCourse(selectedCourse);
           if (defaultSubjects.length > 0) {
             setSubjects(defaultSubjects);
-            setNumberOfSubjects(defaultSubjects.length);
             setMessageType('info');
             setMessage(`No subjects found for this course. Using default subjects. You can modify them as needed.`);
           } else {
             setSubjects([]);
-            setNumberOfSubjects(0);
             setMessageType('info');
             setMessage('No subjects found for this course. You can add subjects manually using the "Add Subject" button below.');
           }
@@ -282,7 +278,6 @@ export default function MarksheetCreate() {
     } else {
       // If no course selected, reset subjects
       setSubjects([]);
-      setNumberOfSubjects(0);
     }
   };
 
@@ -671,7 +666,6 @@ export default function MarksheetCreate() {
                         className="btn btn-outline-primary btn-sm"
                         onClick={() => {
                           setSubjects([...subjects, { subjectName: '', theoryMarks: '', practicalMarks: '', maxTheoryMarks: 100, maxPracticalMarks: 0, grade: '' }]);
-                          setNumberOfSubjects(subjects.length + 1);
                         }}
                       >
                         <i className="bi bi-plus-circle me-1"></i>
@@ -706,7 +700,6 @@ export default function MarksheetCreate() {
                               onClick={() => {
                                 const newSubjects = subjects.filter((_, i) => i !== index);
                                 setSubjects(newSubjects);
-                                setNumberOfSubjects(newSubjects.length);
                               }}
                             >
                               <i className="bi bi-trash"></i>
