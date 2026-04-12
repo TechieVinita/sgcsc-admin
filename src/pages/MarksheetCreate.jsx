@@ -219,65 +219,7 @@ export default function MarksheetCreate() {
       const selectedCourse = courses.find((c) => (c._id || c.id) === selectedCourseId);
       if (selectedCourse) {
         setCourseName(selectedCourse.name || selectedCourse.title || '');
-
-        // First try to fetch subjects from the separate subjects collection
-        try {
-          console.log('Fetching subjects for course:', selectedCourseId);
-          const subjectsResponse = await API.unwrap(API.get(`/subjects?course=${selectedCourseId}`));
-          const subjectsData = Array.isArray(subjectsResponse) ? subjectsResponse : Array.isArray(subjectsResponse?.data) ? subjectsResponse.data : [];
-          console.log('Subjects response:', subjectsResponse, 'Subjects data:', subjectsData);
-
-          if (subjectsData.length > 0) {
-            const courseSubjects = subjectsData.map((subject) => ({
-              subjectName: subject.name || subject.subjectName || '',
-              theoryMarks: '',
-              practicalMarks: '',
-              maxTheoryMarks: subject.maxMarks || 100,
-              maxPracticalMarks: 0,
-              grade: ''
-            }));
-            setSubjects(courseSubjects);
-            setMessageType('success');
-            setMessage(`Successfully imported ${courseSubjects.length} subject(s) from the course. You can now enter marks for each subject.`);
-            return; // Successfully loaded subjects, exit
-          }
-        } catch (err) {
-          console.error('Error fetching subjects from subjects collection:', err);
-          // Continue to check embedded subjects
-        }
-
-        // Fallback: Check for embedded subjects in the course
-        console.log('Checking embedded subjects in course:', selectedCourse.subjects);
-        if (selectedCourse.subjects && Array.isArray(selectedCourse.subjects) && selectedCourse.subjects.length > 0) {
-          const courseSubjects = selectedCourse.subjects.map((subject) => ({
-            subjectName: subject.name || '',
-            theoryMarks: '',
-            practicalMarks: '',
-            maxTheoryMarks: subject.hasPractical ? 70 : 100, // Assume 70 theory + 30 practical if hasPractical
-            maxPracticalMarks: subject.hasPractical ? 30 : 0,
-            grade: ''
-          }));
-          setSubjects(courseSubjects);
-          setMessageType('success');
-          setMessage(`Successfully imported ${courseSubjects.length} subject(s) from course data. You can now enter marks for each subject.`);
-        } else {
-          // If no subjects found anywhere, provide default subjects for common courses
-          console.log('No subjects found, providing defaults for course:', selectedCourse.name || selectedCourse.title);
-          const defaultSubjects = getDefaultSubjectsForCourse(selectedCourse);
-          if (defaultSubjects.length > 0) {
-            setSubjects(defaultSubjects);
-            setMessageType('info');
-            setMessage(`No subjects found for this course. Using default subjects. You can modify them as needed.`);
-          } else {
-            setSubjects([]);
-            setMessageType('info');
-            setMessage('No subjects found for this course. You can add subjects manually using the "Add Subject" button below.');
-          }
-        }
       }
-    } else {
-      // If no course selected, reset subjects
-      setSubjects([]);
     }
   };
 
@@ -659,7 +601,7 @@ export default function MarksheetCreate() {
                     <div className="d-flex justify-content-between align-items-center mb-3">
                       <div>
                         <h5 className="mb-1 text-primary">Subjects & Marks</h5>
-                        <p className="text-muted small mb-0">Subject names are automatically imported from the selected course. Enter the marks for each subject below.</p>
+                        <p className="text-muted small mb-0">Enter subject names and marks manually below.</p>
                       </div>
                       <button
                         type="button"
@@ -678,11 +620,7 @@ export default function MarksheetCreate() {
                     <div className="col-12">
                       <div className="alert alert-info">
                         <i className="bi bi-info-circle me-2"></i>
-                        <strong>No subjects loaded.</strong> To get started:
-                        <ol className="mb-0 mt-2">
-                          <li>Select a course above to auto-import subjects (if subjects have been created for that course)</li>
-                          <li>Or click "Add Subject" above to manually add subjects</li>
-                        </ol>
+                        <strong>No subjects added.</strong> Click "Add Subject" above to manually add subjects.
                       </div>
                     </div>
                   )}
@@ -709,7 +647,7 @@ export default function MarksheetCreate() {
                         <div className="card-body">
                           <div className="row g-3">
                             <div className="col-md-6">
-                              <label className="form-label">Subject Name {subject.subjectName ? '(from course)' : '(manual entry)'}</label>
+                              <label className="form-label">Subject Name</label>
                               <input
                                 type="text"
                                 className="form-control"
