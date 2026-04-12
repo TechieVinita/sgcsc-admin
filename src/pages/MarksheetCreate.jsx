@@ -1,5 +1,5 @@
 // src/pages/MarksheetCreate.jsx
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import API from "../api/axiosInstance";
 
 // Function to get default subjects for a course
@@ -127,7 +127,7 @@ export default function MarksheetCreate() {
   }, [numberOfSubjects, subjects]);
 
   // Calculate totals
-  const calculateTotals = () => {
+  const { totalTheory, totalPractical, totalCombined, maxTotal, percentage } = useMemo(() => {
     let totalTheory = 0;
     let totalPractical = 0;
     let totalCombined = 0;
@@ -147,9 +147,7 @@ export default function MarksheetCreate() {
 
     const percentage = maxTotal > 0 ? (totalCombined / maxTotal) * 100 : 0;
     return { totalTheory, totalPractical, totalCombined, maxTotal, percentage };
-  };
-
-  const { totalTheory, totalPractical, totalCombined, maxTotal, percentage } = calculateTotals();
+  }, [subjects]);
 
   // Calculate grade based on percentage
   const calculateGrade = (pct) => {
