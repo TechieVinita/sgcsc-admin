@@ -144,6 +144,9 @@ export default function Sidebar() {
           {openMenu === "idcard" && (
             <ul className="btn-toggle-nav list-unstyled ps-4 pt-2 pb-1">
               <li className="mb-1">
+                <NavLink to="/id-cards/create" className={subLinkClass}>Generate ID Card</NavLink>
+              </li>
+              <li className="mb-1">
                 <NavLink to="/id-cards" className={subLinkClass}>List ID Cards</NavLink>
               </li>
             </ul>
@@ -215,6 +218,9 @@ export default function Sidebar() {
           </button>
           {openMenu === "typing-certificates" && (
             <ul className="btn-toggle-nav list-unstyled ps-4 pt-2 pb-1">
+              <li className="mb-1">
+                <NavLink to="/typing-certificates/create" className={subLinkClass}>Generate Typing Certificate</NavLink>
+              </li>
               <li className="mb-1">
                 <NavLink to="/typing-certificates" className={subLinkClass}>List Typing Certificates</NavLink>
               </li>

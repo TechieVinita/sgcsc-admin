@@ -26,8 +26,8 @@ var MarksheetGenerator = (() => {
     fields: {
       // { x, y } as % of image dimensions. font is px at full resolution.
       enrollmentNo:       { x: 30,  y: 15, font: 'bold 150px serif',      color: '#000000', align: 'left' },
-      rollNumber:         { x: 73,  y: 28.5, font: 'bold 150px serif',    color: '#000000', align: 'left' },
-      studentName:        { x: 30,  y: 25.5, font: 'bold 150px serif',    color: '#000000', align: 'left' },
+      rollNumber:         { x: 73,  y: 28.5, font: '150px serif',    color: '#000000', align: 'left' },
+      studentName:        { x: 30,  y: 25.5, font: '150px serif',    color: '#000000', align: 'left' },
       fatherName:         { x: 30,  y: 28.4, font: '150px serif',         color: '#000000', align: 'left' },
       motherName:         { x: 30,  y: 31.3, font: '150px serif',         color: '#000000', align: 'left' },
       dob:                { x: 73,  y: 31.2, font: '150px serif',         color: '#000000', align: 'left' },

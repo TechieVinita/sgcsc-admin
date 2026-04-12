@@ -22,10 +22,12 @@ var AdmitCardGenerator = (() => {
   // ─────────────────────────────────────────────
   const CONFIG = {
     templatePath: 'admit-card-template.jpeg',   // ← path to your template (can be overridden)
+    canvasWidth: null,    // ← set custom canvas width in pixels (null = use template width)
+    canvasHeight: null,   // ← set custom canvas height in pixels (null = use template height)
 
     fields: {
       // { x, y } as % of image dimensions. font is px at full resolution.
-      photo:           { x: 74,  y: 25, width: 15, height: 10 },
+      photo:           { x: 74,  y: 25, width: 15, height: 15 },
       rollNumber:       { x: 30,  y: 27.5, font: '14px serif',      color: '#000000', align: 'left' },
       studentName:      { x: 30,  y: 29.7, font: '14px serif',      color: '#000000', align: 'left' },
       fatherName:       { x: 30,  y: 32, font: '14px serif',           color: '#000000', align: 'left' },
@@ -118,8 +120,8 @@ var AdmitCardGenerator = (() => {
     if (!_templateImg) throw new Error('Template not loaded. Call AdmitCardGenerator.loadTemplate() first.');
     if (!_initCanvas()) throw new Error('Canvas not found. Make sure <canvas id="admitCardCanvas"> exists.');
 
-    _canvas.width  = _templateImg.naturalWidth;
-    _canvas.height = _templateImg.naturalHeight;
+    _canvas.width  = CONFIG.canvasWidth || _templateImg.naturalWidth;
+    _canvas.height = CONFIG.canvasHeight || _templateImg.naturalHeight;
 
     // Draw template background
     _ctx.drawImage(_templateImg, 0, 0);
@@ -135,6 +137,7 @@ var AdmitCardGenerator = (() => {
             const y = _pct(photoField.y, _canvas.height);
             const w = _pct(photoField.width, _canvas.width);
             const h = _pct(photoField.height, _canvas.height);
+
             _ctx.drawImage(photoImg, x, y, w, h);
           }
         }

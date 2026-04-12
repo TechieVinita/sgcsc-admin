@@ -30,7 +30,7 @@
       sessionFrom:       { x: 48, y: 28, font: '60px serif', color: '#000000', align: 'left' },
       sessionTo:         { x: 60, y: 28, font: '60px serif', color: '#000000', align: 'left' },
       // Student photo field
-      photo:            { x: 35, y: 30, width: 30, height: 17 },
+      photo:            { x: 35, y: 29.5, width: 30, height: 17 },
       // Note: No photo field by default - add if needed
       fatherName:        { x: 51, y: 55.5, font: '80px serif', color: '#000000', align: 'left' },
       motherName:        { x: 51, y: 59.5, font: '80px serif', color: '#000000', align: 'left' },
@@ -174,8 +174,29 @@
             const y = _pct(photoField.y, _canvas.height);
             const w = _pct(photoField.width, _canvas.width);
             const h = _pct(photoField.height, _canvas.height);
-            console.log('Drawing photo at:', { x, y, w, h });
-            _ctx.drawImage(photoImg, x, y, w, h);
+            console.log('Drawing circular photo at:', { x, y, w, h });
+
+            // Draw circular photo using temporary canvas
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCanvas.width = w;
+            tempCanvas.height = h;
+
+            // Draw circular mask on temp canvas
+            tempCtx.beginPath();
+            const tempCenterX = w / 2;
+            const tempCenterY = h / 2;
+            const tempRadius = Math.min(w, h) / 2;
+            tempCtx.arc(tempCenterX, tempCenterY, tempRadius, 0, Math.PI * 2);
+            tempCtx.fillStyle = '#000000';
+            tempCtx.fill();
+
+            // Use destination-in to clip the image to the circle
+            tempCtx.globalCompositeOperation = 'source-in';
+            tempCtx.drawImage(photoImg, 0, 0, w, h);
+
+            // Draw the circular result to main canvas
+            _ctx.drawImage(tempCanvas, x, y, w, h);
           }
         } else {
           console.log('Photo image failed to load');

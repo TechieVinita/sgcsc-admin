@@ -5,6 +5,42 @@ import API, { getCourses } from "../api/api";
 // Certificate Generator Global Reference
 let certificateGenerator = null;
 
+// Helper function to calculate duration between two dates in "X years Y months" format
+function calculateDuration(fromDate, toDate) {
+  if (!fromDate || !toDate) return '';
+
+  const from = new Date(fromDate);
+  const to = new Date(toDate);
+
+  if (isNaN(from.getTime()) || isNaN(to.getTime())) return '';
+
+  let years = to.getFullYear() - from.getFullYear();
+  let months = to.getMonth() - from.getMonth();
+
+  // Adjust for negative months
+  if (months < 0) {
+    years--;
+    months += 12;
+  }
+
+  // If to date is before from date in the same year
+  if (to < from) {
+    years--;
+    months += 12;
+  }
+
+  // Build the duration string
+  const parts = [];
+  if (years > 0) {
+    parts.push(`${years} year${years > 1 ? 's' : ''}`);
+  }
+  if (months > 0) {
+    parts.push(`${months} month${months > 1 ? 's' : ''}`);
+  }
+
+  return parts.join(' ') || '0 months';
+}
+
 export default function CertificateCreate() {
   // Form fields
   const [enrollmentNumber, setEnrollmentNumber] = useState('');
@@ -19,15 +55,16 @@ export default function CertificateCreate() {
   const [coursePeriodTo, setCoursePeriodTo] = useState('');
   const [certificateNumber, setCertificateNumber] = useState('');
   const [issueDate, setIssueDate] = useState('');
-  
+
   // State management
+  const [allStudents, setAllStudents] = useState([]);
+  const [filteredStudents, setFilteredStudents] = useState([]);
   const [courses, setCourses] = useState([]);
-  const [filteredCourseList, setFilteredCourseList] = useState([]);
+  const [filteredCourses, setFilteredCourses] = useState([]);
   const [saving, setSaving] = useState(false);
-  const [loadingStudent, setLoadingStudent] = useState(false);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('info'); // 'success' | 'danger' | 'info'
-  
+
   // Certificate preview state
   const [previewUrl, setPreviewUrl] = useState(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
@@ -108,118 +145,221 @@ export default function CertificateCreate() {
     });
   };
 
-  // Fetch courses on mount
+
+
+  // Fetch courses and students on mount
   useEffect(() => {
-    const fetchCourses = async () => {
+    const fetchInitialData = async () => {
       try {
-        const data = await getCourses();
-        setCourses(data);
-        setFilteredCourseList(data);
+        // Fetch courses
+        const coursesData = await getCourses();
+        setCourses(coursesData);
+
+        // Fetch all students
+        const studentsRes = await API.get('/students');
+        const studentsData = Array.isArray(studentsRes.data) ? studentsRes.data : Array.isArray(studentsRes.data?.data) ? studentsRes.data.data : [];
+        setAllStudents(studentsData);
+        setFilteredStudents(studentsData);
       } catch (err) {
-        console.error('Failed to fetch courses:', err);
+        console.error('Failed to fetch initial data:', err);
       }
     };
-    fetchCourses();
-    
+
+    fetchInitialData();
+
     // Try to initialize certificate generator on mount
     initCertificateGenerator();
   }, []);
 
-  // Lookup student by enrollment number
-  const handleLookupStudent = async () => {
-    if (!enrollmentNumber.trim()) {
-      setMessageType('danger');
-      setMessage('Please enter an enrollment number first.');
-      return;
+  // Auto-calculate course duration when period dates change
+  useEffect(() => {
+    if (coursePeriodFrom && coursePeriodTo) {
+      const duration = calculateDuration(coursePeriodFrom, coursePeriodTo);
+      setCourseDuration(duration);
+    } else {
+      setCourseDuration('');
     }
+  }, [coursePeriodFrom, coursePeriodTo]);
 
-    setLoadingStudent(true);
-    setMessage('');
+  // Handle student selection - filter courses for this student
+  const handleStudentSelection = (selectedEnrollmentNumber) => {
+    setEnrollmentNumber(selectedEnrollmentNumber);
+    setCourseName(''); // Reset course selection
 
-    try {
-      // Fetch student using the same endpoint as FeeReceipt to get full student data with courses
-      const res = await API.get('/students');
-      const allStudents = Array.isArray(res.data) ? res.data : Array.isArray(res.data?.data) ? res.data.data : [];
-      
-      // Find student by enrollment/roll number
-      const student = allStudents.find(s => 
-        (s.enrollmentNumber || s.rollNumber || '').toLowerCase() === enrollmentNumber.trim().toLowerCase()
-      );
-      
-      if (student) {
-        // Auto-fill student details
-        setName(student.name || '');
-        setFatherName(student.fatherName || '');
-        // Store the student photo for certificate generation
-        setStudentPhoto(student.photo || '');
-        
-        // Use the student's courses array if available, otherwise use courseName
-        if (student.courses && student.courses.length > 0) {
-          // Create a filtered list from student's courses
-          const studentCourses = student.courses.map(c => ({
-            _id: c._id,
-            name: c.courseName
-          }));
-          setFilteredCourseList(studentCourses);
-          
-          // Set the first course as default
-          if (student.courses[0] && student.courses[0].courseName) {
-            setCourseName(student.courses[0].courseName);
-          }
-          
-          // Set session from first course
-          if (student.courses[0] && student.courses[0].sessionStart) {
-            const startYear = new Date(student.courses[0].sessionStart).getFullYear();
-            setSessionFrom(startYear.toString());
-          }
-          if (student.courses[0] && student.courses[0].sessionEnd) {
-            const endYear = new Date(student.courses[0].sessionEnd).getFullYear();
-            setSessionTo(endYear.toString());
-          }
-        } else {
-          // Fallback to old behavior
-          const enrolledCourse = student.courseName || '';
-          setCourseName(enrolledCourse);
-          
-          // Set session years if available
-          if (student.sessionStart) {
-            const startYear = new Date(student.sessionStart).getFullYear();
-            setSessionFrom(startYear.toString());
-          }
-          if (student.sessionEnd) {
-            const endYear = new Date(student.sessionEnd).getFullYear();
-            setSessionTo(endYear.toString());
-          }
-          
-          // Show all courses if no courses array
-          const latestCourses = await getCourses();
-          setCourses(latestCourses);
-          setFilteredCourseList(latestCourses);
-        }
+    // Find the selected student
+    const selectedStudent = allStudents.find(student =>
+      (student.enrollmentNumber || student.rollNumber) === selectedEnrollmentNumber
+    );
 
-        setMessageType('success');
-        setMessage('Student details loaded successfully!');
+    if (selectedStudent) {
+      // Filter courses that this student is enrolled in
+      if (selectedStudent.courses && Array.isArray(selectedStudent.courses)) {
+        const studentCourses = selectedStudent.courses.map(c => ({
+          _id: c._id,
+          name: c.courseName
+        }));
+        setFilteredCourses(studentCourses);
+      } else if (selectedStudent.courseName) {
+        // Fallback for single course
+        const studentCourse = courses.find(c => c.name === selectedStudent.courseName);
+        setFilteredCourses(studentCourse ? [studentCourse] : []);
+      } else {
+        setFilteredCourses([]);
       }
-    } catch (err) {
-      console.error('Student lookup error:', err);
-      setMessageType('danger');
-      setMessage(err.userMessage || 'Student not found with this enrollment number.');
-      // Clear auto-filled fields on error
-      setName('');
-      setFatherName('');
-      setCourseName('');
-      setSessionFrom('');
-      setSessionTo('');
-      setFilteredCourseList(courses);
-    } finally {
-      setLoadingStudent(false);
+
+      setMessageType('info');
+      setMessage(`Student selected. Now choose a course to auto-fill details.`);
     }
   };
+
+  // Handle course selection - auto-fill details
+  const handleCourseSelection = async (selectedCourseName) => {
+    setCourseName(selectedCourseName);
+
+    // Find the selected student
+    const selectedStudent = allStudents.find(student =>
+      (student.enrollmentNumber || student.rollNumber) === enrollmentNumber
+    );
+
+    if (selectedStudent && selectedCourseName) {
+      try {
+        // Fetch marksheet for this student and course to get the grade from marksheet
+        const marksheetRes = await API.get('/marksheets');
+        const allMarksheets = Array.isArray(marksheetRes.data) ? marksheetRes.data : Array.isArray(marksheetRes.data?.data) ? marksheetRes.data.data : [];
+
+        // Find marksheet for this student and course
+        const studentMarksheet = allMarksheets.find(marksheet =>
+          marksheet.enrollmentNo === enrollmentNumber && marksheet.courseName === selectedCourseName
+        );
+
+        // Find the course details for this student
+        let courseDetails = null;
+        if (selectedStudent.courses && Array.isArray(selectedStudent.courses)) {
+          courseDetails = selectedStudent.courses.find(c => c.courseName === selectedCourseName);
+        }
+
+        if (courseDetails) {
+          // Auto-fill student details
+          setName(selectedStudent.name || '');
+          setFatherName(selectedStudent.fatherName || '');
+
+          // Set session from course details
+          if (courseDetails.sessionStart) {
+            const startYear = new Date(courseDetails.sessionStart).getFullYear();
+            setSessionFrom(startYear.toString());
+          }
+          if (courseDetails.sessionEnd) {
+            const endYear = new Date(courseDetails.sessionEnd).getFullYear();
+            setSessionTo(endYear.toString());
+          }
+
+          // Set course period dates first (duration will be auto-calculated from dates)
+          if (courseDetails.sessionStart) {
+            setCoursePeriodFrom(courseDetails.sessionStart.split('T')[0]); // Format as YYYY-MM-DD
+          }
+          if (courseDetails.sessionEnd) {
+            setCoursePeriodTo(courseDetails.sessionEnd.split('T')[0]); // Format as YYYY-MM-DD
+          }
+
+          // Note: Course duration will be auto-calculated from the dates above
+        } else {
+          // Fallback to student-level course data
+          setName(selectedStudent.name || '');
+          setFatherName(selectedStudent.fatherName || '');
+
+          if (selectedStudent.sessionStart) {
+            const startYear = new Date(selectedStudent.sessionStart).getFullYear();
+            setSessionFrom(startYear.toString());
+          }
+          if (selectedStudent.sessionEnd) {
+            const endYear = new Date(selectedStudent.sessionEnd).getFullYear();
+            setSessionTo(endYear.toString());
+          }
+        }
+
+        // Set grade from marksheet if available, otherwise fallback to student record
+        if (studentMarksheet && studentMarksheet.overallGrade) {
+          setGrade(studentMarksheet.overallGrade);
+        } else {
+          setGrade(selectedStudent.grade || '');
+        }
+
+        // Store student photo
+        setStudentPhoto(selectedStudent.photo || '');
+
+        setMessageType('success');
+        setMessage('Student and course details auto-filled successfully!');
+      } catch (err) {
+        console.error('Error fetching marksheet for grade:', err);
+        // Fallback to existing logic without marksheet
+        // Find the course details for this student
+        let courseDetails = null;
+        if (selectedStudent.courses && Array.isArray(selectedStudent.courses)) {
+          courseDetails = selectedStudent.courses.find(c => c.courseName === selectedCourseName);
+        }
+
+        if (courseDetails) {
+          // Auto-fill student details
+          setName(selectedStudent.name || '');
+          setFatherName(selectedStudent.fatherName || '');
+
+          // Set session from course details
+          if (courseDetails.sessionStart) {
+            const startYear = new Date(courseDetails.sessionStart).getFullYear();
+            setSessionFrom(startYear.toString());
+          }
+          if (courseDetails.sessionEnd) {
+            const endYear = new Date(courseDetails.sessionEnd).getFullYear();
+            setSessionTo(endYear.toString());
+          }
+
+          // Set course period dates first (duration will be auto-calculated from dates)
+          if (courseDetails.sessionStart) {
+            setCoursePeriodFrom(courseDetails.sessionStart.split('T')[0]); // Format as YYYY-MM-DD
+          }
+          if (courseDetails.sessionEnd) {
+            setCoursePeriodTo(courseDetails.sessionEnd.split('T')[0]); // Format as YYYY-MM-DD
+          }
+
+          // Note: Course duration will be auto-calculated from the dates above
+        } else {
+          // Fallback to student-level course data
+          setName(selectedStudent.name || '');
+          setFatherName(selectedStudent.fatherName || '');
+
+          if (selectedStudent.sessionStart) {
+            const startYear = new Date(selectedStudent.sessionStart).getFullYear();
+            setSessionFrom(startYear.toString());
+          }
+          if (selectedStudent.sessionEnd) {
+            const endYear = new Date(selectedStudent.sessionEnd).getFullYear();
+            setSessionTo(endYear.toString());
+          }
+        }
+
+        // Set grade from student record since marksheet fetch failed
+        setGrade(selectedStudent.grade || '');
+
+        // Store student photo
+        setStudentPhoto(selectedStudent.photo || '');
+
+        setMessageType('success');
+        setMessage('Student and course details auto-filled successfully!');
+      }
+    }
+  };
+
+
 
   const validate = () => {
     if (!enrollmentNumber.trim()) {
       setMessageType('danger');
-      setMessage('Enrollment Number is required.');
+      setMessage('Student selection is required.');
+      return false;
+    }
+    if (!courseName.trim()) {
+      setMessageType('danger');
+      setMessage('Course Name is required.');
       return false;
     }
     if (!name.trim()) {
@@ -489,29 +629,46 @@ export default function CertificateCreate() {
           <div className="card shadow-sm">
             <div className="card-body">
               <form onSubmit={handleSubmit} className="row g-3">
-                {/* Enrollment Number - First field with Lookup button */}
+                {/* Student Selection - First field */}
                 <div className="col-md-6">
-                  <label className="form-label">Enrollment Number *</label>
-                  <div className="input-group">
-                    <input
-                      type="text"
-                      className="form-control"
-                      value={enrollmentNumber}
-                      onChange={(e) => setEnrollmentNumber(e.target.value)}
-                      placeholder="Enter enrollment number"
-                      required
-                    />
-                    <button
-                      type="button"
-                      className="btn btn-outline-primary"
-                      onClick={handleLookupStudent}
-                      disabled={loadingStudent}
-                    >
-                      {loadingStudent ? 'Looking up...' : 'Lookup'}
-                    </button>
-                  </div>
+                  <label className="form-label">Student *</label>
+                  <select
+                    className="form-select"
+                    value={enrollmentNumber}
+                    onChange={(e) => handleStudentSelection(e.target.value)}
+                    required
+                  >
+                    <option value="">Select Student</option>
+                    {filteredStudents.map((student) => (
+                      <option key={student._id || student.enrollmentNumber} value={student.enrollmentNumber || student.rollNumber}>
+                        {student.name} ({student.enrollmentNumber || student.rollNumber})
+                      </option>
+                    ))}
+                  </select>
                   <small className="text-muted">
-                    Enter enrollment number and click Lookup to auto-fill student details
+                    Select a student to filter available courses
+                  </small>
+                </div>
+
+                {/* Course Name - Second field */}
+                <div className="col-md-6">
+                  <label className="form-label">Course Name *</label>
+                  <select
+                    className="form-select"
+                    value={courseName}
+                    onChange={(e) => handleCourseSelection(e.target.value)}
+                    required
+                    disabled={!enrollmentNumber}
+                  >
+                    <option value="">Select Course</option>
+                    {filteredCourses.map((course) => (
+                      <option key={course._id} value={course.name}>
+                        {course.name}
+                      </option>
+                    ))}
+                  </select>
+                  <small className="text-muted">
+                    Courses available for the selected student ({filteredCourses.length} found)
                   </small>
                 </div>
 
@@ -535,24 +692,6 @@ export default function CertificateCreate() {
                     onChange={(e) => setFatherName(e.target.value)}
                     required
                   />
-                </div>
-
-                {/* Course Name - Dropdown */}
-                <div className="col-md-6">
-                  <label className="form-label">Course Name *</label>
-                  <select
-                    className="form-select"
-                    value={courseName}
-                    onChange={(e) => setCourseName(e.target.value)}
-                    required
-                  >
-                    <option value="">Select Course</option>
-                    {filteredCourseList.map((course) => (
-                      <option key={course._id} value={course.name}>
-                        {course.name}
-                      </option>
-                    ))}
-                  </select>
                 </div>
 
                 <div className="col-md-3">
@@ -607,10 +746,13 @@ export default function CertificateCreate() {
                     type="text"
                     className="form-control"
                     value={courseDuration}
-                    onChange={(e) => setCourseDuration(e.target.value)}
-                    placeholder="e.g., 1 Year, 2 Years"
+                    readOnly
+                    placeholder="Auto-calculated from period dates"
                     required
                   />
+                  <small className="text-muted">
+                    Calculated automatically from Course Period From and To dates
+                  </small>
                 </div>
 
                 <div className="col-md-6">
