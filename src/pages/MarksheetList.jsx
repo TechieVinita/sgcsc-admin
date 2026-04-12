@@ -291,12 +291,22 @@ export default function MarksheetList() {
     setLoading(true);
     setMsg('');
     try {
-      const response = await API.unwrap(API.get('/marksheets'));
-      const marksheetsData = Array.isArray(response) ? response : Array.isArray(response?.data) ? response.data : [];
+      // Add timeout to prevent hanging if backend is down
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 seconds timeout
+
+      const response = await API.get('/marksheets', { signal: controller.signal });
+      clearTimeout(timeoutId);
+      const data = API.unwrap(response);
+      const marksheetsData = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : [];
       setMarksheets(marksheetsData);
     } catch (err) {
-      console.error('load marksheets error:', err);
-      setMsg(err.userMessage || 'Failed to load marksheets');
+      if (err.name === 'AbortError') {
+        setMsg('Request timed out. Please check if the backend is running.');
+      } else {
+        console.error('load marksheets error:', err);
+        setMsg(err.userMessage || 'Failed to load marksheets');
+      }
     } finally {
       setLoading(false);
     }
