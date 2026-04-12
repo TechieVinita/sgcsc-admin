@@ -124,7 +124,7 @@ export default function MarksheetCreate() {
       }
     }
     setSubjects(newSubjects);
-  }, [numberOfSubjects, subjects]);
+  }, [numberOfSubjects]);
 
   // Calculate totals
   const { totalTheory, totalPractical, totalCombined, maxTotal, percentage } = useMemo(() => {
