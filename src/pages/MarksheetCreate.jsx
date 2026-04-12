@@ -1,5 +1,6 @@
 // src/pages/MarksheetCreate.jsx
 import { useEffect, useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import API from "../api/axiosInstance";
 
 
@@ -34,6 +35,7 @@ export default function MarksheetCreate() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('info');
+  const navigate = useNavigate();
 
   // Load students + courses on mount
   useEffect(() => {
@@ -308,6 +310,7 @@ export default function MarksheetCreate() {
 
       setMessageType('success');
       setMessage('Marksheet created successfully.');
+      navigate('/marksheets');
 
       // Reset form
       setEnrollmentNo('');
