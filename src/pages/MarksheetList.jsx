@@ -284,7 +284,6 @@ export default function MarksheetList() {
   const [msg, setMsg] = useState('');
   const [search, setSearch] = useState('');
   const [templateLoaded, setTemplateLoaded] = useState(false);
-  const [templateError, setTemplateError] = useState(null);
   const [viewImage, setViewImage] = useState(null);
   const [showViewModal, setShowViewModal] = useState(false);
 
