@@ -308,25 +308,13 @@ export default function MarksheetList() {
   }, []);
 
   useEffect(() => {
-    const initGenerator = async () => {
-      if (typeof MarksheetGenerator !== 'undefined') {
-        try {
-          console.log('Loading marksheet template...');
-          const templateUrl = `${window.location.origin}/marksheet-template.jpeg`;
-          console.log('Template URL:', templateUrl);
-          await MarksheetGenerator.loadTemplate(templateUrl);
-          // MarksheetGenerator.fetchConfigFromAPI();
-          console.log('Marksheet template loaded successfully');
-          setTemplateLoaded(true);
-        } catch (err) {
-          console.error('Failed to load marksheet template:', err);
-          setTemplateError(err.message);
-        }
-      } else {
-        console.warn('MarksheetGenerator not defined');
-      }
-    };
-    initGenerator();
+    // Skip template loading to prevent unresponsiveness
+    if (typeof MarksheetGenerator !== 'undefined') {
+      console.log('MarksheetGenerator available, using default background');
+      setTemplateLoaded(true);
+    } else {
+      console.warn('MarksheetGenerator not defined');
+    }
   }, []);
 
   // Function to handle download using template-based generator
@@ -335,19 +323,8 @@ export default function MarksheetList() {
 
     if (typeof MarksheetGenerator !== 'undefined') {
       try {
-        // Ensure template is loaded
-        if (!templateLoaded) {
-          console.log('Loading marksheet template...');
-          const templateUrl = `${window.location.origin}/marksheet-template.jpeg`;
-          console.log('Template URL:', templateUrl);
-          await MarksheetGenerator.loadTemplate(templateUrl);
-          // MarksheetGenerator.fetchConfigFromAPI();
-          console.log('Marksheet template loaded successfully');
-        }
-
         // Generate the PDF
         MarksheetGenerator.download({
-          enrollmentNo: marksheet.enrollmentNo,
           studentName: marksheet.studentName,
           fatherName: marksheet.fatherName,
           motherName: marksheet.motherName,
@@ -358,6 +335,7 @@ export default function MarksheetList() {
           coursePeriodFrom: marksheet.coursePeriodFrom,
           coursePeriodTo: marksheet.coursePeriodTo,
           courseDuration: marksheet.courseDuration,
+          dateOfIssue: marksheet.dateOfIssue,
           subjects: marksheet.subjects,
           totalTheoryMarks: marksheet.totalTheoryMarks,
           totalPracticalMarks: marksheet.totalPracticalMarks,
@@ -411,17 +389,8 @@ export default function MarksheetList() {
   const handleView = async (marksheet) => {
     if (typeof MarksheetGenerator !== 'undefined') {
       try {
-        // Ensure template is loaded
-        if (!templateLoaded) {
-          console.log('Loading marksheet template for view...');
-          const templateUrl = `${window.location.origin}/marksheet-template.jpeg`;
-          await MarksheetGenerator.loadTemplate(templateUrl);
-          // MarksheetGenerator.fetchConfigFromAPI();
-        }
-
         // Generate preview image
         const dataURL = await MarksheetGenerator.getDataURL({
-          enrollmentNo: marksheet.enrollmentNo,
           studentName: marksheet.studentName,
           fatherName: marksheet.fatherName,
           motherName: marksheet.motherName,
@@ -432,6 +401,7 @@ export default function MarksheetList() {
           coursePeriodFrom: marksheet.coursePeriodFrom,
           coursePeriodTo: marksheet.coursePeriodTo,
           courseDuration: marksheet.courseDuration,
+          dateOfIssue: marksheet.dateOfIssue,
           subjects: marksheet.subjects,
           totalTheoryMarks: marksheet.totalTheoryMarks,
           totalPracticalMarks: marksheet.totalPracticalMarks,

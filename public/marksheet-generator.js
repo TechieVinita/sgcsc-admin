@@ -39,7 +39,7 @@ var MarksheetGenerator = (() => {
       dateOfIssue:        { x: 19,  y: 92.5, font: '150px serif',        color: '#000000', align: 'left' },
 
       // Subject marks will be rendered dynamically
-      subjectsStartY:     65,  // Starting Y position for subjects table
+      subjectsStartY:     61,  // Starting Y position for subjects table
       subjectRowHeight:   15,   // Height of each subject row (increased 5x)
     }
   };
