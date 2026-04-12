@@ -21,13 +21,22 @@ const Dashboard = lazy(() => import("./pages/Dashboard"));
 const FranchiseCreate = lazy(() => import("./pages/FranchiseCreate"));
 const FranchiseList = lazy(() => import("./pages/FranchiseList"));
 const FranchiseCredits = lazy(() => import("./pages/FranchiseCredits"));
+const FranchiseCertificateList = lazy(() => import("./pages/FranchiseCertificateList"));
+const FranchiseCertificateCreate = lazy(() => import("./pages/FranchiseCertificateCreate"));
+
+/* Typing Certificates */
+const TypingCertificateList = lazy(() => import("./pages/TypingCertificateList"));
+
+/* Marksheet */
+const MarksheetCreate = lazy(() => import("./pages/MarksheetCreate"));
+const MarksheetList = lazy(() => import("./pages/MarksheetList"));
 
 /* Students */
 const Students = lazy(() => import("./pages/Students"));
 const AddStudent = lazy(() => import("./pages/AddStudent"));
 const StudentDetail = lazy(() => import("./pages/StudentDetail"));
 
-/* Courses + Subjects */
+/* Courses */
 const Courses = lazy(() => import("./pages/Courses"));
 const CreateCourse = lazy(() => import("./pages/CreateCourse"));
 const CreateSubject = lazy(() => import("./pages/CreateSubject"));
@@ -41,28 +50,16 @@ const AddGalleryCategory = lazy(() => import("./pages/AddGalleryImage"));
 const Members = lazy(() => import("./pages/Members"));
 const AddMember = lazy(() => import("./pages/AddMember"));
 
-
-
-/* Admit Card */
-const AdmitCardCreate = lazy(() => import("./pages/AdmitCardCreate"));
+/* Admit Cards */
 const AdmitCardList = lazy(() => import("./pages/AdmitCardList"));
+const AdmitCardCreate = lazy(() => import("./pages/AdmitCardCreate"));
 
-/* ID Card */
+/* ID Cards */
 const IDCardList = lazy(() => import("./pages/IDCardList"));
 
-/* Certificate */
-const CertificateCreate = lazy(() => import("./pages/CertificateCreate"));
+/* Certificates */
 const CertificateList = lazy(() => import("./pages/CertificateList"));
-
-/* Franchise Certificates */
-const FranchiseCertificateList = lazy(() => import("./pages/FranchiseCertificateList"));
-
-/* Typing Certificates */
-const TypingCertificateList = lazy(() => import("./pages/TypingCertificateList"));
-
-/* Marksheet */
-const MarksheetCreate = lazy(() => import("./pages/MarksheetCreate"));
-const MarksheetList = lazy(() => import("./pages/MarksheetList"));
+const CertificateCreate = lazy(() => import("./pages/CertificateCreate"));
 
 /* Study Material */
 // const StudyUpload = lazy(() => import("./pages/StudyUpload"));
@@ -360,6 +357,16 @@ export default function App() {
               <PrivateRoute>
                 <ProtectedLayout>
                   <FranchiseCertificateList />
+                </ProtectedLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/franchise-certificates/create"
+            element={
+              <PrivateRoute>
+                <ProtectedLayout>
+                  <FranchiseCertificateCreate />
                 </ProtectedLayout>
               </PrivateRoute>
             }

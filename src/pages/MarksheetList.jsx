@@ -291,39 +291,48 @@ export default function MarksheetList() {
     setLoading(true);
     setMsg('');
     try {
-      // Add timeout to prevent hanging if backend is down
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 seconds timeout
-
-      const response = await API.get('/marksheets', { signal: controller.signal });
-      clearTimeout(timeoutId);
-      const data = API.unwrap(response);
+      console.log('Loading marksheets from API...');
+      const data = await API.unwrap(API.get('/marksheets'));
+      console.log('Marksheets unwrapped data:', data);
       const marksheetsData = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : [];
+      console.log('Setting marksheets:', marksheetsData);
       setMarksheets(marksheetsData);
     } catch (err) {
-      if (err.name === 'AbortError') {
-        setMsg('Request timed out. Please check if the backend is running.');
-      } else {
-        console.error('load marksheets error:', err);
-        setMsg(err.userMessage || 'Failed to load marksheets');
-      }
+      console.error('load marksheets error:', err);
+      console.error('Error response:', err.response?.data);
+      setMsg(err.userMessage || err.response?.data?.message || 'Failed to load marksheets');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
+    console.log('MarksheetList mounted, loading marksheets...');
     loadAll(); // Load marksheets on component mount
   }, []);
 
   useEffect(() => {
-    // Skip template loading to prevent unresponsiveness
-    if (typeof MarksheetGenerator !== 'undefined') {
-      console.log('MarksheetGenerator available, using default background');
-      setTemplateLoaded(true);
-    } else {
-      console.warn('MarksheetGenerator not defined');
-    }
+    const initGenerator = async () => {
+      if (typeof MarksheetGenerator !== 'undefined') {
+        try {
+          console.log('Loading marksheet template...');
+          // First try to load template config from API
+          const apiBaseUrl = process.env.REACT_APP_API_URL || 'https://sgcsc-backend.onrender.com/api';
+          await MarksheetGenerator.fetchConfigFromAPI(apiBaseUrl);
+          // Then load the template image
+          await MarksheetGenerator.loadTemplate('/marksheet-template.jpeg');
+          console.log('Marksheet template loaded successfully');
+          setTemplateLoaded(true);
+        } catch (err) {
+          console.error('Failed to load marksheet template:', err);
+          // Fallback to HTML generation
+          setTemplateLoaded(false);
+        }
+      } else {
+        console.warn('MarksheetGenerator not defined');
+      }
+    };
+    initGenerator();
   }, []);
 
   // Function to handle download using template-based generator
@@ -332,8 +341,8 @@ export default function MarksheetList() {
 
     if (typeof MarksheetGenerator !== 'undefined') {
       try {
-        // Generate the PDF
         MarksheetGenerator.download({
+          enrollmentNo: marksheet.enrollmentNo,
           studentName: marksheet.studentName,
           fatherName: marksheet.fatherName,
           motherName: marksheet.motherName,
@@ -400,6 +409,7 @@ export default function MarksheetList() {
       try {
         // Generate preview image
         const dataURL = await MarksheetGenerator.getDataURL({
+          enrollmentNo: marksheet.enrollmentNo,
           studentName: marksheet.studentName,
           fatherName: marksheet.fatherName,
           motherName: marksheet.motherName,

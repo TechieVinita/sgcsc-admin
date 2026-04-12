@@ -37,7 +37,7 @@
       enrollmentNo:      { x: 51, y: 63, font: '80px serif', color: '#000000', align: 'left' },
       dateOfBirth:       { x: 51, y: 67, font: '80px serif', color: '#000000', align: 'left' },
       contactNo:         { x: 51, y: 71, font: '80px serif', color: '#000000', align: 'left' },
-      address:           { x: 51, y: 74.5, font: '80px serif', color: '#000000', align: 'left' },
+      address:           { x: 51, y: 74.5, font: '60px serif', color: '#000000', align: 'left', maxWidth: 35, lineHeight: 2.0 },
       mobileNo:          { x: 51, y: 82.5, font: '80px serif', color: '#000000', align: 'left' },
       centerMobileNo:    { x: 51, y: 86.5, font: '80px serif', color: '#000000', align: 'left' },
     }
@@ -91,6 +91,40 @@
     _ctx.fillStyle = field.color;
     _ctx.textAlign = field.align || 'left';
     _ctx.fillText(text, _pct(field.x, W), _pct(field.y, H));
+    _ctx.restore();
+  }
+
+  function _drawWrappedText(field, text) {
+    if (!text || !_ctx) return;
+    const W = _canvas.width, H = _canvas.height;
+    const maxWidth = _pct(field.maxWidth || 40, W); // Default max width of 40% if not specified
+    const lineHeight = _pct(field.lineHeight || 3, H); // Default line height of 3% if not specified
+    const x = _pct(field.x, W);
+    const y = _pct(field.y, H);
+
+    _ctx.save();
+    _ctx.font = field.font;
+    _ctx.fillStyle = field.color;
+    _ctx.textAlign = field.align || 'left';
+
+    const words = text.split(' ');
+    let line = '';
+    let currentY = y;
+
+    for (let i = 0; i < words.length; i++) {
+      const testLine = line + words[i] + ' ';
+      const metrics = _ctx.measureText(testLine);
+      const testWidth = metrics.width;
+
+      if (testWidth > maxWidth && i > 0) {
+        _ctx.fillText(line, x, currentY);
+        line = words[i] + ' ';
+        currentY += lineHeight;
+      } else {
+        line = testLine;
+      }
+    }
+    _ctx.fillText(line, x, currentY);
     _ctx.restore();
   }
 
@@ -162,7 +196,7 @@
     _drawField(CONFIG.fields.enrollmentNo, idCard.enrollmentNo);
     _drawField(CONFIG.fields.dateOfBirth, _fmtDate(idCard.dateOfBirth));
     _drawField(CONFIG.fields.contactNo, idCard.contactNo);
-    _drawField(CONFIG.fields.address, idCard.address);
+    _drawWrappedText(CONFIG.fields.address, idCard.address);
     _drawField(CONFIG.fields.mobileNo, idCard.mobileNo);
     _drawField(CONFIG.fields.centerMobileNo, idCard.centerMobileNo);
   }

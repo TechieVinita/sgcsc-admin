@@ -31,12 +31,12 @@ var FranchiseCertificateGenerator = (() => {
 
     fields: {
       // { x, y } as % of image dimensions. font is px at full resolution.
-      trainingCentreName: { x: 50,  y: 40, font: 'bold 120px serif',      color: '#000000', align: 'center' },
-      applicantName:      { x: 50,  y: 50, font: '100px serif',          color: '#000000', align: 'center' },
-      atcCode:            { x: 30,  y: 60, font: '100px serif',          color: '#000000', align: 'left' },
-      atcCode2:           { x: 70,  y: 60, font: '100px serif',          color: '#000000', align: 'left' },
-      dateOfIssue:        { x: 30,  y: 70, font: '100px serif',          color: '#000000', align: 'left' },
-      dateOfRenewal:      { x: 70,  y: 70, font: '100px serif',          color: '#000000', align: 'left' },
+      trainingCentreName: { x: 50,  y: 44, font: '200px serif',           color: '#000000', align: 'center' },
+      applicantName:      { x: 46,  y: 49.7, font: '200px serif',        color: '#000000', align: 'left' },
+      atcCode:            { x: 46,  y: 53.3, font: '200px serif',        color: '#000000', align: 'left' },
+      atcCode2:           { x: 29,  y: 87.8, font: '130px serif',        color: '#000000', align: 'left' },
+      dateOfIssue:        { x: 29,  y: 89.6, font: '130px serif',        color: '#000000', align: 'left' },
+      dateOfRenewal:      { x: 29,  y: 91.5, font: '130px serif',        color: '#000000', align: 'left' },
     }
   };
 
@@ -53,10 +53,18 @@ var FranchiseCertificateGenerator = (() => {
   function _initCanvas() {
     if (!_canvas) {
       _canvas = document.getElementById('franchiseCertCanvas');
+      if (!_canvas) {
+        // Create a hidden canvas dynamically if not found
+        _canvas = document.createElement('canvas');
+        _canvas.id = 'franchiseCertCanvas';
+        _canvas.style.display = 'none';
+        document.body.appendChild(_canvas);
+      }
       if (_canvas) {
         _ctx = _canvas.getContext('2d');
       }
     }
+    console.log('Canvas initialized:', { canvas: !!_canvas, ctx: !!_ctx });
     return _canvas && _ctx;
   }
 

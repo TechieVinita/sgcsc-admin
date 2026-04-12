@@ -38,9 +38,14 @@ var MarksheetGenerator = (() => {
       instituteName:      { x: 30,  y: 39.8, font: '150px serif',        color: '#000000', align: 'left' },
       dateOfIssue:        { x: 19,  y: 92.5, font: '150px serif',        color: '#000000', align: 'left' },
 
+      // Summary fields (percentage, grade, grand total)
+      totalPercentage:    { x: 80,  y: 77.7, font: '100px serif',        color: '#000000', align: 'left' },
+      overallGrade:       { x: 56,  y: 77.7, font: '100px serif',        color: '#000000', align: 'left' },
+      grandTotal:       { x: 29,  y: 77.7, font: '100px serif',        color: '#000000', align: 'left' },
+
       // Subject marks will be rendered dynamically
-      subjectsStartY:     61,  // Starting Y position for subjects table
-      subjectRowHeight:   15,   // Height of each subject row (increased 5x)
+      subjectsStartY:     53,  // Starting Y position for subjects table
+      subjectRowHeight:   2,   // Height of each subject row (increased 5x)
     }
   };
 
@@ -129,6 +134,14 @@ var MarksheetGenerator = (() => {
     _drawField(CONFIG.fields.instituteName, marksheet.instituteName);
     _drawField(CONFIG.fields.dateOfIssue, _fmtDate(marksheet.dateOfIssue));
 
+    // Draw summary fields (percentage, grade, grand total)
+    const totalPercent = marksheet.percentage ? marksheet.percentage.toFixed(1) + '%' : '';
+    const grade = marksheet.overallGrade || '';
+    const totalMarks = marksheet.totalCombinedMarks + '/' + marksheet.maxTotalMarks;
+    _drawField(CONFIG.fields.totalPercentage, totalPercent);
+    _drawField(CONFIG.fields.overallGrade, grade);
+    _drawField(CONFIG.fields.grandTotal, totalMarks);
+
     // Draw subjects table
     if (marksheet.subjects && Array.isArray(marksheet.subjects)) {
       const W = _canvas.width, H = _canvas.height;
@@ -159,7 +172,7 @@ var MarksheetGenerator = (() => {
         _ctx.font = '150px serif';
         _ctx.fillStyle = '#000000';
         _ctx.textAlign = 'center';
-        _ctx.fillText(`${subject.theoryMarks || 0}`, _pct(50, W), y);
+        _ctx.fillText(`${subject.theoryMarks || 0}`, _pct(55, W), y);
         _ctx.restore();
 
         // Draw practical marks
@@ -167,7 +180,7 @@ var MarksheetGenerator = (() => {
         _ctx.font = '150px serif';
         _ctx.fillStyle = '#000000';
         _ctx.textAlign = 'center';
-        _ctx.fillText(`${subject.practicalMarks || 0}`, _pct(65, W), y);
+        _ctx.fillText(`${subject.practicalMarks || 0}`, _pct(70, W), y);
         _ctx.restore();
 
         // Draw combined marks
@@ -175,7 +188,7 @@ var MarksheetGenerator = (() => {
         _ctx.font = '150px serif';
         _ctx.fillStyle = '#000000';
         _ctx.textAlign = 'center';
-        _ctx.fillText(`${subject.combinedMarks || 0}`, _pct(80, W), y);
+        _ctx.fillText(`${subject.combinedMarks || 0}`, _pct(82, W), y);
         _ctx.restore();
       });
     }

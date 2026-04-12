@@ -499,9 +499,27 @@ function FranchiseCertificateViewModal({ show, onClose, certificate }) {
     }
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
+    // Try to use template generator first
+    if (window.FranchiseCertificateGenerator) {
+      try {
+        await window.FranchiseCertificateGenerator.loadTemplate('/franchise-certificate-template.jpeg');
+        await window.FranchiseCertificateGenerator.download({
+          trainingCentreName: certificate.franchiseName || certificate.applicantName,
+          applicantName: certificate.applicantName,
+          atcCode: certificate.atcCode,
+          atcCode2: certificate.atcCode,
+          dateOfIssue: certificate.dateOfIssue,
+          dateOfRenewal: certificate.dateOfRenewal,
+        });
+        return;
+      } catch (err) {
+        console.error('Template generation failed:', err);
+      }
+    }
+
+    // Fallback to stored image
     if (certificate.certificateImage) {
-      // Load jsPDF if not already loaded
       if (!window.jspdf) {
         const script = document.createElement('script');
         script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
@@ -615,7 +633,7 @@ function FranchiseCertificateViewModal({ show, onClose, certificate }) {
   );
 }
 
-export default function FranchiseCertificateList() {
+export default function FranchiseCertificateList({ createMode }) {
   const [certs, setCerts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
@@ -624,6 +642,13 @@ export default function FranchiseCertificateList() {
   const [showViewModal, setShowViewModal] = useState(false);
   const [viewingCert, setViewingCert] = useState(null);
   const [editing, setEditing] = useState(null);
+
+  // Open create modal if in createMode
+  useEffect(() => {
+    if (createMode) {
+      setShowModal(true);
+    }
+  }, [createMode]);
 
   const loadAll = async () => {
     setLoading(true);
@@ -667,6 +692,34 @@ export default function FranchiseCertificateList() {
     } catch (err) {
       console.error('delete franchise certificate error:', err);
       setMsg(err.userMessage || 'Failed to delete franchise certificate');
+    }
+  };
+
+  const handleDownload = async (cert) => {
+    try {
+      // Initialize franchise certificate generator
+      await initFranchiseCertificateGenerator();
+
+      if (!franchiseCertificateGenerator) {
+        alert('Certificate generator not available. Please try again.');
+        return;
+      }
+
+      // Format certificate data for generator
+      const certificateData = {
+        trainingCentreName: cert.franchiseName,
+        applicantName: cert.applicantName,
+        atcCode: cert.atcCode,
+        atcCode2: cert.atcCode, // Same ATC code printed twice
+        dateOfIssue: cert.dateOfIssue,
+        dateOfRenewal: cert.dateOfRenewal,
+      };
+
+      // Download the certificate
+      await franchiseCertificateGenerator.download(certificateData);
+    } catch (err) {
+      console.error('Download certificate error:', err);
+      alert('Failed to download certificate: ' + err.message);
     }
   };
 
@@ -769,31 +822,37 @@ export default function FranchiseCertificateList() {
                           <td>{c.address}</td>
                           <td>{fmtDate(c.dateOfIssue)}</td>
                           <td>{fmtDate(c.dateOfRenewal)}</td>
-                          <td className="text-center">
-                            <button
-                              className="btn btn-sm btn-outline-success me-2"
-                              onClick={() => handleView(c)}
-                            >
-                              View
-                            </button>
-                            <button
-                              className="btn btn-sm btn-outline-warning me-2"
-                              onClick={() => {
-                                setEditing(c);
-                                setShowModal(true);
-                              }}
-                            >
-                              Edit
-                            </button>
-                            <button
-                              className="btn btn-sm btn-outline-danger"
-                              onClick={() =>
-                                handleDelete(c._id || c.id)
-                              }
-                            >
-                              Delete
-                            </button>
-                          </td>
+                           <td className="text-center">
+                             <button
+                               className="btn btn-sm btn-outline-success me-1"
+                               onClick={() => handleView(c)}
+                             >
+                               View
+                             </button>
+                             <button
+                               className="btn btn-sm btn-outline-primary me-1"
+                               onClick={() => handleDownload(c)}
+                             >
+                               Download
+                             </button>
+                             <button
+                               className="btn btn-sm btn-outline-warning me-1"
+                               onClick={() => {
+                                 setEditing(c);
+                                 setShowModal(true);
+                               }}
+                             >
+                               Edit
+                             </button>
+                             <button
+                               className="btn btn-sm btn-outline-danger"
+                               onClick={() =>
+                                 handleDelete(c._id || c.id)
+                               }
+                             >
+                               Delete
+                             </button>
+                           </td>
                         </tr>
                       ))}
                     </tbody>

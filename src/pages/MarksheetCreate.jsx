@@ -21,6 +21,7 @@ export default function MarksheetCreate() {
   const [coursePeriodTo, setCoursePeriodTo] = useState('');
   const [courseDuration, setCourseDuration] = useState('');
   const [dateOfIssue, setDateOfIssue] = useState('');
+  const [overallGrade, setOverallGrade] = useState(''); // ✅ single declaration
 
   // Subject fields
   const [subjects, setSubjects] = useState([
@@ -66,9 +67,7 @@ export default function MarksheetCreate() {
       } catch (err) {
         console.error('load students/courses error (marksheet):', err);
         setMessageType('danger');
-        setMessage(
-          err.userMessage || 'Failed to load students or courses. Check API.'
-        );
+        setMessage(err.userMessage || 'Failed to load students or courses. Check API.');
       } finally {
         setLoadingLists(false);
       }
@@ -76,8 +75,6 @@ export default function MarksheetCreate() {
 
     fetchData();
   }, []);
-
-
 
   // Calculate totals
   const { totalTheory, totalPractical, totalCombined, maxTotal, percentage } = useMemo(() => {
@@ -102,7 +99,7 @@ export default function MarksheetCreate() {
     return { totalTheory, totalPractical, totalCombined, maxTotal, percentage };
   }, [subjects]);
 
-  // Calculate grade based on percentage
+  // ✅ Derived auto-grade — separate from the overallGrade state
   const calculateGrade = (pct) => {
     if (pct >= 90) return 'A+';
     if (pct >= 80) return 'A';
@@ -113,7 +110,13 @@ export default function MarksheetCreate() {
     return 'F';
   };
 
-  const overallGrade = calculateGrade(percentage);
+  const autoGrade = calculateGrade(percentage); // ✅ renamed to avoid shadowing
+
+  // Auto-sync overallGrade with calculated grade whenever percentage changes
+  // (only if user hasn't manually overridden it — optional UX choice)
+  useEffect(() => {
+    setOverallGrade(autoGrade);
+  }, [autoGrade]);
 
   // Handle enrollment number lookup
   const handleEnrollmentLookup = async () => {
@@ -181,7 +184,6 @@ export default function MarksheetCreate() {
   // Handle course selection
   const handleCourseChange = async (e) => {
     const selectedCourseId = e.target.value;
-    console.log('Course selected:', selectedCourseId);
     setCourseId(selectedCourseId);
 
     if (selectedCourseId) {
@@ -195,9 +197,7 @@ export default function MarksheetCreate() {
   // Handle subject field change
   const handleSubjectChange = (index, field, value) => {
     const newSubjects = [...subjects];
-    // For number fields, allow empty strings for better UX, convert to number only when not empty
-    if (field === 'theoryMarks' || field === 'practicalMarks' || field === 'maxTheoryMarks' || field === 'maxPracticalMarks') {
-      // Allow empty string, or convert to number if it's a valid number
+    if (['theoryMarks', 'practicalMarks', 'maxTheoryMarks', 'maxPracticalMarks'].includes(field)) {
       if (value === '' || value === null || value === undefined) {
         newSubjects[index] = { ...newSubjects[index], [field]: '' };
       } else {
@@ -211,64 +211,45 @@ export default function MarksheetCreate() {
   };
 
   const validate = () => {
-    if (!enrollmentNo.trim()) {
-      setMessageType('danger');
-      setMessage('Enrollment Number is required.');
-      return false;
+    const required = [
+      [enrollmentNo, 'Enrollment Number'],
+      [studentName, 'Student Name'],
+      [fatherName, 'Father/Husband Name'],
+      [motherName, 'Mother Name'],
+      [courseName, 'Course Name'],
+      [instituteName, 'Institute Name'],
+      [rollNumber, 'Roll Number'],
+    ];
+
+    for (const [value, label] of required) {
+      if (!value.trim()) {
+        setMessageType('danger');
+        setMessage(`${label} is required.`);
+        return false;
+      }
     }
-    if (!studentName.trim()) {
-      setMessageType('danger');
-      setMessage('Student Name is required.');
-      return false;
+
+    const dateFields = [
+      [dob, 'Date of Birth'],
+      [coursePeriodFrom, 'Course Period From'],
+      [coursePeriodTo, 'Course Period To'],
+      [dateOfIssue, 'Date of Issue'],
+    ];
+
+    for (const [value, label] of dateFields) {
+      if (!value) {
+        setMessageType('danger');
+        setMessage(`${label} is required.`);
+        return false;
+      }
     }
-    if (!fatherName.trim()) {
-      setMessageType('danger');
-      setMessage('Father/Husband Name is required.');
-      return false;
-    }
-    if (!motherName.trim()) {
-      setMessageType('danger');
-      setMessage('Mother Name is required.');
-      return false;
-    }
-    if (!courseName.trim()) {
-      setMessageType('danger');
-      setMessage('Course Name is required.');
-      return false;
-    }
-    if (!instituteName.trim()) {
-      setMessageType('danger');
-      setMessage('Institute Name is required.');
-      return false;
-    }
-    if (!rollNumber.trim()) {
-      setMessageType('danger');
-      setMessage('Roll Number is required.');
-      return false;
-    }
-    if (!dob) {
-      setMessageType('danger');
-      setMessage('Date of Birth is required.');
-      return false;
-    }
-    if (!coursePeriodFrom) {
-      setMessageType('danger');
-      setMessage('Course Period From is required.');
-      return false;
-    }
-    if (!coursePeriodTo) {
-      setMessageType('danger');
-      setMessage('Course Period To is required.');
-      return false;
-    }
+
     if (!courseDuration.trim()) {
       setMessageType('danger');
       setMessage('Course Duration is required.');
       return false;
     }
-    
 
-    
     return true;
   };
 
@@ -302,15 +283,17 @@ export default function MarksheetCreate() {
           maxPracticalMarks: Number(s.maxPracticalMarks) || 0,
           grade: s.grade?.trim() || '',
         })),
+        overallGrade: overallGrade.trim() || undefined, // ✅ uses state value (manual or auto-synced)
         studentId: studentId || undefined,
         courseId: courseId || undefined,
       };
 
       await API.unwrap(API.post('/marksheets', payload));
-
+      
       setMessageType('success');
-      setMessage('Marksheet created successfully.');
-      navigate('/marksheets');
+      setMessage('Marksheet created successfully!');
+      
+      setTimeout(() => navigate('/marksheets'), 500);
 
       // Reset form
       setEnrollmentNo('');
@@ -325,13 +308,14 @@ export default function MarksheetCreate() {
       setCoursePeriodTo('');
       setCourseDuration('');
       setDateOfIssue('');
-       setSubjects([{ subjectName: '', theoryMarks: '', practicalMarks: '', maxTheoryMarks: 100, maxPracticalMarks: 0, grade: '' }]);
+      setOverallGrade('');
+      setSubjects([{ subjectName: '', theoryMarks: '', practicalMarks: '', maxTheoryMarks: 100, maxPracticalMarks: 0, grade: '' }]);
       setCourseId('');
       setStudentId('');
     } catch (err) {
       console.error('create marksheet error:', err);
       setMessageType('danger');
-      setMessage(err.userMessage || 'Failed to create marksheet');
+      setMessage(err.userMessage || err.response?.data?.message || 'Failed to create marksheet. Please check all fields are filled correctly.');
     } finally {
       setSaving(false);
     }
@@ -345,13 +329,7 @@ export default function MarksheetCreate() {
 
           {message && (
             <div
-              className={`alert alert-${
-                messageType === 'danger'
-                  ? 'danger'
-                  : messageType === 'success'
-                  ? 'success'
-                  : 'info'
-              }`}
+              className={`alert alert-${messageType === 'danger' ? 'danger' : messageType === 'success' ? 'success' : 'info'}`}
               role="alert"
             >
               {message}
@@ -370,19 +348,12 @@ export default function MarksheetCreate() {
                   </div>
 
                   <div className="col-md-6">
-                    <label className="form-label">
-                      Select Student (optional - auto-fills details)
-                    </label>
-                    <select
-                      className="form-select"
-                      value={studentId}
-                      onChange={handleStudentChange}
-                    >
+                    <label className="form-label">Select Student (optional - auto-fills details)</label>
+                    <select className="form-select" value={studentId} onChange={handleStudentChange}>
                       <option value="">Select a student</option>
                       {students.map((s) => (
                         <option key={s._id || s.id} value={s._id || s.id}>
-                          {s.name || s.fullName || 'Student'}{' '}
-                          {s.rollNumber ? `(${s.rollNumber})` : ''}
+                          {s.name || s.fullName || 'Student'}{s.rollNumber ? ` (${s.rollNumber})` : ''}
                         </option>
                       ))}
                     </select>
@@ -399,11 +370,7 @@ export default function MarksheetCreate() {
                         placeholder="Enter enrollment number"
                         required
                       />
-                      <button
-                        type="button"
-                        className="btn btn-outline-primary"
-                        onClick={handleEnrollmentLookup}
-                      >
+                      <button type="button" className="btn btn-outline-primary" onClick={handleEnrollmentLookup}>
                         Fetch Details
                       </button>
                     </div>
@@ -417,61 +384,27 @@ export default function MarksheetCreate() {
 
                   <div className="col-md-6">
                     <label className="form-label">Student Name *</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      value={studentName}
-                      onChange={(e) => setStudentName(e.target.value)}
-                      placeholder="Enter student name"
-                      required
-                    />
+                    <input type="text" className="form-control" value={studentName} onChange={(e) => setStudentName(e.target.value)} placeholder="Enter student name" required />
                   </div>
 
                   <div className="col-md-6">
                     <label className="form-label">Father/Husband Name *</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      value={fatherName}
-                      onChange={(e) => setFatherName(e.target.value)}
-                      placeholder="Enter father/husband name"
-                      required
-                    />
+                    <input type="text" className="form-control" value={fatherName} onChange={(e) => setFatherName(e.target.value)} placeholder="Enter father/husband name" required />
                   </div>
 
                   <div className="col-md-6">
                     <label className="form-label">Mother Name *</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      value={motherName}
-                      onChange={(e) => setMotherName(e.target.value)}
-                      placeholder="Enter mother name"
-                      required
-                    />
+                    <input type="text" className="form-control" value={motherName} onChange={(e) => setMotherName(e.target.value)} placeholder="Enter mother name" required />
                   </div>
 
                   <div className="col-md-6">
                     <label className="form-label">Roll Number *</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      value={rollNumber}
-                      onChange={(e) => setRollNumber(e.target.value)}
-                      placeholder="Enter roll number"
-                      required
-                    />
+                    <input type="text" className="form-control" value={rollNumber} onChange={(e) => setRollNumber(e.target.value)} placeholder="Enter roll number" required />
                   </div>
 
                   <div className="col-md-6">
                     <label className="form-label">Date of Birth *</label>
-                    <input
-                      type="date"
-                      className="form-control"
-                      value={dob}
-                      onChange={(e) => setDob(e.target.value)}
-                      required
-                    />
+                    <input type="date" className="form-control" value={dob} onChange={(e) => setDob(e.target.value)} required />
                   </div>
 
                   {/* Course & Institute Details */}
@@ -480,14 +413,8 @@ export default function MarksheetCreate() {
                   </div>
 
                   <div className="col-md-6">
-                    <label className="form-label">
-                      Select Course (optional - auto-fills course name)
-                    </label>
-                    <select
-                      className="form-select"
-                      value={courseId}
-                      onChange={handleCourseChange}
-                    >
+                    <label className="form-label">Select Course (optional - auto-fills course name)</label>
+                    <select className="form-select" value={courseId} onChange={handleCourseChange}>
                       <option value="">Select a course</option>
                       {courses.map((c) => (
                         <option key={c._id || c.id} value={c._id || c.id}>
@@ -499,74 +426,36 @@ export default function MarksheetCreate() {
 
                   <div className="col-md-6">
                     <label className="form-label">Course Name *</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      value={courseName}
-                      onChange={(e) => setCourseName(e.target.value)}
-                      placeholder="Enter course name"
-                      required
-                    />
+                    <input type="text" className="form-control" value={courseName} onChange={(e) => setCourseName(e.target.value)} placeholder="Enter course name" required />
                   </div>
 
                   <div className="col-md-6">
                     <label className="form-label">Institute Name *</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      value={instituteName}
-                      onChange={(e) => setInstituteName(e.target.value)}
-                      placeholder="Enter institute name"
-                      required
-                    />
+                    <input type="text" className="form-control" value={instituteName} onChange={(e) => setInstituteName(e.target.value)} placeholder="Enter institute name" required />
                   </div>
 
                   <div className="col-md-6">
                     <label className="form-label">Course Duration *</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      value={courseDuration}
-                      onChange={(e) => setCourseDuration(e.target.value)}
-                      placeholder="e.g. 1 Year, 6 Months"
-                      required
-                    />
+                    <input type="text" className="form-control" value={courseDuration} onChange={(e) => setCourseDuration(e.target.value)} placeholder="e.g. 1 Year, 6 Months" required />
                   </div>
 
                   <div className="col-md-6">
                     <label className="form-label">Course Period From *</label>
-                    <input
-                      type="date"
-                      className="form-control"
-                      value={coursePeriodFrom}
-                      onChange={(e) => setCoursePeriodFrom(e.target.value)}
-                      required
-                    />
+                    <input type="date" className="form-control" value={coursePeriodFrom} onChange={(e) => setCoursePeriodFrom(e.target.value)} required />
                   </div>
 
-                   <div className="col-md-6">
-                     <label className="form-label">Course Period To *</label>
-                     <input
-                       type="date"
-                       className="form-control"
-                       value={coursePeriodTo}
-                       onChange={(e) => setCoursePeriodTo(e.target.value)}
-                       required
-                     />
-                   </div>
+                  <div className="col-md-6">
+                    <label className="form-label">Course Period To *</label>
+                    <input type="date" className="form-control" value={coursePeriodTo} onChange={(e) => setCoursePeriodTo(e.target.value)} required />
+                  </div>
 
-                   <div className="col-md-6">
-                     <label className="form-label">Date of Issue *</label>
-                     <input
-                       type="date"
-                       className="form-control"
-                       value={dateOfIssue}
-                       onChange={(e) => setDateOfIssue(e.target.value)}
-                       required
-                     />
-                   </div>
+                  <div className="col-md-6">
+                    <label className="form-label">Date of Issue *</label>
+                    <input type="date" className="form-control" value={dateOfIssue} onChange={(e) => setDateOfIssue(e.target.value)} required />
+                    <small className="text-muted">Required for marksheet generation</small>
+                  </div>
 
-                   {/* Subjects Section */}
+                  {/* Subjects Section */}
                   <div className="col-12 mt-4">
                     <div className="d-flex justify-content-between align-items-center mb-3">
                       <div>
@@ -576,12 +465,9 @@ export default function MarksheetCreate() {
                       <button
                         type="button"
                         className="btn btn-outline-primary btn-sm"
-                        onClick={() => {
-                          setSubjects([...subjects, { subjectName: '', theoryMarks: '', practicalMarks: '', maxTheoryMarks: 100, maxPracticalMarks: 0, grade: '' }]);
-                        }}
+                        onClick={() => setSubjects([...subjects, { subjectName: '', theoryMarks: '', practicalMarks: '', maxTheoryMarks: 100, maxPracticalMarks: 0, grade: '' }])}
                       >
-                        <i className="bi bi-plus-circle me-1"></i>
-                        Add Subject
+                        <i className="bi bi-plus-circle me-1"></i>Add Subject
                       </button>
                     </div>
                   </div>
@@ -595,7 +481,6 @@ export default function MarksheetCreate() {
                     </div>
                   )}
 
-                  {/* Subject Input Fields */}
                   {subjects.map((subject, index) => (
                     <div key={index} className="col-12">
                       <div className="card mb-3">
@@ -605,10 +490,7 @@ export default function MarksheetCreate() {
                             <button
                               type="button"
                               className="btn btn-outline-danger btn-sm"
-                              onClick={() => {
-                                const newSubjects = subjects.filter((_, i) => i !== index);
-                                setSubjects(newSubjects);
-                              }}
+                              onClick={() => setSubjects(subjects.filter((_, i) => i !== index))}
                             >
                               <i className="bi bi-trash"></i>
                             </button>
@@ -618,80 +500,31 @@ export default function MarksheetCreate() {
                           <div className="row g-3">
                             <div className="col-md-6">
                               <label className="form-label">Subject Name</label>
-                              <input
-                                type="text"
-                                className="form-control"
-                                value={subject.subjectName}
-                                onChange={(e) => handleSubjectChange(index, 'subjectName', e.target.value)}
-                                placeholder="Enter subject name"
-                                required
-                              />
+                              <input type="text" className="form-control" value={subject.subjectName} onChange={(e) => handleSubjectChange(index, 'subjectName', e.target.value)} placeholder="Enter subject name" required />
                             </div>
-
                             <div className="col-md-3">
                               <label className="form-label">Max Theory Marks</label>
-                              <input
-                                type="number"
-                                className="form-control"
-                                value={subject.maxTheoryMarks}
-                                onChange={(e) => handleSubjectChange(index, 'maxTheoryMarks', e.target.value)}
-                                min="0"
-                              />
+                              <input type="number" className="form-control" value={subject.maxTheoryMarks} onChange={(e) => handleSubjectChange(index, 'maxTheoryMarks', e.target.value)} min="0" />
                             </div>
-
                             <div className="col-md-3">
                               <label className="form-label">Max Practical Marks</label>
-                              <input
-                                type="number"
-                                className="form-control"
-                                value={subject.maxPracticalMarks}
-                                onChange={(e) => handleSubjectChange(index, 'maxPracticalMarks', e.target.value)}
-                                min="0"
-                              />
+                              <input type="number" className="form-control" value={subject.maxPracticalMarks} onChange={(e) => handleSubjectChange(index, 'maxPracticalMarks', e.target.value)} min="0" />
                             </div>
-
                             <div className="col-md-3">
                               <label className="form-label">Theory Marks Obtained</label>
-                              <input
-                                type="number"
-                                className="form-control"
-                                value={subject.theoryMarks}
-                                onChange={(e) => handleSubjectChange(index, 'theoryMarks', e.target.value)}
-                                min="0"
-                              />
+                              <input type="number" className="form-control" value={subject.theoryMarks} onChange={(e) => handleSubjectChange(index, 'theoryMarks', e.target.value)} min="0" />
                             </div>
-
                             <div className="col-md-3">
                               <label className="form-label">Practical Marks Obtained</label>
-                              <input
-                                type="number"
-                                className="form-control"
-                                value={subject.practicalMarks}
-                                onChange={(e) => handleSubjectChange(index, 'practicalMarks', e.target.value)}
-                                min="0"
-                              />
+                              <input type="number" className="form-control" value={subject.practicalMarks} onChange={(e) => handleSubjectChange(index, 'practicalMarks', e.target.value)} min="0" />
                             </div>
-
                             <div className="col-md-3">
                               <label className="form-label">Combined Marks</label>
-                              <input
-                                type="text"
-                                className="form-control"
-                                value={(Number(subject.theoryMarks) || 0) + (Number(subject.practicalMarks) || 0)}
-                                readOnly
-                                disabled
-                              />
+                              <input type="text" className="form-control" value={(Number(subject.theoryMarks) || 0) + (Number(subject.practicalMarks) || 0)} readOnly disabled />
                             </div>
-
                             <div className="col-md-3">
                               <label className="form-label">Grade (Optional)</label>
-                              <input
-                                type="text"
-                                className="form-control"
-                                value={subject.grade}
-                                onChange={(e) => handleSubjectChange(index, 'grade', e.target.value)}
-                                placeholder="e.g. A, B+"
-                              />
+                              <input type="text" className="form-control" value={subject.grade} onChange={(e) => handleSubjectChange(index, 'grade', e.target.value)} placeholder="e.g. A, B+" />
                             </div>
                           </div>
                         </div>
@@ -720,12 +553,18 @@ export default function MarksheetCreate() {
                             <p className="fs-5">{totalCombined} / {maxTotal}</p>
                           </div>
                           <div className="col-md-6">
-                            <p className="mb-1"><strong>Percentage:</strong></p>
+                            <p className="mb-1"><strong>Percentage (Auto):</strong></p>
                             <p className="fs-5">{percentage.toFixed(2)}%</p>
                           </div>
                           <div className="col-md-6">
-                            <p className="mb-1"><strong>Overall Grade:</strong></p>
-                            <p className="fs-5">{overallGrade}</p>
+                            <label className="form-label"><strong>Final Grade (Manual Entry):</strong></label>
+                            <input
+                              type="text"
+                              className="form-control"
+                              value={overallGrade}
+                              onChange={(e) => setOverallGrade(e.target.value.toUpperCase())}
+                              placeholder="Enter grade e.g. A, B+, Pass"
+                            />
                           </div>
                         </div>
                       </div>
@@ -733,11 +572,7 @@ export default function MarksheetCreate() {
                   </div>
 
                   <div className="col-12 mt-4">
-                    <button
-                      type="submit"
-                      className="btn btn-primary w-100"
-                      disabled={saving || loadingLists}
-                    >
+                    <button type="submit" className="btn btn-primary w-100" disabled={saving || loadingLists}>
                       {saving ? 'Generating Marksheet...' : 'Generate Marksheet'}
                     </button>
                   </div>

@@ -12,6 +12,86 @@ function fmtDate(d) {
   return dt.toLocaleDateString('en-IN');
 }
 
+// ─── IDCardViewModal ──────────────────────────────────────────────────────────
+
+function IDCardViewModal({ show, onClose, card }) {
+  if (!show || !card) return null;
+
+  return (
+    <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+      <div className="modal-dialog modal-lg">
+        <div className="modal-content">
+          <div className="modal-header">
+            <h5 className="modal-title">ID Card Details - {card.studentName}</h5>
+            <button type="button" className="btn-close" onClick={onClose}></button>
+          </div>
+          <div className="modal-body">
+            <div className="row">
+              <div className="col-md-6">
+                <div className="card">
+                  <div className="card-header bg-primary text-white">
+                    <h6 className="mb-0">Student Information</h6>
+                  </div>
+                  <div className="card-body">
+                    <p><strong>Student Name:</strong> {card.studentName}</p>
+                    <p><strong>Father Name:</strong> {card.fatherName}</p>
+                    <p><strong>Mother Name:</strong> {card.motherName || '-'}</p>
+                    <p><strong>Enrollment No:</strong> {card.enrollmentNo}</p>
+                    <p><strong>Date of Birth:</strong> {fmtDate(card.dateOfBirth)}</p>
+                    <p><strong>Mobile No:</strong> {card.mobileNo}</p>
+                    <p><strong>Contact No:</strong> {card.contactNo || '-'}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="col-md-6">
+                <div className="card">
+                  <div className="card-header bg-success text-white">
+                    <h6 className="mb-0">Course & Center Information</h6>
+                  </div>
+                  <div className="card-body">
+                    <p><strong>Course Name:</strong> {card.courseName}</p>
+                    <p><strong>Center Name:</strong> {card.centerName}</p>
+                    <p><strong>Session From:</strong> {fmtDate(card.sessionFrom)}</p>
+                    <p><strong>Session To:</strong> {fmtDate(card.sessionTo)}</p>
+                    <p><strong>Center Mobile:</strong> {card.centerMobileNo || '-'}</p>
+                    <p><strong>Address:</strong> {card.address}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {card.studentPhoto && (
+              <div className="row mt-3">
+                <div className="col-12 text-center">
+                  <div className="card">
+                    <div className="card-header">
+                      <h6 className="mb-0">Student Photo</h6>
+                    </div>
+                    <div className="card-body text-center">
+                      <img
+                        src={card.studentPhoto}
+                        alt="Student"
+                        className="img-fluid rounded"
+                        style={{ maxHeight: '200px' }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="modal-footer">
+            <button type="button" className="btn btn-secondary" onClick={onClose}>
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── IDCardModal ──────────────────────────────────────────────────────────────
+
 function IDCardModal({ show, onClose, onSaved, initial }) {
   const [studentName, setStudentName] = useState('');
   const [fatherName, setFatherName] = useState('');
@@ -56,8 +136,8 @@ function IDCardModal({ show, onClose, onSaved, initial }) {
   }, [show]);
 
   // Handle student selection from dropdown
-  const handleStudentSelect = (studentId) => {
-    const student = students.find(s => s._id === studentId);
+  const handleStudentSelect = (selectedId) => {
+    const student = students.find(s => s._id === selectedId);
     if (!student) return;
 
     setStudentName(student.name || '');
@@ -72,15 +152,10 @@ function IDCardModal({ show, onClose, onSaved, initial }) {
     setStudentId(student._id || null);
     setStudentPhoto(student.photo || null);
 
-    // Handle multiple courses - set as dropdown if more than one
     if (student.courses && student.courses.length > 0) {
       const courseNames = student.courses.map(c => c.courseName || c.course || c.name || '').filter(Boolean);
       setAvailableCourses(courseNames);
-      if (courseNames.length === 1) {
-        setCourseName(courseNames[0] || '');
-      } else if (courseNames.length > 1) {
-        setCourseName('');
-      }
+      setCourseName(courseNames.length === 1 ? courseNames[0] : '');
     } else if (student.courseName) {
       setAvailableCourses([student.courseName]);
       setCourseName(student.courseName);
@@ -93,31 +168,21 @@ function IDCardModal({ show, onClose, onSaved, initial }) {
   // Auto-fill student data by enrollment number
   const handleEnrollmentLookup = async (enrollmentNumber) => {
     if (!enrollmentNumber || enrollmentNumber.length < 3) return;
-    
+
     setLoadingStudent(true);
-    console.log('===== LOOKUP STUDENT START =====');
-    console.log('Looking up enrollment:', enrollmentNumber);
     try {
-      // Fetch all students and find matching one (like CertificateCreate)
       const res = await API.get('/students');
       const allStudents = Array.isArray(res.data) ? res.data : Array.isArray(res.data?.data) ? res.data.data : [];
-      console.log('Total students fetched:', allStudents.length);
-      
-      // Find student by enrollment/roll number
-      const student = allStudents.find(s => 
+
+      const student = allStudents.find(s =>
         (s.enrollmentNumber || s.rollNumber || '').toLowerCase() === enrollmentNumber.trim().toLowerCase()
       );
-      
-      console.log('Found student:', student ? student.name : 'NOT FOUND');
-      console.log('Student photo:', student?.photo);
-      console.log('Student courses:', student?.courses);
-      
+
       if (!student) {
         setError('Student not found. Please check the enrollment number.');
-        setLoadingStudent(false);
         return;
       }
-      
+
       setStudentName(student.name || '');
       setFatherName(student.fatherName || '');
       setMotherName(student.motherName || '');
@@ -127,21 +192,13 @@ function IDCardModal({ show, onClose, onSaved, initial }) {
       setAddress(student.address || '');
       setMobileNo(student.mobile || '');
       setCenterName(student.centerName || '');
-      // Also save student ID and photo for ID card
       setStudentId(student._id || null);
       setStudentPhoto(student.photo || null);
-      
-      // Handle multiple courses - set as dropdown if more than one
+
       if (student.courses && student.courses.length > 0) {
-        // Extract course names from the course objects
         const courseNames = student.courses.map(c => c.courseName || c.course || c.name || '').filter(Boolean);
         setAvailableCourses(courseNames);
-        if (courseNames.length === 1) {
-          setCourseName(courseNames[0] || '');
-        } else if (courseNames.length > 1) {
-          // If multiple courses, don't auto-select, let user choose
-          setCourseName('');
-        }
+        setCourseName(courseNames.length === 1 ? courseNames[0] : '');
       } else if (student.courseName) {
         setAvailableCourses([student.courseName]);
         setCourseName(student.courseName);
@@ -150,8 +207,7 @@ function IDCardModal({ show, onClose, onSaved, initial }) {
         setCourseName('');
       }
     } catch (err) {
-      // Student not found - just ignore
-      console.log('Student not found for enrollment:', enrollmentNumber);
+      console.log('Student not found for enrollment:', enrollmentNumber, err);
     } finally {
       setLoadingStudent(false);
     }
@@ -192,39 +248,25 @@ function IDCardModal({ show, onClose, onSaved, initial }) {
       setSessionFrom('');
       setSessionTo('');
       setAvailableCourses([]);
+      setStudentId(null);
+      setStudentPhoto(null);
     }
   }, [show, initial]);
 
   if (!show) return null;
 
   const validate = () => {
-    if (!studentName.trim()) {
-      setError('Student Name is required.');
-      return false;
-    }
-    if (!fatherName.trim()) {
-      setError('Father Name is required.');
-      return false;
-    }
-    if (!motherName.trim()) {
-      setError('Mother Name is required.');
-      return false;
-    }
-    if (!enrollmentNo.trim()) {
-      setError('Enrollment Number is required.');
-      return false;
-    }
-    if (!dateOfBirth) {
-      setError('Date of Birth is required.');
-      return false;
-    }
+    if (!studentName.trim()) { setError('Student Name is required.'); return false; }
+    if (!fatherName.trim())  { setError('Father Name is required.');  return false; }
+    if (!motherName.trim())  { setError('Mother Name is required.');  return false; }
+    if (!enrollmentNo.trim()) { setError('Enrollment Number is required.'); return false; }
+    if (!dateOfBirth)         { setError('Date of Birth is required.');     return false; }
     return true;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-
     if (!validate()) return;
     setSaving(true);
 
@@ -287,11 +329,11 @@ function IDCardModal({ show, onClose, onSaved, initial }) {
                     required
                   >
                     <option value="">
-                      {loadingStudents ? "Loading students..." : "Select a student"}
+                      {loadingStudents ? 'Loading students...' : 'Select a student'}
                     </option>
                     {students.map((s) => (
                       <option key={s._id} value={s._id}>
-                        {s.name} ({s.rollNumber || s.enrollmentNo}) - {s.courseName || "No Course"}
+                        {s.name} ({s.rollNumber || s.enrollmentNo}) - {s.courseName || 'No Course'}
                       </option>
                     ))}
                   </select>
@@ -342,7 +384,6 @@ function IDCardModal({ show, onClose, onSaved, initial }) {
                       value={enrollmentNo}
                       onChange={(e) => {
                         setEnrollmentNo(e.target.value);
-                        // Auto-lookup after typing stops
                         if (e.target.value.length >= 3) {
                           handleEnrollmentLookup(e.target.value);
                         }
@@ -391,7 +432,7 @@ function IDCardModal({ show, onClose, onSaved, initial }) {
                     rows="2"
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
-                  ></textarea>
+                  />
                 </div>
                 <div className="col-md-6 mb-3">
                   <label className="form-label">Mobile No</label>
@@ -424,9 +465,7 @@ function IDCardModal({ show, onClose, onSaved, initial }) {
                     >
                       <option value="">Select a course</option>
                       {availableCourses.map((course, index) => (
-                        <option key={index} value={course}>
-                          {course}
-                        </option>
+                        <option key={index} value={course}>{course}</option>
                       ))}
                     </select>
                   ) : (
@@ -490,15 +529,18 @@ function IDCardModal({ show, onClose, onSaved, initial }) {
   );
 }
 
-export default function IDCardList() {
+// ─── IDCardList (default export) ──────────────────────────────────────────────
+
+function IDCardList() {
   const [cards, setCards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState('');
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [viewingCard, setViewingCard] = useState(null);
   const [editing, setEditing] = useState(null);
 
-  // Template loading state
   // eslint-disable-next-line no-unused-vars
   const [templateLoaded, setTemplateLoaded] = useState(false);
   // eslint-disable-next-line no-unused-vars
@@ -507,96 +549,41 @@ export default function IDCardList() {
   const loadAll = async () => {
     setLoading(true);
     setMsg('');
-    console.log('===== LOAD ALL ID CARDS START =====');
     try {
-      console.log('Fetching ID cards and students...');
       const [cardsData, studentsData] = await Promise.all([
         API.unwrap(API.get('/id-cards')),
         API.unwrap(API.get('/students')),
       ]);
 
-      console.log('Cards API response:', cardsData);
-      console.log('Students API response, count:', studentsData?.length);
-      
       const cardArr = Array.isArray(cardsData)
         ? cardsData
-        : Array.isArray(cardsData?.data)
-        ? cardsData.data
-        : [];
+        : Array.isArray(cardsData?.data) ? cardsData.data : [];
 
       const studentArr = Array.isArray(studentsData)
         ? studentsData
-        : Array.isArray(studentsData?.data)
-        ? studentsData.data
-        : [];
+        : Array.isArray(studentsData?.data) ? studentsData.data : [];
 
-      console.log('Total cards:', cardArr.length);
-      console.log('Total students:', studentArr.length);
-
-      // Create a map of student ID -> photo for quick lookup
+      // Build photo lookup map (by _id, name, and enrollmentNo)
       const studentPhotoMap = {};
       studentArr.forEach(s => {
-        // Map by _id
-        if (s._id) {
-          studentPhotoMap[s._id] = s.photo || null;
-        }
-        // Also map by name (like admit card does)
-        if (s.name) {
-          studentPhotoMap[s.name.toLowerCase()] = s.photo || null;
-        }
-        // Also map by enrollment number
-        if (s.enrollmentNo) {
-          studentPhotoMap[s.enrollmentNo.toLowerCase()] = s.photo || null;
-        }
+        if (s._id)        studentPhotoMap[s._id]                        = s.photo || null;
+        if (s.name)       studentPhotoMap[s.name.toLowerCase()]          = s.photo || null;
+        if (s.enrollmentNo) studentPhotoMap[s.enrollmentNo.toLowerCase()] = s.photo || null;
       });
 
-      console.log('Student photo map sample:', JSON.stringify(studentArr.slice(0, 1).map(s => ({ id: s._id, name: s.name, photo: s.photo, rollNumber: s.rollNumber, enrollmentNo: s.enrollmentNo })), null, 2));
-
-      // Add student photo to each ID card - try multiple sources
       const cardsWithPhotos = cardArr.map(card => {
-        // Debug: log the card to see what's available
-        console.log('Processing card:', card.studentName, { 
-          cardPhoto: card.photo, 
-          student: card.student,
-          studentPhoto: card.student?.photo 
-        });
-        
-        // Get student ID - could be string or populated object
         const studentId = card.student ? (card.student._id || card.student) : null;
-        
-        // Get student photo from various sources
-        let foundPhoto = null;
-        
-        // 1. Card's own photo field
-        if (card.photo) {
-          foundPhoto = card.photo;
-        }
-        // 2. Populated student data from backend
-        else if (card.student && typeof card.student === 'object' && card.student.photo) {
-          foundPhoto = card.student.photo;
-        }
-        // 3. Lookup by student ObjectId
-        else if (studentId && studentPhotoMap[studentId]) {
-          foundPhoto = studentPhotoMap[studentId];
-        }
-        // 4. Lookup by studentName
-        else if (card.studentName && studentPhotoMap[card.studentName.toLowerCase()]) {
-          foundPhoto = studentPhotoMap[card.studentName.toLowerCase()];
-        }
-        // 5. Lookup by enrollmentNo
-        else if (card.enrollmentNo && studentPhotoMap[card.enrollmentNo.toLowerCase()]) {
-          foundPhoto = studentPhotoMap[card.enrollmentNo.toLowerCase()];
-        }
-        
-        console.log('Found photo for', card.studentName + ':', foundPhoto);
-        
-        return {
-          ...card,
-          studentPhoto: foundPhoto
-        };
+        let foundPhoto =
+          card.photo ||
+          (card.student && typeof card.student === 'object' && card.student.photo) ||
+          (studentId && studentPhotoMap[studentId]) ||
+          (card.studentName && studentPhotoMap[card.studentName.toLowerCase()]) ||
+          (card.enrollmentNo && studentPhotoMap[card.enrollmentNo.toLowerCase()]) ||
+          null;
+
+        return { ...card, studentPhoto: foundPhoto };
       });
 
-      console.log('===== LOAD ALL ID CARDS END =====');
       setCards(cardsWithPhotos);
     } catch (err) {
       console.error('fetch ID cards', err);
@@ -615,34 +602,20 @@ export default function IDCardList() {
     const initGenerator = async () => {
       if (typeof IDCardGenerator !== 'undefined') {
         try {
-          console.log('Loading ID card template...');
           await IDCardGenerator.loadTemplate('/id-card-template.jpeg');
-          console.log('ID card template loaded successfully');
           setTemplateLoaded(true);
         } catch (err) {
           console.error('Failed to load ID card template:', err);
           setTemplateError(err.message);
         }
-      } else {
-        console.warn('IDCardGenerator not defined');
       }
     };
     initGenerator();
   }, []);
 
-  // Function to handle download using template-based generator
   const handleTemplateDownload = (card) => {
-    console.log('===== HANDLE TEMPLATE DOWNLOAD START =====');
-    console.log('Full card object:', JSON.stringify(card, null, 2));
-    console.log('templateLoaded:', templateLoaded);
-    console.log('card.studentPhoto:', card.studentPhoto);
-    console.log('card.photo:', card.photo);
-    console.log('card.student:', card.student);
-    
     if (typeof IDCardGenerator !== 'undefined' && templateLoaded) {
       try {
-        const photoValue = card.studentPhoto || card.photo || null;
-        console.log('Final photo value being sent:', photoValue);
         IDCardGenerator.download({
           studentName: card.studentName,
           sessionFrom: card.sessionFrom || '',
@@ -655,30 +628,31 @@ export default function IDCardList() {
           address: card.address || '',
           mobileNo: card.mobileNo || '',
           centerMobileNo: card.centerMobileNo || '',
-          photo: photoValue
+          photo: card.studentPhoto || card.photo || null,
         });
       } catch (err) {
         console.error('Error generating PDF:', err);
         alert('Failed to generate PDF: ' + err.message);
       }
     } else {
-      console.warn('Template not loaded');
       alert('ID card template not loaded. Please refresh the page.');
     }
-    console.log('===== HANDLE TEMPLATE DOWNLOAD END =====');
   };
 
   const filteredCards = useMemo(() => {
     if (!search.trim()) return cards;
     const s = search.trim().toLowerCase();
-    return cards.filter((c) => {
-      return (
-        (c.studentName || '').toLowerCase().includes(s) ||
-        (c.enrollmentNo || '').toLowerCase().includes(s) ||
-        (c.courseName || '').toLowerCase().includes(s)
-      );
-    });
+    return cards.filter((c) =>
+      (c.studentName || '').toLowerCase().includes(s) ||
+      (c.enrollmentNo || '').toLowerCase().includes(s) ||
+      (c.courseName || '').toLowerCase().includes(s)
+    );
   }, [cards, search]);
+
+  const handleView = (card) => {
+    setViewingCard(card);
+    setShowViewModal(true);
+  };
 
   const handleEdit = (card) => {
     setEditing(card);
@@ -716,7 +690,10 @@ export default function IDCardList() {
     <div className="container-fluid p-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2>ID Cards</h2>
-        <button className="btn btn-primary" onClick={() => { setEditing(null); setShowModal(true); }}>
+        <button
+          className="btn btn-primary"
+          onClick={() => { setEditing(null); setShowModal(true); }}
+        >
           + Create ID Card
         </button>
       </div>
@@ -767,14 +744,20 @@ export default function IDCardList() {
                     <td>{c.courseName}</td>
                     <td>
                       <button
-                        className="btn btn-sm btn-outline-success me-2"
+                        className="btn btn-sm btn-outline-info me-1"
+                        onClick={() => handleView(c)}
+                      >
+                        View
+                      </button>
+                      <button
+                        className="btn btn-sm btn-outline-success me-1"
                         onClick={() => handleTemplateDownload(c)}
                         title="Download/Print ID Card"
                       >
                         Download
                       </button>
                       <button
-                        className="btn btn-sm btn-outline-primary me-2"
+                        className="btn btn-sm btn-outline-primary me-1"
                         onClick={() => handleEdit(c)}
                       >
                         Edit
@@ -796,16 +779,21 @@ export default function IDCardList() {
 
       <IDCardModal
         show={showModal}
-        onClose={() => {
-          setShowModal(false);
-          setEditing(null);
-        }}
+        onClose={() => { setShowModal(false); setEditing(null); }}
         onSaved={handleSaved}
         initial={editing}
       />
-      
+
+      <IDCardViewModal
+        show={showViewModal}
+        onClose={() => { setShowViewModal(false); setViewingCard(null); }}
+        card={viewingCard}
+      />
+
       {/* Hidden canvas for template-based ID card generation */}
       <canvas id="idCardCanvas" style={{ display: 'none' }}></canvas>
     </div>
   );
 }
+
+export default IDCardList;
