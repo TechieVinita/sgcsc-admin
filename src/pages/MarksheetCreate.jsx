@@ -52,6 +52,7 @@ export default function MarksheetCreate() {
   const [coursePeriodFrom, setCoursePeriodFrom] = useState('');
   const [coursePeriodTo, setCoursePeriodTo] = useState('');
   const [courseDuration, setCourseDuration] = useState('');
+  const [dateOfIssue, setDateOfIssue] = useState('');
 
   // Subject fields
   const [numberOfSubjects, setNumberOfSubjects] = useState(1);
@@ -404,6 +405,7 @@ export default function MarksheetCreate() {
         coursePeriodFrom,
         coursePeriodTo,
         courseDuration: courseDuration.trim(),
+        dateOfIssue,
         subjects: subjects.map(s => ({
           subjectName: s.subjectName.trim(),
           theoryMarks: Number(s.theoryMarks) || 0,
@@ -433,6 +435,7 @@ export default function MarksheetCreate() {
       setCoursePeriodFrom('');
       setCoursePeriodTo('');
       setCourseDuration('');
+      setDateOfIssue('');
       setNumberOfSubjects(1);
        setSubjects([{ subjectName: '', theoryMarks: '', practicalMarks: '', maxTheoryMarks: 100, maxPracticalMarks: 0, grade: '' }]);
       setCourseId('');
@@ -653,18 +656,29 @@ export default function MarksheetCreate() {
                     />
                   </div>
 
-                  <div className="col-md-6">
-                    <label className="form-label">Course Period To *</label>
-                    <input
-                      type="date"
-                      className="form-control"
-                      value={coursePeriodTo}
-                      onChange={(e) => setCoursePeriodTo(e.target.value)}
-                      required
-                    />
-                  </div>
+                   <div className="col-md-6">
+                     <label className="form-label">Course Period To *</label>
+                     <input
+                       type="date"
+                       className="form-control"
+                       value={coursePeriodTo}
+                       onChange={(e) => setCoursePeriodTo(e.target.value)}
+                       required
+                     />
+                   </div>
 
-                  {/* Subjects Section */}
+                   <div className="col-md-6">
+                     <label className="form-label">Date of Issue *</label>
+                     <input
+                       type="date"
+                       className="form-control"
+                       value={dateOfIssue}
+                       onChange={(e) => setDateOfIssue(e.target.value)}
+                       required
+                     />
+                   </div>
+
+                   {/* Subjects Section */}
                   <div className="col-12 mt-4">
                     <div className="d-flex justify-content-between align-items-center mb-3">
                       <div>

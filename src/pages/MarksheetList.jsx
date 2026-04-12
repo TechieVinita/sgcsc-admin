@@ -315,7 +315,7 @@ export default function MarksheetList() {
           const templateUrl = `${window.location.origin}/marksheet-template.jpeg`;
           console.log('Template URL:', templateUrl);
           await MarksheetGenerator.loadTemplate(templateUrl);
-          MarksheetGenerator.fetchConfigFromAPI();
+          // MarksheetGenerator.fetchConfigFromAPI();
           console.log('Marksheet template loaded successfully');
           setTemplateLoaded(true);
         } catch (err) {
@@ -341,7 +341,7 @@ export default function MarksheetList() {
           const templateUrl = `${window.location.origin}/marksheet-template.jpeg`;
           console.log('Template URL:', templateUrl);
           await MarksheetGenerator.loadTemplate(templateUrl);
-          MarksheetGenerator.fetchConfigFromAPI();
+          // MarksheetGenerator.fetchConfigFromAPI();
           console.log('Marksheet template loaded successfully');
         }
 
@@ -416,7 +416,7 @@ export default function MarksheetList() {
           console.log('Loading marksheet template for view...');
           const templateUrl = `${window.location.origin}/marksheet-template.jpeg`;
           await MarksheetGenerator.loadTemplate(templateUrl);
-          MarksheetGenerator.fetchConfigFromAPI();
+          // MarksheetGenerator.fetchConfigFromAPI();
         }
 
         // Generate preview image

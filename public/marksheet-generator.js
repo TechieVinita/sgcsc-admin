@@ -39,7 +39,7 @@ var MarksheetGenerator = (() => {
       dateOfIssue:        { x: 19,  y: 92.5, font: '150px serif',        color: '#000000', align: 'left' },
 
       // Subject marks will be rendered dynamically
-      subjectsStartY:     55,  // Starting Y position for subjects table
+      subjectsStartY:     65,  // Starting Y position for subjects table
       subjectRowHeight:   15,   // Height of each subject row (increased 5x)
     }
   };
@@ -97,7 +97,7 @@ var MarksheetGenerator = (() => {
 
   // ─────────────────────────────────────────────
   // Core render function
-  // marksheet = { enrollmentNo, studentName, fatherName, motherName, courseName, instituteName, rollNumber, dob, coursePeriodFrom, coursePeriodTo, courseDuration, subjects, dateOfIssue }
+  // marksheet = { studentName, fatherName, motherName, courseName, instituteName, rollNumber, dob, coursePeriodFrom, coursePeriodTo, courseDuration, subjects, dateOfIssue }
   // ─────────────────────────────────────────────
   async function _render(marksheet) {
     if (!_initCanvas()) throw new Error('Canvas not found. Make sure <canvas id="marksheetCanvas"> exists.');
@@ -117,7 +117,6 @@ var MarksheetGenerator = (() => {
     }
 
     // Draw student details
-    _drawField(CONFIG.fields.enrollmentNo, marksheet.enrollmentNo);
     _drawField(CONFIG.fields.rollNumber, marksheet.rollNumber);
     _drawField(CONFIG.fields.studentName, marksheet.studentName);
     _drawField(CONFIG.fields.fatherName, marksheet.fatherName);
@@ -237,12 +236,11 @@ var MarksheetGenerator = (() => {
 
     /**
      * Download a single student's marksheet as a PDF.
-     * @param {Object} marksheet — { enrollmentNo, studentName, fatherName, motherName, courseName, instituteName, rollNumber, dob, coursePeriodFrom, coursePeriodTo, courseDuration, subjects, totalTheoryMarks, totalPracticalMarks, totalCombinedMarks, maxTotalMarks, percentage, overallGrade }
+      * @param {Object} marksheet — { studentName, fatherName, motherName, courseName, instituteName, rollNumber, dob, coursePeriodFrom, coursePeriodTo, courseDuration, subjects, dateOfIssue }
      *
      * Example:
-     *   MarksheetGenerator.download({
-     *     enrollmentNo: 'ENR-2024-001',
-     *     studentName: 'Ramesh Kumar',
+      *   MarksheetGenerator.download({
+      *     studentName: 'Ramesh Kumar',
      *     fatherName: 'Suresh Kumar',
      *     motherName: 'Kamla Devi',
      *     courseName: 'Diploma in Computer Application',
