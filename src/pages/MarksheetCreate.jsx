@@ -624,6 +624,7 @@ export default function MarksheetCreate() {
                                 value={subject.subjectName}
                                 onChange={(e) => handleSubjectChange(index, 'subjectName', e.target.value)}
                                 placeholder="Enter subject name"
+                                required
                               />
                             </div>
 
