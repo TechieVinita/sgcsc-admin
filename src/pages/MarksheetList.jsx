@@ -318,7 +318,7 @@ export default function MarksheetList() {
 
   // Function to handle download using template-based generator
   const handleTemplateDownload = async (marksheet) => {
-    console.log('handleTemplateDownload called:', { templateLoaded, templateError, marksheet });
+    console.log('handleTemplateDownload called:', { templateLoaded, marksheet });
 
     if (typeof MarksheetGenerator !== 'undefined') {
       try {
