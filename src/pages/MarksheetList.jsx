@@ -295,7 +295,7 @@ export default function MarksheetList() {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 seconds timeout
 
-      const response = await API.get(`/marksheets?t=${Date.now()}`, { signal: controller.signal });
+      const response = await API.get('/marksheets', { signal: controller.signal });
       clearTimeout(timeoutId);
       const data = API.unwrap(response);
       const marksheetsData = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : [];
