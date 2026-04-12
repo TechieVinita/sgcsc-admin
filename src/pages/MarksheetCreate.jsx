@@ -55,7 +55,6 @@ export default function MarksheetCreate() {
   const [dateOfIssue, setDateOfIssue] = useState('');
 
   // Subject fields
-  const [numberOfSubjects, setNumberOfSubjects] = useState(1);
   const [subjects, setSubjects] = useState([
     { subjectName: '', theoryMarks: '', practicalMarks: '', maxTheoryMarks: 100, maxPracticalMarks: 0, grade: '' }
   ]);
@@ -109,22 +108,7 @@ export default function MarksheetCreate() {
     fetchData();
   }, []);
 
-  // Handle number of subjects change (only when manually changed, not when course is selected)
-  useEffect(() => {
-    // Skip if subjects were just set by course selection
-    if (subjects.length > 0 && subjects[0].subjectName) return;
 
-    const num = parseInt(numberOfSubjects) || 1;
-    const newSubjects = [];
-    for (let i = 0; i < num; i++) {
-      if (subjects[i]) {
-        newSubjects.push(subjects[i]);
-      } else {
-        newSubjects.push({ subjectName: '', theoryMarks: '', practicalMarks: '', maxTheoryMarks: 100, maxPracticalMarks: 0, grade: '' });
-      }
-    }
-    setSubjects(newSubjects);
-  }, [numberOfSubjects]);
 
   // Calculate totals
   const { totalTheory, totalPractical, totalCombined, maxTotal, percentage } = useMemo(() => {
@@ -434,7 +418,6 @@ export default function MarksheetCreate() {
       setCoursePeriodTo('');
       setCourseDuration('');
       setDateOfIssue('');
-      setNumberOfSubjects(1);
        setSubjects([{ subjectName: '', theoryMarks: '', practicalMarks: '', maxTheoryMarks: 100, maxPracticalMarks: 0, grade: '' }]);
       setCourseId('');
       setStudentId('');
