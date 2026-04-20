@@ -30,7 +30,7 @@
       sessionFrom:       { x: 48, y: 28, font: '60px serif', color: '#000000', align: 'left' },
       sessionTo:         { x: 60, y: 28, font: '60px serif', color: '#000000', align: 'left' },
       // Student photo field
-      photo:            { x: 35, y: 29.5, width: 30, height: 17 },
+      photo:            { x: 35, y: 29.3, width: 30, height: 17 },
       // Note: No photo field by default - add if needed
       fatherName:        { x: 51, y: 55.5, font: '80px serif', color: '#000000', align: 'left' },
       motherName:        { x: 51, y: 59.5, font: '80px serif', color: '#000000', align: 'left' },

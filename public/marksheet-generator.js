@@ -89,6 +89,24 @@ var MarksheetGenerator = (() => {
 
   function _pct(val, total) { return (val / 100) * total; }
 
+  function _wrapText(text, maxWidth, ctx) {
+    const words = text.split(' ');
+    const lines = [];
+    let currentLine = '';
+    for (const word of words) {
+      const testLine = currentLine ? currentLine + ' ' + word : word;
+      if (ctx.measureText(testLine).width <= maxWidth) {
+        currentLine = testLine;
+      } else {
+        if (currentLine) lines.push(currentLine);
+        currentLine = word;
+      }
+    }
+    if (currentLine) lines.push(currentLine);
+    // Allow full wrapping without truncation
+    return lines;
+  }
+
   function _drawField(field, text) {
     if (!text || !_ctx) return;
     const W = _canvas.width, H = _canvas.height;
@@ -147,32 +165,39 @@ var MarksheetGenerator = (() => {
       const W = _canvas.width, H = _canvas.height;
       const startY = _pct(CONFIG.fields.subjectsStartY, H);
       const rowHeight = _pct(CONFIG.fields.subjectRowHeight, H);
+      const lineSpacing = _pct(1.5, H); // Spacing between wrapped lines
+
+      let currentY = startY;
 
       marksheet.subjects.forEach((subject, index) => {
-        const y = startY + (index * rowHeight);
-
         // Draw subject number
         _ctx.save();
         _ctx.font = '150px serif';
         _ctx.fillStyle = '#000000';
         _ctx.textAlign = 'left';
-        _ctx.fillText(`${index + 1}.`, _pct(10, W), y);
+        _ctx.fillText(`${index + 1}.`, _pct(10, W), currentY);
         _ctx.restore();
 
-        // Draw subject name
+        // Draw subject name (with wrapping)
         _ctx.save();
         _ctx.font = '150px serif';
         _ctx.fillStyle = '#000000';
         _ctx.textAlign = 'left';
-        _ctx.fillText(subject.subjectName || '-', _pct(15, W), y);
+        const subjectText = subject.subjectName || '-';
+        const maxWidth = _pct(35, W); // Leave some margin before marks column
+        const lines = _wrapText(subjectText, maxWidth, _ctx);
+        lines.forEach((line, i) => {
+          _ctx.fillText(line, _pct(15, W), currentY + i * lineSpacing);
+        });
         _ctx.restore();
 
+        // Draw marks aligned with the first line of the subject
         // Draw theory marks
         _ctx.save();
         _ctx.font = '150px serif';
         _ctx.fillStyle = '#000000';
         _ctx.textAlign = 'center';
-        _ctx.fillText(`${subject.theoryMarks || 0}`, _pct(55, W), y);
+        _ctx.fillText(`${subject.theoryMarks || 0}`, _pct(55, W), currentY);
         _ctx.restore();
 
         // Draw practical marks
@@ -180,7 +205,7 @@ var MarksheetGenerator = (() => {
         _ctx.font = '150px serif';
         _ctx.fillStyle = '#000000';
         _ctx.textAlign = 'center';
-        _ctx.fillText(`${subject.practicalMarks || 0}`, _pct(70, W), y);
+        _ctx.fillText(`${subject.practicalMarks || 0}`, _pct(70, W), currentY);
         _ctx.restore();
 
         // Draw combined marks
@@ -188,8 +213,12 @@ var MarksheetGenerator = (() => {
         _ctx.font = '150px serif';
         _ctx.fillStyle = '#000000';
         _ctx.textAlign = 'center';
-        _ctx.fillText(`${subject.combinedMarks || 0}`, _pct(82, W), y);
+        _ctx.fillText(`${subject.combinedMarks || 0}`, _pct(82, W), currentY);
         _ctx.restore();
+
+        // Advance Y position based on lines used (minimum 1 row)
+        const usedLines = Math.max(1, lines.length);
+        currentY += usedLines * rowHeight;
       });
     }
 

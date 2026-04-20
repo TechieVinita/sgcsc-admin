@@ -20,12 +20,11 @@ export default function MarksheetCreate() {
   const [coursePeriodFrom, setCoursePeriodFrom] = useState('');
   const [coursePeriodTo, setCoursePeriodTo] = useState('');
   const [courseDuration, setCourseDuration] = useState('');
-  const [dateOfIssue, setDateOfIssue] = useState('');
-  const [overallGrade, setOverallGrade] = useState(''); // ✅ single declaration
+   const [dateOfIssue, setDateOfIssue] = useState('');
 
   // Subject fields
   const [subjects, setSubjects] = useState([
-    { subjectName: '', theoryMarks: '', practicalMarks: '', maxTheoryMarks: 100, maxPracticalMarks: 0, grade: '' }
+    { subjectName: '', theoryMarks: '', practicalMarks: '', maxTheoryMarks: 100, maxPracticalMarks: 100, grade: '' }
   ]);
 
   // Optional links
@@ -76,6 +75,48 @@ export default function MarksheetCreate() {
     fetchData();
   }, []);
 
+  // ─── UTILITY: reliably extract a plain string ID from anything ───────────────
+  const toId = (val) => {
+    if (!val) return null;
+    if (typeof val === 'string') return val;
+    if (typeof val === 'object') return (val._id || val.id)?.toString() ?? null;
+    return String(val);
+  };
+
+  // ─── UTILITY: fetch + populate subjects for a given courseId string ──────────
+  const fetchAndSetSubjects = async (courseIdStr) => {
+    if (!courseIdStr) return;
+    try {
+      const res = await API.unwrap(API.get(`/subjects?course=${courseIdStr}`));
+
+      // Handle every possible shape the API might return
+      let data = [];
+      if (Array.isArray(res))           data = res;
+      else if (Array.isArray(res?.data)) data = res.data;
+
+      console.log(`[subjects] courseId=${courseIdStr} → ${data.length} subjects`, data);
+
+      if (data.length > 0) {
+        setSubjects(data.map((s) => ({
+          subjectName:      s.name       || '',
+          theoryMarks:      '',
+          practicalMarks:   '',
+          maxTheoryMarks:   Number(s.maxMarks) || 100,
+          maxPracticalMarks: 100,
+          grade:            '',
+        })));
+      } else {
+        // No subjects for this course — reset to one blank row
+        setSubjects([{
+          subjectName: '', theoryMarks: '', practicalMarks: '',
+          maxTheoryMarks: 100, maxPracticalMarks: 100, grade: '',
+        }]);
+      }
+    } catch (err) {
+      console.error('[subjects] fetch failed:', err);
+    }
+  };
+
   // Calculate totals
   const { totalTheory, totalPractical, totalCombined, maxTotal, percentage } = useMemo(() => {
     let totalTheory = 0;
@@ -99,24 +140,25 @@ export default function MarksheetCreate() {
     return { totalTheory, totalPractical, totalCombined, maxTotal, percentage };
   }, [subjects]);
 
-  // ✅ Derived auto-grade — separate from the overallGrade state
+  // ✅ Derived auto-grade
   const calculateGrade = (pct) => {
-    if (pct >= 90) return 'A+';
-    if (pct >= 80) return 'A';
-    if (pct >= 70) return 'B+';
-    if (pct >= 60) return 'B';
-    if (pct >= 50) return 'C';
-    if (pct >= 40) return 'D';
+    if (pct >= 85) return 'A+';
+    if (pct >= 70) return 'A';
+    if (pct >= 55) return 'B';
+    if (pct >= 40) return 'C';
     return 'F';
   };
 
-  const autoGrade = calculateGrade(percentage); // ✅ renamed to avoid shadowing
+  // Calculate grade for individual subjects
+  const calculateSubjectGrade = (theory, practical, maxTheory, maxPractical) => {
+    const totalObtained = (theory || 0) + (practical || 0);
+    const totalMax = (maxTheory || 0) + (maxPractical || 0);
+    if (totalMax === 0) return 'F';
+    const pct = (totalObtained / totalMax) * 100;
+    return calculateGrade(pct);
+  };
 
-  // Auto-sync overallGrade with calculated grade whenever percentage changes
-  // (only if user hasn't manually overridden it — optional UX choice)
-  useEffect(() => {
-    setOverallGrade(autoGrade);
-  }, [autoGrade]);
+  const autoGrade = calculateGrade(percentage); // ✅ auto-calculated
 
   // Handle enrollment number lookup
   const handleEnrollmentLookup = async () => {
@@ -157,41 +199,98 @@ export default function MarksheetCreate() {
     }
   };
 
-  // Handle student selection
-  const handleStudentChange = (e) => {
+  // ─── HANDLER: student dropdown ───────────────────────────────────────────────
+  const handleStudentChange = async (e) => {
     const selectedStudentId = e.target.value;
     setStudentId(selectedStudentId);
 
-    if (selectedStudentId) {
-      const selectedStudent = students.find((s) => (s._id || s.id) === selectedStudentId);
-      if (selectedStudent) {
-        if (selectedStudent.name) setStudentName(selectedStudent.name);
-        if (selectedStudent.fatherName) setFatherName(selectedStudent.fatherName);
-        if (selectedStudent.motherName) setMotherName(selectedStudent.motherName);
-        if (selectedStudent.rollNumber) setRollNumber(selectedStudent.rollNumber);
-        if (selectedStudent.enrollmentNo || selectedStudent.rollNumber) setEnrollmentNo(selectedStudent.enrollmentNo || selectedStudent.rollNumber);
-        if (selectedStudent.courseName) setCourseName(selectedStudent.courseName);
-        if (selectedStudent.centerName) setInstituteName(selectedStudent.centerName);
-
-        if (selectedStudent.dob) {
-          const dobDate = new Date(selectedStudent.dob);
-          setDob(dobDate.toISOString().split('T')[0]);
-        }
-      }
+    if (!selectedStudentId) {
+      // Clear everything when deselected
+      setSubjects([{ subjectName: '', theoryMarks: '', practicalMarks: '', maxTheoryMarks: 100, maxPracticalMarks: 100, grade: '' }]);
+      return;
     }
+
+    const stu = students.find((s) => toId(s) === selectedStudentId);
+    if (!stu) return;
+
+    // ── Personal details ─────────────────────────────────────────────────────
+    if (stu.name)         setStudentName(stu.name);
+    if (stu.fatherName)   setFatherName(stu.fatherName);
+    if (stu.motherName)   setMotherName(stu.motherName);
+    if (stu.rollNumber)   setRollNumber(stu.rollNumber);
+    if (stu.enrollmentNo || stu.rollNumber)
+      setEnrollmentNo(stu.enrollmentNo || stu.rollNumber);
+    if (stu.centerName)   setInstituteName(stu.centerName);
+    if (stu.dob)          setDob(new Date(stu.dob).toISOString().split('T')[0]);
+
+    // ── Resolve courseId ─────────────────────────────────────────────────────
+    let resolvedCourseId = null;
+
+    if (stu.courses?.length >= 1) {
+      // courses[] may be: [{ course: "id_string", ... }]
+      //               or: [{ course: { _id: "...", name: "..." }, ... }]
+      const enrollment = stu.courses[0];
+      resolvedCourseId = toId(enrollment.course);
+
+      if (enrollment.sessionStart)
+        setCoursePeriodFrom(new Date(enrollment.sessionStart).toISOString().split('T')[0]);
+      if (enrollment.sessionEnd)
+        setCoursePeriodTo(new Date(enrollment.sessionEnd).toISOString().split('T')[0]);
+
+    } else if (stu.courseName) {
+      // Fallback: match by name against loaded courses list
+      const match = courses.find(
+        (c) => c.name === stu.courseName || c.title === stu.courseName
+      );
+      if (match) resolvedCourseId = toId(match);
+
+      if (stu.sessionStart)
+        setCoursePeriodFrom(new Date(stu.sessionStart).toISOString().split('T')[0]);
+      if (stu.sessionEnd)
+        setCoursePeriodTo(new Date(stu.sessionEnd).toISOString().split('T')[0]);
+    }
+
+    console.log('[student select] resolvedCourseId =', resolvedCourseId);
+
+    if (!resolvedCourseId) {
+      console.warn('[student select] no courseId found. Student data:', stu);
+      return;
+    }
+
+    setCourseId(resolvedCourseId);
+
+    // ── Set course name + duration from the loaded courses list ───────────────
+    const courseObj = courses.find((c) => toId(c) === resolvedCourseId);
+    console.log('[student select] matched courseObj =', courseObj);
+
+    if (courseObj) {
+      setCourseName(courseObj.name || courseObj.title || '');
+      setCourseDuration(courseObj.duration || courseObj.readableDuration || '');
+    }
+
+    // ── Fetch subjects immediately (don't rely on useEffect race) ─────────────
+    await fetchAndSetSubjects(resolvedCourseId);
   };
 
-  // Handle course selection
+  // ─── HANDLER: course dropdown ────────────────────────────────────────────────
   const handleCourseChange = async (e) => {
     const selectedCourseId = e.target.value;
     setCourseId(selectedCourseId);
 
-    if (selectedCourseId) {
-      const selectedCourse = courses.find((c) => (c._id || c.id) === selectedCourseId);
-      if (selectedCourse) {
-        setCourseName(selectedCourse.name || selectedCourse.title || '');
-      }
+    if (!selectedCourseId) {
+      setCourseName('');
+      setCourseDuration('');
+      setSubjects([{ subjectName: '', theoryMarks: '', practicalMarks: '', maxTheoryMarks: 100, maxPracticalMarks: 100, grade: '' }]);
+      return;
     }
+
+    const courseObj = courses.find((c) => toId(c) === selectedCourseId);
+    if (courseObj) {
+      setCourseName(courseObj.name || courseObj.title || '');
+      setCourseDuration(courseObj.duration || courseObj.readableDuration || '');
+    }
+
+    await fetchAndSetSubjects(selectedCourseId);
   };
 
   // Handle subject field change
@@ -207,6 +306,16 @@ export default function MarksheetCreate() {
     } else {
       newSubjects[index] = { ...newSubjects[index], [field]: value };
     }
+
+    // Auto-calculate grade for the subject
+    const subject = newSubjects[index];
+    subject.grade = calculateSubjectGrade(
+      Number(subject.theoryMarks) || 0,
+      Number(subject.practicalMarks) || 0,
+      Number(subject.maxTheoryMarks) || 100,
+      Number(subject.maxPracticalMarks) || 0
+    );
+
     setSubjects(newSubjects);
   };
 
@@ -283,7 +392,7 @@ export default function MarksheetCreate() {
           maxPracticalMarks: Number(s.maxPracticalMarks) || 0,
           grade: s.grade?.trim() || '',
         })),
-        overallGrade: overallGrade.trim() || undefined, // ✅ uses state value (manual or auto-synced)
+        overallGrade: autoGrade || undefined, // ✅ auto-calculated
         studentId: studentId || undefined,
         courseId: courseId || undefined,
       };
@@ -306,10 +415,9 @@ export default function MarksheetCreate() {
       setDob('');
       setCoursePeriodFrom('');
       setCoursePeriodTo('');
-      setCourseDuration('');
-      setDateOfIssue('');
-      setOverallGrade('');
-      setSubjects([{ subjectName: '', theoryMarks: '', practicalMarks: '', maxTheoryMarks: 100, maxPracticalMarks: 0, grade: '' }]);
+       setCourseDuration('');
+       setDateOfIssue('');
+       setSubjects([{ subjectName: '', theoryMarks: '', practicalMarks: '', maxTheoryMarks: 100, maxPracticalMarks: 100, grade: '' }]);
       setCourseId('');
       setStudentId('');
     } catch (err) {
@@ -460,12 +568,12 @@ export default function MarksheetCreate() {
                     <div className="d-flex justify-content-between align-items-center mb-3">
                       <div>
                         <h5 className="mb-1 text-primary">Subjects & Marks</h5>
-                        <p className="text-muted small mb-0">Enter subject names and marks manually below.</p>
+                        <p className="text-muted small mb-0">Select a course to auto-fill subjects, or add manually.</p>
                       </div>
                       <button
                         type="button"
                         className="btn btn-outline-primary btn-sm"
-                        onClick={() => setSubjects([...subjects, { subjectName: '', theoryMarks: '', practicalMarks: '', maxTheoryMarks: 100, maxPracticalMarks: 0, grade: '' }])}
+                        onClick={() => setSubjects([...subjects, { subjectName: '', theoryMarks: '', practicalMarks: '', maxTheoryMarks: 100, maxPracticalMarks: 100, grade: '' }])}
                       >
                         <i className="bi bi-plus-circle me-1"></i>Add Subject
                       </button>
@@ -476,7 +584,7 @@ export default function MarksheetCreate() {
                     <div className="col-12">
                       <div className="alert alert-info">
                         <i className="bi bi-info-circle me-2"></i>
-                        <strong>No subjects added.</strong> Click "Add Subject" above to manually add subjects.
+                        <strong>No subjects added.</strong> Select a course to auto-fill subjects, or click "Add Subject" to add manually.
                       </div>
                     </div>
                   )}
@@ -523,8 +631,8 @@ export default function MarksheetCreate() {
                               <input type="text" className="form-control" value={(Number(subject.theoryMarks) || 0) + (Number(subject.practicalMarks) || 0)} readOnly disabled />
                             </div>
                             <div className="col-md-3">
-                              <label className="form-label">Grade (Optional)</label>
-                              <input type="text" className="form-control" value={subject.grade} onChange={(e) => handleSubjectChange(index, 'grade', e.target.value)} placeholder="e.g. A, B+" />
+                              <label className="form-label">Grade (Auto)</label>
+                              <input type="text" className="form-control" value={subject.grade} readOnly disabled placeholder="Auto-calculated" />
                             </div>
                           </div>
                         </div>
@@ -557,14 +665,8 @@ export default function MarksheetCreate() {
                             <p className="fs-5">{percentage.toFixed(2)}%</p>
                           </div>
                           <div className="col-md-6">
-                            <label className="form-label"><strong>Final Grade (Manual Entry):</strong></label>
-                            <input
-                              type="text"
-                              className="form-control"
-                              value={overallGrade}
-                              onChange={(e) => setOverallGrade(e.target.value.toUpperCase())}
-                              placeholder="Enter grade e.g. A, B+, Pass"
-                            />
+                            <p className="mb-1"><strong>Final Grade (Auto):</strong></p>
+                            <p className="fs-5">{autoGrade}</p>
                           </div>
                         </div>
                       </div>

@@ -81,6 +81,10 @@ const SettingsTemplateConfig = lazy(() => import("./pages/SettingsTemplateConfig
 const FeeReceipt = lazy(() => import("./pages/FeeReceipt"));
 // const SettingsBranding = lazy(() => import("./pages/SettingsBranding"));
 
+/* Student Verification (Public) */
+const StudentResultVerification = lazy(() => import("./pages/StudentResultVerification"));
+const StudentCertificateVerification = lazy(() => import("./pages/StudentCertificateVerification"));
+
 /* ----------------------------------------------------- */
 
 function LoadingFallback() {
@@ -549,6 +553,10 @@ export default function App() {
             }
           />
           */}
+
+          {/* Student Verification (Public) */}
+          <Route path="/student/result-verification" element={<StudentResultVerification />} />
+          <Route path="/student/certificate-verification" element={<StudentCertificateVerification />} />
 
           {/* Root redirect */}
           <Route
