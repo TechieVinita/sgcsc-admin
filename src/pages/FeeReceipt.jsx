@@ -68,18 +68,27 @@ export default function FeeReceipt() {
     setSaving(true);
 
     try {
-      // Calculate totals
-      const totalPaid = Object.values(monthlyData).reduce((sum, month) => sum + (month.paid || 0), 0);
-      const totalDue = Object.values(monthlyData).reduce((sum, month) => sum + (month.due || 0), 0);
+      // Calculate totals - only for selected months
+      const totalPaid = selectedMonths.reduce((sum, index) => {
+        const data = monthlyData[index];
+        return sum + (data?.paid || 0);
+      }, 0);
+      const totalDue = selectedMonths.reduce((sum, index) => {
+        const data = monthlyData[index];
+        return sum + (data?.due || 0);
+      }, 0);
 
-      // Prepare monthly payments data
-      const monthlyPayments = Object.entries(monthlyData).map(([index, data]) => ({
-        month: new Date(0, parseInt(index)).toLocaleString('default', { month: 'long' }),
-        date: data.date,
-        paid: data.paid || 0,
-        due: data.due || 0,
-        status: (data.paid || 0) > 0 ? 'Paid' : 'Pending'
-      }));
+      // Prepare monthly payments data - only include selected months
+      const monthlyPayments = selectedMonths.map(index => {
+        const data = monthlyData[index] || { date: '', paid: 0, due: 0 };
+        return {
+          month: new Date(0, index).toLocaleString('default', { month: 'long' }),
+          date: data.date,
+          paid: data.paid || 0,
+          due: data.due || 0,
+          status: (data.paid || 0) > 0 ? 'Paid' : 'Pending'
+        };
+      });
 
       const receiptData = {
         studentId: selectedStudent._id || selectedStudent.id,
@@ -113,13 +122,16 @@ export default function FeeReceipt() {
     }
   };
   
-  // Calculate totals from monthly data
+  // Calculate totals from monthly data - only selected months
   const calculateTotals = () => {
     let totalPaid = 0;
     let totalDue = 0;
-    Object.values(monthlyData).forEach(data => {
-      totalPaid += Number(data.paid) || 0;
-      totalDue += Number(data.due) || 0;
+    selectedMonths.forEach(index => {
+      const data = monthlyData[index];
+      if (data) {
+        totalPaid += Number(data.paid) || 0;
+        totalDue += Number(data.due) || 0;
+      }
     });
     return { totalPaid, totalDue };
   };
