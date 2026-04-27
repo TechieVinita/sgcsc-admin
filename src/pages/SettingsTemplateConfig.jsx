@@ -238,7 +238,24 @@ export default function SettingsTemplateConfig() {
     try {
       setLoading(true);
       const data = await getCertificateTemplateConfig();
-      setConfig(data || {});
+      let initialConfig = data || {};
+      // Set default values for studentCertificate if not present
+      if (!initialConfig.studentCertificate) {
+        initialConfig.studentCertificate = {
+          atcName: { x: 50, y: 10, font: 'bold 14px serif', color: '#000000', align: 'center' },
+          studentNameCombined: { x: 50, y: 20, font: 'bold 16px serif', color: '#000000', align: 'center' },
+          courseName: { x: 50, y: 30, font: '12px serif', color: '#000000', align: 'center' },
+          grade: { x: 50, y: 40, font: 'bold 12px serif', color: '#000000', align: 'center' },
+          gradeExtra: { x: 50, y: 40, font: 'bold 12px serif', color: '#000000', align: 'center' },
+          courseDuration: { x: 50, y: 50, font: '12px serif', color: '#000000', align: 'center' },
+          coursePeriodFrom: { x: 30, y: 60, font: '10px serif', color: '#000000', align: 'left' },
+          coursePeriodTo: { x: 70, y: 60, font: '10px serif', color: '#000000', align: 'left' },
+          certificateNumber: { x: 50, y: 70, font: '10px serif', color: '#000000', align: 'center' },
+          dateOfIssue: { x: 50, y: 80, font: '10px serif', color: '#000000', align: 'center' },
+          photo: { x: 10, y: 10, width: 20, height: 25 }
+        };
+      }
+      setConfig(initialConfig);
     } catch (err) {
       console.error("Error fetching template config:", err);
       setMessage({ type: "danger", text: "Failed to load template configuration" });
