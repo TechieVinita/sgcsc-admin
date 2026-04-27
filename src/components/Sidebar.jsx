@@ -92,6 +92,7 @@ export default function Sidebar() {
               </li>
               <li className="mb-1">
                 <NavLink to="/fee-receipt" className={subLinkClass}>Fee Receipt</NavLink>
+                <NavLink to="/receipt-management" className={subLinkClass}>Receipt Management</NavLink>
               </li>
             </ul>
           )}

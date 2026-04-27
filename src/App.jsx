@@ -79,6 +79,7 @@ const SettingsCreditPricing = lazy(() => import("./pages/SettingsCreditPricing")
 const SettingsCreditQR = lazy(() => import("./pages/SettingsCreditQR"));
 const SettingsTemplateConfig = lazy(() => import("./pages/SettingsTemplateConfig"));
 const FeeReceipt = lazy(() => import("./pages/FeeReceipt"));
+const ReceiptManagement = lazy(() => import("./pages/ReceiptManagement"));
 // const SettingsBranding = lazy(() => import("./pages/SettingsBranding"));
 
 /* Student Verification (Public) */
@@ -207,6 +208,16 @@ export default function App() {
               <PrivateRoute>
                 <ProtectedLayout>
                   <FeeReceipt />
+                </ProtectedLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/receipt-management"
+            element={
+              <PrivateRoute>
+                <ProtectedLayout>
+                  <ReceiptManagement />
                 </ProtectedLayout>
               </PrivateRoute>
             }

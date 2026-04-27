@@ -22,7 +22,10 @@ export default function FeeReceipt() {
   
   // Per-month fee details
   const [monthlyData, setMonthlyData] = useState({});
-  
+
+  // Save functionality
+  const [saving, setSaving] = useState(false);
+
   // Initialize monthly data when months are selected
    const initializeMonthlyData = (monthsArray) => {
     const newData = {};
@@ -47,6 +50,66 @@ export default function FeeReceipt() {
         [field]: value
       }
     }));
+  };
+
+  // Save receipt to database
+  const saveReceipt = async () => {
+    if (!selectedStudent) {
+      alert('Please select a student first');
+      return;
+    }
+
+    if (!receiptNo.trim()) {
+      alert('Please enter a receipt number');
+      return;
+    }
+
+    setSaving(true);
+
+    try {
+      // Calculate totals
+      const totalPaid = Object.values(monthlyData).reduce((sum, month) => sum + (month.paid || 0), 0);
+      const totalDue = Object.values(monthlyData).reduce((sum, month) => sum + (month.due || 0), 0);
+
+      // Prepare monthly payments data
+      const monthlyPayments = Object.entries(monthlyData).map(([index, data]) => ({
+        month: new Date(0, parseInt(index)).toLocaleString('default', { month: 'long' }),
+        date: data.date,
+        paid: data.paid || 0,
+        due: data.due || 0,
+        status: (data.paid || 0) > 0 ? 'Paid' : 'Pending'
+      }));
+
+      const receiptData = {
+        studentId: selectedStudent._id,
+        courseId: selectedCourse?._id,
+        receiptNo: receiptNo.trim(),
+        sessionStart: sessionStart,
+        sessionEnd: getSessionEndYear().toString(),
+        monthlyFee,
+        dueAmount,
+        totalPaid,
+        totalDue,
+        paymentMethod: 'Cash', // Default, could be made configurable
+        whatsappNumber,
+        monthlyPayments,
+        remarks: '' // Could be added to form
+      };
+
+      const response = await API.post('/receipts', receiptData);
+
+      if (response.data.success) {
+        alert('Receipt saved successfully!');
+        // Reset form or keep for printing
+      } else {
+        alert('Failed to save receipt: ' + response.data.message);
+      }
+    } catch (error) {
+      console.error('Save receipt error:', error);
+      alert('Failed to save receipt: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setSaving(false);
+    }
   };
   
   // Calculate totals from monthly data
@@ -456,6 +519,13 @@ export default function FeeReceipt() {
               
               <div className="row">
                 <div className="col-md-8 mb-3">
+                  <button
+                    className="btn btn-success me-2"
+                    onClick={saveReceipt}
+                    disabled={saving || !selectedStudent}
+                  >
+                    {saving ? 'Saving...' : 'Save Receipt'}
+                  </button>
                   <button className="btn btn-primary me-2" onClick={handlePrint}>
                     Print Receipt
                   </button>
