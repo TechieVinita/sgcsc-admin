@@ -63,7 +63,8 @@ export default function ReceiptManagement() {
       totalDue: receipt.totalDue,
       paymentMethod: receipt.paymentMethod,
       whatsappNumber: receipt.whatsappNumber,
-      remarks: receipt.remarks
+      remarks: receipt.remarks,
+      monthlyPayments: receipt.monthlyPayments || []
     });
     setShowEditModal(true);
   };
@@ -346,6 +347,68 @@ export default function ReceiptManagement() {
                       value={editForm.remarks}
                       onChange={(e) => setEditForm({...editForm, remarks: e.target.value})}
                     />
+                  </div>
+                </div>
+
+                {/* Monthly Payments Section */}
+                <div className="mt-4">
+                  <h6>Monthly Payments</h6>
+                  <div className="table-responsive">
+                    <table className="table table-sm">
+                      <thead>
+                        <tr>
+                          <th>Month</th>
+                          <th>Date</th>
+                          <th>Paid</th>
+                          <th>Due</th>
+                          <th>Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {editForm.monthlyPayments && editForm.monthlyPayments.map((payment, index) => (
+                          <tr key={index}>
+                            <td>{payment.month}</td>
+                            <td>
+                              <input
+                                type="date"
+                                className="form-control form-control-sm"
+                                value={payment.date ? payment.date.split('T')[0] : ''}
+                                onChange={(e) => {
+                                  const updatedPayments = [...editForm.monthlyPayments];
+                                  updatedPayments[index] = { ...payment, date: e.target.value };
+                                  setEditForm({...editForm, monthlyPayments: updatedPayments});
+                                }}
+                              />
+                            </td>
+                            <td>
+                              <input
+                                type="number"
+                                className="form-control form-control-sm"
+                                value={payment.paid || 0}
+                                onChange={(e) => {
+                                  const updatedPayments = [...editForm.monthlyPayments];
+                                  updatedPayments[index] = { ...payment, paid: parseFloat(e.target.value) || 0 };
+                                  setEditForm({...editForm, monthlyPayments: updatedPayments});
+                                }}
+                              />
+                            </td>
+                            <td>
+                              <input
+                                type="number"
+                                className="form-control form-control-sm"
+                                value={payment.due || 0}
+                                onChange={(e) => {
+                                  const updatedPayments = [...editForm.monthlyPayments];
+                                  updatedPayments[index] = { ...payment, due: parseFloat(e.target.value) || 0 };
+                                  setEditForm({...editForm, monthlyPayments: updatedPayments});
+                                }}
+                              />
+                            </td>
+                            <td>{payment.status}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </div>
