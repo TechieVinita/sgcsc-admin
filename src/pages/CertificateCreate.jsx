@@ -382,11 +382,13 @@ export default function CertificateCreate() {
         }
 
         // Set grade from marksheet if available, otherwise fallback to student record
-        if (studentMarksheet && studentMarksheet.overallGrade) {
-          setGrade(studentMarksheet.overallGrade);
+        console.log('Setting grade - marksheet:', studentMarksheet, 'student grade:', selectedStudent.grade);
+        if (studentMarksheet && (studentMarksheet.overallGrade || studentMarksheet.grade)) {
+          setGrade(studentMarksheet.overallGrade || studentMarksheet.grade);
         } else {
           setGrade(selectedStudent.grade || '');
         }
+        console.log('Grade set to:', studentMarksheet?.overallGrade || selectedStudent.grade || '');
 
         // Store student photo
         setStudentPhoto(selectedStudent.photo || '');
