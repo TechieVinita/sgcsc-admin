@@ -289,6 +289,7 @@ export default function CertificateCreate() {
     );
 
     if (selectedStudent) {
+      console.log('Selected student data:', selectedStudent);
       // Filter courses that this student is enrolled in
       if (selectedStudent.courses && Array.isArray(selectedStudent.courses)) {
         const studentCourses = selectedStudent.courses.map(c => ({
@@ -307,8 +308,8 @@ export default function CertificateCreate() {
       // Auto-fill basic student details
       setName(selectedStudent.name || '');
       setFatherName(selectedStudent.fatherName || '');
-      setCenterName(selectedStudent.center || '');
-      setAtcName(selectedStudent.center || '');
+      setCenterName(selectedStudent.centerName || '');
+      setAtcName(selectedStudent.centerName || '');
 
       setMessageType('info');
       setMessage(`Student selected. Now choose a course to auto-fill details.`);
