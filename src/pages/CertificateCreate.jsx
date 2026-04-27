@@ -55,6 +55,8 @@ export default function CertificateCreate() {
   const [coursePeriodTo, setCoursePeriodTo] = useState('');
   const [certificateNumber, setCertificateNumber] = useState('');
   const [issueDate, setIssueDate] = useState('');
+  const [centerName, setCenterName] = useState('');
+  const [atcName, setAtcName] = useState('');
 
   // State management
   const [allStudents, setAllStudents] = useState([]);
@@ -543,7 +545,7 @@ export default function CertificateCreate() {
         try {
           const studentNameCombined = `${name.trim()} S/O, D/O, W/O ${fatherName.trim()}`;
           const studentData = {
-            centerName: selectedStudent?.center || "SGCSC Training Center",
+            centerName: centerName || "SGCSC Training Center",
             studentNameCombined: studentNameCombined,
             courseName: courseName.trim(),
             grade: grade.trim(),
