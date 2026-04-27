@@ -1,23 +1,15 @@
-// ╔══════════════════════════════════════════════════════════════╗
+// ═══════════════════════════════════════════════════════════════╗
 // ║        TYPING CERTIFICATE GENERATOR — DROP-IN MODULE        ║
 // ║                                                              ║
 // ║  SETUP (do once):                                            ║
 // ║    TypingCertificateGenerator.loadTemplate('path/to/template.jpg') ║
 // ║                                                              ║
-// ║  TO CUSTOMIZE TEXT POSITIONS:                                ║
-// ║    1. Edit CONFIG.fields below with new x,y coordinates     ║
-// ║    2. Or call updateFieldPositions({fieldName: {x, y, ...}})║
-// ║    3. Coordinates are % of image width/height (0-100)       ║
-// ║                                                              ║
 // ║  GENERATE (call whenever you have student data):             ║
 // ║    TypingCertificateGenerator.download({ ...studentData })   ║
-// ║    TypingCertificateGenerator.preview({ ...studentData }) ← blob ║
+// ║    TypingCertificateGenerator.preview({ ...studentData }) ← blob  ║
+// ║    TypingCertificateGenerator.downloadAll([ ...students ])    ║
 // ╚══════════════════════════════════════════════════════════════╝
 
-// Prevent re-declaration if already defined
-if (typeof TypingCertificateGenerator !== 'undefined') {
-  console.warn('TypingCertificateGenerator already defined, skipping re-declaration');
-} else {
 var TypingCertificateGenerator = (() => {
 
   // ─────────────────────────────────────────────
@@ -31,18 +23,18 @@ var TypingCertificateGenerator = (() => {
 
     fields: {
       // { x, y } as % of image dimensions. font is px at full resolution.
-      studentName:        { x: 58.5, y: 52.6, font: 'bold 200px serif',     color: '#000000', align: 'center' },
-      fatherHusbandName:  { x: 32,  y: 57, font: 'bold 200px serif',       color: '#000000', align: 'left' },
-      motherName:         { x: 70,  y: 57, font: 'bold 200px serif',       color: '#000000', align: 'left' },
-      enrollmentNumber:   { x: 22.5, y: 77.5, font: 'bold 150px serif',    color: '#000000', align: 'left' },
-      computerTyping:     { x: 22.5, y: 82, font: 'bold 150px serif',      color: '#000000', align: 'left' },
-      certificateNo:      { x: 22.5, y: 86.5, font: 'bold 150px serif',     color: '#000000', align: 'left' },
-      dateOfIssue:        { x: 22.5, y: 90.7, font: 'bold 150px serif',     color: '#000000', align: 'left' },
-      sessionFrom:        { x: 74,  y: 61, font: 'bold 120px serif',       color: '#000000', align: 'left' },
-      sessionTo:          { x: 83,  y: 61, font: 'bold 120px serif',       color: '#000000', align: 'left' },
-      grade:              { x: 86,  y: 65, font: 'bold 200px serif',       color: '#000000', align: 'left' },
-      studyCentre:        { x: 37,  y: 69.4, font: 'bold 200px serif',     color: '#000000', align: 'left' },
-      wordsPerMinute:     { x: 28.5, y: 82, font: 'bold 150px serif',      color: '#000000', align: 'left' },
+      studentName:        { x: 58.5, y: 51.5, font: '200px serif',     color: '#000000', align: 'center' },
+      fatherHusbandName:  { x: 32,  y: 57, font: '200px serif',       color: '#000000', align: 'left' },
+      motherName:         { x: 70,  y: 57, font: '200px serif',       color: '#000000', align: 'left' },
+      enrollmentNumber:   { x: 22.5, y: 77.5, font: '150px serif',    color: '#000000', align: 'left' },
+      computerTyping:     { x: 22.5, y: 82, font: '150px serif',      color: '#000000', align: 'left' },
+      certificateNo:      { x: 22.5, y: 86.5, font: '150px serif',     color: '#000000', align: 'left' },
+      dateOfIssue:        { x: 22.5, y: 90.7, font: '150px serif',     color: '#000000', align: 'left' },
+      sessionFrom:        { x: 74,  y: 61, font: '120px serif',       color: '#000000', align: 'left' },
+      sessionTo:          { x: 83,  y: 61, font: '120px serif',       color: '#000000', align: 'left' },
+      grade:              { x: 86,  y: 65, font: '200px serif',       color: '#000000', align: 'left' },
+      studyCentre:        { x: 37,  y: 69.4, font: '200px serif',     color: '#000000', align: 'left' },
+      wordsPerMinute:     { x: 28.5, y: 82, font: '150px serif',      color: '#000000', align: 'left' },
     }
   };
 
@@ -97,10 +89,9 @@ var TypingCertificateGenerator = (() => {
     if (!text || !_ctx) return;
     const W = _canvas.width, H = _canvas.height;
     _ctx.save();
-    _ctx.font      = field.font;
+    _ctx.font = field.font;
     _ctx.fillStyle = field.color;
 
-    // Handle text alignment: center text should be drawn at the center point
     if (field.align === 'center') {
       _ctx.textAlign = 'center';
       _ctx.fillText(text, _pct(field.x, W), _pct(field.y, H));
@@ -108,11 +99,40 @@ var TypingCertificateGenerator = (() => {
       _ctx.textAlign = 'right';
       _ctx.fillText(text, _pct(field.x, W), _pct(field.y, H));
     } else {
-      // left align (default)
       _ctx.textAlign = 'left';
       _ctx.fillText(text, _pct(field.x, W), _pct(field.y, H));
     }
     _ctx.restore();
+  }
+
+  // Helper to resolve typing certificate data from identifier or object
+  function _resolveTypingData(dataOrId) {
+    if (typeof dataOrId === 'string') {
+      if (typeof window !== 'undefined' && window.StudentDB) {
+        const found = window.StudentDB.find(dataOrId);
+        if (found) {
+          return {
+            studentName:        found.studentName || found.applicantName || '',
+            fatherHusbandName:  found.fatherName || '',
+            motherName:         found.motherName || '',
+            enrollmentNumber:   found.enrollmentNo || found.rollNumber || '',
+            computerTyping:     found.computerTyping || '',
+            certificateNo:      found.certificateNumber || '',
+            dateOfIssue:        found.dateOfIssue || '',
+            sessionFrom:        found.sessionFrom || '',
+            sessionTo:          found.sessionTo || '',
+            grade:              found.grade || '',
+            studyCentre:        found.studyCentre || '',
+            wordsPerMinute:     found.wordsPerMinute || ''
+          };
+        }
+        console.warn('No student found with typing-cert lookup:', dataOrId);
+        return {};
+      }
+      console.warn('StudentDB not available, cannot auto-fill');
+      return {};
+    }
+    return dataOrId || {};
   }
 
   // ─────────────────────────────────────────────
@@ -146,7 +166,7 @@ var TypingCertificateGenerator = (() => {
   // ─────────────────────────────────────────────
   // Generate certificate data URL
   // ─────────────────────────────────────────────
-  async function getDataURL(student) {
+  async function getDataURL(studentOrId) {
     if (!_templateImg || !_ctx) {
       throw new Error('Template not loaded. Call loadTemplate() first.');
     }
@@ -155,7 +175,7 @@ var TypingCertificateGenerator = (() => {
     _ctx.clearRect(0, 0, _canvas.width, _canvas.height);
     _ctx.drawImage(_templateImg, 0, 0);
 
-    // student = { studentName, fatherHusbandName, motherName, enrollmentNumber, computerTyping, certificateNo, dateOfIssue, sessionFrom, sessionTo, grade, studyCentre, wordsPerMinute }
+    const student = _resolveTypingData(studentOrId);
 
     _drawField(CONFIG.fields.studentName,        student.studentName);
     _drawField(CONFIG.fields.fatherHusbandName,  student.fatherHusbandName);
@@ -176,8 +196,9 @@ var TypingCertificateGenerator = (() => {
   // ─────────────────────────────────────────────
   // Generate and download single certificate
   // ─────────────────────────────────────────────
-  async function download(student) {
-    const dataURL = await getDataURL(student);
+  async function download(studentOrId) {
+    const dataURL = await getDataURL(studentOrId);
+    const student = _resolveTypingData(studentOrId);
     const link = document.createElement('a');
     link.download = `typing_certificate_${student.certificateNo || 'unknown'}.jpg`;
     link.href = dataURL;
@@ -187,9 +208,9 @@ var TypingCertificateGenerator = (() => {
   // ─────────────────────────────────────────────
   // Get a Blob URL of the certificate (for <img> preview or custom handling)
   // ─────────────────────────────────────────────
-  async function preview(student) {
-    const dataURL = await getDataURL(student);
-    return dataURL; // It's already a data URL, can be used directly in <img src="">
+  async function preview(studentOrId) {
+    const dataURL = await getDataURL(studentOrId);
+    return dataURL;
   }
 
   // ─────────────────────────────────────────────
@@ -200,7 +221,6 @@ var TypingCertificateGenerator = (() => {
 
     for (const student of students) {
       await download(student);
-      // Small delay to prevent browser overload
       await new Promise(resolve => setTimeout(resolve, 500));
     }
   }
@@ -258,4 +278,5 @@ var TypingCertificateGenerator = (() => {
   };
 
 })();
-}
+
+window.TypingCertificateGenerator = TypingCertificateGenerator;

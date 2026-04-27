@@ -77,25 +77,61 @@ export default function CertificateCreate() {
   // Initialize Certificate Generator function
   const initCertificateGenerator = async () => {
     if (certificateGenerator) return certificateGenerator;
-    
+
+    // Ensure DOM is ready
+    if (document.readyState !== 'complete') {
+      console.log('Waiting for DOM to be ready...');
+      await new Promise(resolve => {
+        const checkReady = () => {
+          if (document.readyState === 'complete') {
+            resolve();
+          } else {
+            setTimeout(checkReady, 100);
+          }
+        };
+        checkReady();
+      });
+    }
+
     // Ensure canvas is available before loading template
-    const canvasElement = document.getElementById('certCanvas');
+    let canvasElement = document.getElementById('certCanvas');
     if (!canvasElement) {
-      console.warn('Canvas element not found in DOM yet. Waiting...');
-      // Wait for canvas to be available
-      await new Promise(resolve => setTimeout(resolve, 500));
+      console.warn('Canvas element not found in DOM. Creating it...');
+      canvasElement = document.createElement('canvas');
+      canvasElement.id = 'certCanvas';
+      canvasElement.style.display = 'none';
+      document.body.appendChild(canvasElement);
     }
     
-    // Check if already available on window
+    // Wait for certificate generator script to load if not available yet
+    if (!window.CertificateGenerator) {
+      console.log('Waiting for CertificateGenerator to load...');
+      await new Promise((resolve, reject) => {
+        const checkLoaded = () => {
+          if (window.CertificateGenerator) {
+            resolve();
+          } else {
+            setTimeout(checkLoaded, 100);
+          }
+        };
+        setTimeout(() => reject(new Error('CertificateGenerator script failed to load')), 10000);
+        checkLoaded();
+      });
+    }
+
+    // Check if available on window
     if (window.CertificateGenerator) {
       certificateGenerator = window.CertificateGenerator;
       try {
+        console.log('Loading certificate template...');
         await certificateGenerator.loadTemplate('/student-certificate-template.jpeg');
         console.log('Certificate template loaded successfully');
         return certificateGenerator;
       } catch (err) {
+        console.error('Failed to load certificate template:', err.message);
         console.warn('Certificate template not found. Please upload a template to /public/student-certificate-template.jpeg');
-        return certificateGenerator;
+        // Generator can still work with fallback, so don't set to null
+        console.log('Continuing with fallback certificate background');
       }
     }
     
@@ -444,7 +480,7 @@ export default function CertificateCreate() {
     try {
       // Generate certificate image data URL for storing
       let certificateImage = null;
-      if (certificateGenerator) {
+      if (certificateGenerator && certificateGenerator.getCompressedDataURL) {
         try {
           const studentNameCombined = `${name.trim()} S/O, D/O, W/O ${fatherName.trim()}`;
           const studentData = {
@@ -460,10 +496,15 @@ export default function CertificateCreate() {
             photo: studentPhoto
           };
           console.log('Generating certificate with data:', studentData);
-          certificateImage = await certificateGenerator.getDataURL(studentData);
+
+          certificateImage = await certificateGenerator.getCompressedDataURL(studentData);
+
           console.log('Certificate image generated successfully, length:', certificateImage ? certificateImage.length : 0);
         } catch (imgErr) {
           console.error('Failed to generate certificate image:', imgErr);
+          // Continue without image - certificate can still be created
+          console.log('Certificate will be created without image data');
+          certificateImage = null;
         }
       } else {
         console.warn('Certificate generator not available');

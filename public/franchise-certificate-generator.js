@@ -1,4 +1,4 @@
-// ╔══════════════════════════════════════════════════════════════╗
+// ═══════════════════════════════════════════════════════════════╗
 // ║       FRANCHISE CERTIFICATE GENERATOR — DROP-IN MODULE      ║
 // ║                                                              ║
 // ║  SETUP (do once):                                            ║
@@ -14,10 +14,6 @@
 // ║    FranchiseCertificateGenerator.preview({ ...franchiseData }) ← blob ║
 // ╚══════════════════════════════════════════════════════════════╝
 
-// Prevent re-declaration if already defined
-if (typeof FranchiseCertificateGenerator !== 'undefined') {
-  console.warn('FranchiseCertificateGenerator already defined, skipping re-declaration');
-} else {
 var FranchiseCertificateGenerator = (() => {
 
   // ─────────────────────────────────────────────
@@ -99,10 +95,9 @@ var FranchiseCertificateGenerator = (() => {
     if (!text || !_ctx) return;
     const W = _canvas.width, H = _canvas.height;
     _ctx.save();
-    _ctx.font      = field.font;
+    _ctx.font = field.font;
     _ctx.fillStyle = field.color;
 
-    // Handle text alignment: center text should be drawn at the center point
     if (field.align === 'center') {
       _ctx.textAlign = 'center';
       _ctx.fillText(text, _pct(field.x, W), _pct(field.y, H));
@@ -110,11 +105,35 @@ var FranchiseCertificateGenerator = (() => {
       _ctx.textAlign = 'right';
       _ctx.fillText(text, _pct(field.x, W), _pct(field.y, H));
     } else {
-      // left align (default)
       _ctx.textAlign = 'left';
       _ctx.fillText(text, _pct(field.x, W), _pct(field.y, H));
     }
     _ctx.restore();
+  }
+
+  // Helper to resolve franchise data from identifier or object
+  function _resolveFranchiseData(franchiseOrId) {
+    if (typeof franchiseOrId === 'string') {
+      if (typeof window !== 'undefined' && window.StudentDB) {
+        const found = window.StudentDB.find(franchiseOrId);
+        if (found) {
+          return {
+            trainingCentreName: found.trainingCentreName || found.instituteName || found.institutionName || '',
+            applicantName:      found.applicantName || found.studentName || '',
+            atcCode:            found.atcCode || '',
+            atcCode2:           found.atcCode2 || '',
+            dateOfIssue:        found.dateOfIssue || '',
+            dateOfRenewal:      found.dateOfRenewal || '',
+            certificateNumber:  found.certificateNumber || ''
+          };
+        }
+        console.warn('No franchise found with lookup:', franchiseOrId);
+        return {};
+      }
+      console.warn('StudentDB not available, cannot auto-fill');
+      return {};
+    }
+    return franchiseOrId || {};
   }
 
   // ─────────────────────────────────────────────
@@ -148,7 +167,7 @@ var FranchiseCertificateGenerator = (() => {
   // ─────────────────────────────────────────────
   // Generate certificate data URL
   // ─────────────────────────────────────────────
-  async function getDataURL(franchise) {
+  async function getDataURL(franchiseOrId) {
     if (!_templateImg || !_ctx) {
       throw new Error('Template not loaded. Call loadTemplate() first.');
     }
@@ -157,7 +176,7 @@ var FranchiseCertificateGenerator = (() => {
     _ctx.clearRect(0, 0, _canvas.width, _canvas.height);
     _ctx.drawImage(_templateImg, 0, 0);
 
-    // franchise = { trainingCentreName, applicantName, atcCode, atcCode2, dateOfIssue, dateOfRenewal }
+    const franchise = _resolveFranchiseData(franchiseOrId);
 
     _drawField(CONFIG.fields.trainingCentreName, franchise.trainingCentreName);
     _drawField(CONFIG.fields.applicantName,      franchise.applicantName);
@@ -172,8 +191,9 @@ var FranchiseCertificateGenerator = (() => {
   // ─────────────────────────────────────────────
   // Generate and download single certificate
   // ─────────────────────────────────────────────
-  async function download(franchise) {
-    const dataURL = await getDataURL(franchise);
+  async function download(franchiseOrId) {
+    const dataURL = await getDataURL(franchiseOrId);
+    const franchise = _resolveFranchiseData(franchiseOrId);
     const link = document.createElement('a');
     link.download = `franchise_certificate_${franchise.certificateNumber || 'unknown'}.jpg`;
     link.href = dataURL;
@@ -183,9 +203,9 @@ var FranchiseCertificateGenerator = (() => {
   // ─────────────────────────────────────────────
   // Get a Blob URL of the certificate (for <img> preview or custom handling)
   // ─────────────────────────────────────────────
-  async function preview(franchise) {
-    const dataURL = await getDataURL(franchise);
-    return dataURL; // It's already a data URL, can be used directly in <img src="">
+  async function preview(franchiseOrId) {
+    const dataURL = await getDataURL(franchiseOrId);
+    return dataURL;
   }
 
   // ─────────────────────────────────────────────
@@ -196,7 +216,6 @@ var FranchiseCertificateGenerator = (() => {
 
     for (const franchise of franchises) {
       await download(franchise);
-      // Small delay to prevent browser overload
       await new Promise(resolve => setTimeout(resolve, 500));
     }
   }
@@ -254,4 +273,5 @@ var FranchiseCertificateGenerator = (() => {
   };
 
 })();
-}
+
+window.FranchiseCertificateGenerator = FranchiseCertificateGenerator;

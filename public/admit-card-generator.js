@@ -95,8 +95,43 @@ var AdmitCardGenerator = (() => {
 
   // ─────────────────────────────────────────────
   // Core render function
-  // admitCard = { rollNumber, studentName, fatherName, motherName, courseName, instituteName, examCenterAddress, examDate, examTime, reportingTime, examDuration }
+  // admitCard = { rollNumber, studentName, fatherName, motherName, courseName, instituteName, examCenterAddress, examDate, examTime, reportingTime, examDuration, photo }
   // ─────────────────────────────────────────────
+
+  // Helper to resolve admit card data from roll number or object
+  function _resolveAdmitCardData(admitCardOrRoll) {
+    // If it's a string, try to look up from StudentDB
+    if (typeof admitCardOrRoll === 'string') {
+      if (typeof window !== 'undefined' && window.StudentDB) {
+        const found = window.StudentDB.find(admitCardOrRoll);
+        if (found) {
+          // Map student fields to admit card fields
+          return {
+            rollNumber: found.rollNumber || found.enrollmentNo || admitCardOrRoll,
+            studentName: found.studentName || found.name || '',
+            fatherName: found.fatherName || '',
+            motherName: found.motherName || '',
+            courseName: found.courseName || '',
+            instituteName: found.instituteName || found.institutionName || '',
+            examCenterAddress: found.examCenterAddress || '',
+            examDate: found.examDate || '',
+            examTime: found.examTime || '',
+            reportingTime: found.reportingTime || '',
+            examDuration: found.examDuration || '',
+            photo: found.photo || ''
+          };
+        }
+        console.warn('No student found with roll/admit-card lookup:', admitCardOrRoll);
+        // Still generate with minimal data
+        return { rollNumber: admitCardOrRoll };
+      }
+      console.warn('StudentDB not available, cannot auto-fill');
+      return { rollNumber: admitCardOrRoll };
+    }
+    // If it's an object, use as-is
+    return admitCardOrRoll || {};
+  }
+
   // Helper to load an image from URL
   function _loadImage(src) {
     return new Promise((resolve, reject) => {
@@ -117,6 +152,8 @@ var AdmitCardGenerator = (() => {
   // admitCard = { rollNumber, studentName, fatherName, motherName, courseName, instituteName, examCenterAddress, examDate, examTime, reportingTime, examDuration, photo }
   // ─────────────────────────────────────────────
   async function _render(admitCard) {
+    const data = _resolveAdmitCardData(admitCard);
+    
     if (!_templateImg) throw new Error('Template not loaded. Call AdmitCardGenerator.loadTemplate() first.');
     if (!_initCanvas()) throw new Error('Canvas not found. Make sure <canvas id="admitCardCanvas"> exists.');
 
@@ -127,9 +164,9 @@ var AdmitCardGenerator = (() => {
     _ctx.drawImage(_templateImg, 0, 0);
 
     // Draw student photo if available
-    if (admitCard.photo) {
+    if (data.photo) {
       try {
-        const photoImg = await _loadImage(admitCard.photo);
+        const photoImg = await _loadImage(data.photo);
         if (photoImg) {
           const photoField = CONFIG.fields.photo;
           if (photoField) {
@@ -137,7 +174,6 @@ var AdmitCardGenerator = (() => {
             const y = _pct(photoField.y, _canvas.height);
             const w = _pct(photoField.width, _canvas.width);
             const h = _pct(photoField.height, _canvas.height);
-
             _ctx.drawImage(photoImg, x, y, w, h);
           }
         }
@@ -147,17 +183,17 @@ var AdmitCardGenerator = (() => {
     }
 
     // Overlay fields
-    _drawField(CONFIG.fields.rollNumber,       admitCard.rollNumber);
-    _drawField(CONFIG.fields.studentName,      admitCard.studentName);
-    _drawField(CONFIG.fields.fatherName,       admitCard.fatherName);
-    _drawField(CONFIG.fields.motherName,       admitCard.motherName);
-    _drawField(CONFIG.fields.courseName,       admitCard.courseName);
-    _drawField(CONFIG.fields.instituteName,    admitCard.instituteName);
-    _drawField(CONFIG.fields.examCenterAddress,admitCard.examCenterAddress);
-    _drawField(CONFIG.fields.examDate,         _fmtDate(admitCard.examDate));
-    _drawField(CONFIG.fields.examTime,         admitCard.examTime);
-    _drawField(CONFIG.fields.reportingTime,    admitCard.reportingTime);
-    _drawField(CONFIG.fields.examDuration,     admitCard.examDuration);
+    _drawField(CONFIG.fields.rollNumber,       data.rollNumber);
+    _drawField(CONFIG.fields.studentName,      data.studentName);
+    _drawField(CONFIG.fields.fatherName,       data.fatherName);
+    _drawField(CONFIG.fields.motherName,       data.motherName);
+    _drawField(CONFIG.fields.courseName,       data.courseName);
+    _drawField(CONFIG.fields.instituteName,    data.instituteName);
+    _drawField(CONFIG.fields.examCenterAddress, data.examCenterAddress);
+    _drawField(CONFIG.fields.examDate,         _fmtDate(data.examDate));
+    _drawField(CONFIG.fields.examTime,         data.examTime);
+    _drawField(CONFIG.fields.reportingTime,    data.reportingTime);
+    _drawField(CONFIG.fields.examDuration,     data.examDuration);
 
     return _canvas;
   }
@@ -187,9 +223,6 @@ var AdmitCardGenerator = (() => {
      * Load template image.
      * @param {string} pathOrDataURL  — URL or base64 data URL of your JPG
      * @returns {Promise}
-     *
-     * Example:
-     *   await AdmitCardGenerator.loadTemplate('/assets/admit_template.jpg');
      */
     loadTemplate(pathOrDataURL) {
       return new Promise((resolve, reject) => {
@@ -206,28 +239,16 @@ var AdmitCardGenerator = (() => {
 
     /**
      * Download a single student's admit card as a PDF.
-     * @param {Object} admitCard — { rollNumber, studentName, fatherName, motherName, courseName, instituteName, examCenterAddress, examDate, examTime, reportingTime, examDuration }
-     *
-     * Example:
-     *   AdmitCardGenerator.download({
-     *     rollNumber: 'R-2024-001',
-     *     studentName: 'Ramesh Kumar',
-     *     fatherName: 'Suresh Kumar',
-     *     motherName: 'Kamla Devi',
-     *     courseName: 'Diploma in Computer Application',
-     *     instituteName: 'SGCSC Institute',
-     *     examCenterAddress: 'SGCSC Exam Center, Delhi',
-     *     examDate: '2024-04-15',
-     *     examTime: '10:00 AM - 12:00 PM',
-     *     reportingTime: '09:00 AM',
-     *     examDuration: '2 Hours'
-     *   });
+     * @param {Object|string} admitCardOrRoll — Either an admitCard object or a roll number string
+     *   Object fields: { rollNumber, studentName, fatherName, motherName, courseName, instituteName, examCenterAddress, examDate, examTime, reportingTime, examDuration, photo }
+     *   If a string is passed, it will be looked up from the StudentDB automatically.
      */
-    async download(admitCard) {
+    async download(admitCardOrRoll) {
       try {
-        await _render(admitCard);
+        await _render(admitCardOrRoll);
         const pdf = _canvasToPDF();
-        pdf.save(`admit-card_${_safeName(admitCard.rollNumber || admitCard.studentName)}.pdf`);
+        const resolved = _resolveAdmitCardData(admitCardOrRoll);
+        pdf.save(`admit-card_${_safeName(resolved.rollNumber || resolved.studentName)}.pdf`);
       } catch (err) {
         console.error('AdmitCardGenerator.download error:', err);
         alert('Failed to generate PDF: ' + err.message);
@@ -236,13 +257,13 @@ var AdmitCardGenerator = (() => {
 
     /**
      * Preview a single student's admit card, returns canvas blob.
-     * @param {Object} admitCard — same as download()
+     * @param {Object|string} admitCardOrRoll — same as download()
      * @returns {Promise<Blob>}
      */
-    async preview(admitCard) {
+    async preview(admitCardOrRoll) {
       return new Promise(async (resolve, reject) => {
         try {
-          await _render(admitCard);
+          await _render(admitCardOrRoll);
           _canvas.toBlob(blob => resolve(blob), 'image/jpeg', 0.95);
         } catch (err) {
           reject(err);
@@ -252,22 +273,22 @@ var AdmitCardGenerator = (() => {
 
     /**
      * Download multiple admit cards as PDFs (one by one).
-     * @param {Array} admitCards — array of admit card objects
+     * @param {Array} items — array of admit card objects or roll numbers
      * @param {number} delayMs — delay between downloads (default 500ms)
      */
-    async downloadAll(admitCards, delayMs = 500) {
-      if (!Array.isArray(admitCards) || admitCards.length === 0) {
+    async downloadAll(items, delayMs = 500) {
+      if (!Array.isArray(items) || items.length === 0) {
         console.warn('No admit cards to download');
         return;
       }
 
-      for (let i = 0; i < admitCards.length; i++) {
+      for (let i = 0; i < items.length; i++) {
         try {
-          _render(admitCards[i]);
+          await _render(items[i]);
           const pdf = _canvasToPDF();
-          pdf.save(`admit-card_${_safeName(admitCards[i].rollNumber || admitCards[i].studentName || i)}.pdf`);
-          // Small delay to prevent browser blocking multiple downloads
-          if (i < admitCards.length - 1) {
+          const resolved = _resolveAdmitCardData(items[i]);
+          pdf.save(`admit-card_${_safeName(resolved.rollNumber || resolved.studentName || i)}.pdf`);
+          if (i < items.length - 1) {
             await new Promise(r => setTimeout(r, delayMs));
           }
         } catch (err) {
@@ -278,14 +299,6 @@ var AdmitCardGenerator = (() => {
 
     /**
      * Update field position configuration.
-     * @param {Object} newFields — partial fields object to override defaults
-     *
-     * Example:
-     *   AdmitCardGenerator.updateConfig({
-     *     fields: {
-     *       studentName: { x: 30, y: 35, font: 'bold 24px serif', color: '#000000' }
-     *     }
-     *   });
      */
     updateConfig(newConfig) {
       if (newConfig && newConfig.fields) {
@@ -297,7 +310,7 @@ var AdmitCardGenerator = (() => {
     },
 
     /**
-     * Get current configuration (useful for debugging).
+     * Get current configuration.
      */
     getConfig() {
       return JSON.parse(JSON.stringify(CONFIG));

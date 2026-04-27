@@ -10,10 +10,6 @@
 // ║    MarksheetGenerator.downloadAll([ ...marksheets ])         ║
 // ╚══════════════════════════════════════════════════════════════╝
 
-// Prevent re-declaration if already defined
-if (typeof MarksheetGenerator !== 'undefined') {
-  console.warn('MarksheetGenerator already defined, skipping re-declaration');
-} else {
 var MarksheetGenerator = (() => {
 
   // ─────────────────────────────────────────────
@@ -25,25 +21,30 @@ var MarksheetGenerator = (() => {
 
     fields: {
       // { x, y } as % of image dimensions. font is px at full resolution.
-      enrollmentNo:       { x: 30,  y: 15, font: 'bold 150px serif',      color: '#000000', align: 'left' },
-      rollNumber:         { x: 73,  y: 28.5, font: '150px serif',    color: '#000000', align: 'left' },
-      studentName:        { x: 30,  y: 25.5, font: '150px serif',    color: '#000000', align: 'left' },
-      fatherName:         { x: 30,  y: 28.4, font: '150px serif',         color: '#000000', align: 'left' },
-      motherName:         { x: 30,  y: 31.3, font: '150px serif',         color: '#000000', align: 'left' },
-      dob:                { x: 73,  y: 31.2, font: '150px serif',         color: '#000000', align: 'left' },
-      courseName:         { x: 30,  y: 37, font: '150px serif',           color: '#000000', align: 'left' },
-      courseDuration:     { x: 73,  y: 25.5, font: '150px serif',        color: '#000000', align: 'left' },
-      coursePeriodFrom:   { x: 30,  y: 34, font: '150px serif',           color: '#000000', align: 'left' },
-      coursePeriodTo:     { x: 49,  y: 34, font: '150px serif',           color: '#000000', align: 'left' },
-      instituteName:      { x: 30,  y: 39.8, font: '150px serif',        color: '#000000', align: 'left' },
-      dateOfIssue:        { x: 19,  y: 92.5, font: '150px serif',        color: '#000000', align: 'left' },
+      enrollmentNo:       { x: 30,  y: 15, font: '100px serif',      color: '#000000', align: 'left' },
+      rollNumber:         { x: 73,  y: 28.5, font: '100px serif',    color: '#000000', align: 'left' },
+      studentName:        { x: 30,  y: 25.5, font: '100px serif',    color: '#000000', align: 'left' },
+      fatherName:         { x: 30,  y: 28.4, font: '100px serif',         color: '#000000', align: 'left' },
+      motherName:         { x: 30,  y: 31.3, font: '100px serif',         color: '#000000', align: 'left' },
+      dob:                { x: 73,  y: 31.2, font: '100px serif',         color: '#000000', align: 'left' },
+      courseName:         { x: 30,  y: 37, font: '100px serif',           color: '#000000', align: 'left' },
+      courseDuration:     { x: 73,  y: 25.5, font: '100px serif',        color: '#000000', align: 'left' },
+      coursePeriodFrom:   { x: 30,  y: 34, font: '100px serif',           color: '#000000', align: 'left' },
+      coursePeriodTo:     { x: 49,  y: 34, font: '100px serif',           color: '#000000', align: 'left' },
+      instituteName:      { x: 30,  y: 39.8, font: '100px serif',        color: '#000000', align: 'left' },
+      dateOfIssue:        { x: 19,  y: 92.5, font: '100px serif',        color: '#000000', align: 'left' },
 
-      // Summary fields (percentage, grade, grand total)
-      totalPercentage:    { x: 80,  y: 77.7, font: '100px serif',        color: '#000000', align: 'left' },
-      overallGrade:       { x: 56,  y: 77.7, font: '100px serif',        color: '#000000', align: 'left' },
-      grandTotal:       { x: 29,  y: 77.7, font: '100px serif',        color: '#000000', align: 'left' },
+       // Summary fields (percentage, grade, grand total)
+       totalPercentage:    { x: 80,  y: 77.7, font: '100px serif',        color: '#000000', align: 'left' },
+       overallGrade:       { x: 56,  y: 77.7, font: '100px serif',        color: '#000000', align: 'left' },
+       grandTotal:       { x: 29,  y: 77.7, font: '100px serif',        color: '#000000', align: 'left' },
 
-      // Subject marks will be rendered dynamically
+        // Separate coordinates for sums (outside the table)
+        theorySum:          { x: 55,  y: 75, font: '100px serif',        color: '#000000', align: 'center' },
+        practicalSum:       { x: 70,  y: 75, font: '100px serif',        color: '#000000', align: 'center' },
+        objectiveSum:       { x: 82,  y: 75, font: '100px serif',        color: '#000000', align: 'center' },
+
+       // Subject marks will be rendered dynamically
       subjectsStartY:     53,  // Starting Y position for subjects table
       subjectRowHeight:   2,   // Height of each subject row (increased 5x)
     }
@@ -152,13 +153,22 @@ var MarksheetGenerator = (() => {
     _drawField(CONFIG.fields.instituteName, marksheet.instituteName);
     _drawField(CONFIG.fields.dateOfIssue, _fmtDate(marksheet.dateOfIssue));
 
-    // Draw summary fields (percentage, grade, grand total)
-    const totalPercent = marksheet.percentage ? marksheet.percentage.toFixed(1) + '%' : '';
-    const grade = marksheet.overallGrade || '';
-    const totalMarks = marksheet.totalCombinedMarks + '/' + marksheet.maxTotalMarks;
-    _drawField(CONFIG.fields.totalPercentage, totalPercent);
-    _drawField(CONFIG.fields.overallGrade, grade);
-    _drawField(CONFIG.fields.grandTotal, totalMarks);
+     // Draw summary fields (percentage, grade, grand total)
+     const totalPercent = marksheet.percentage ? marksheet.percentage.toFixed(1) + '%' : '';
+     const grade = marksheet.overallGrade || '';
+     const totalMarks = marksheet.totalCombinedMarks + '/' + marksheet.maxTotalMarks;
+     _drawField(CONFIG.fields.totalPercentage, totalPercent);
+     _drawField(CONFIG.fields.overallGrade, grade);
+     _drawField(CONFIG.fields.grandTotal, totalMarks);
+
+      // Draw separate sums for theory, practical, objective (outside the table)
+      const totalTheory = marksheet.subjects ? marksheet.subjects.reduce((sum, s) => sum + (Number(s.theoryMarks || 0)), 0) : 0;
+      const totalPractical = marksheet.subjects ? marksheet.subjects.reduce((sum, s) => sum + (Number(s.practicalMarks || 0)), 0) : 0;
+      const totalObjective = marksheet.subjects ? marksheet.subjects.reduce((sum, s) => sum + (Number(s.objectiveMarks || 0)), 0) : 0;
+      const totalCombined = totalTheory + totalPractical; // sum of total = theory + practical
+      _drawField(CONFIG.fields.theorySum, String(totalTheory));
+      _drawField(CONFIG.fields.practicalSum, String(totalPractical));
+      _drawField(CONFIG.fields.objectiveSum, String(totalCombined));
 
     // Draw subjects table
     if (marksheet.subjects && Array.isArray(marksheet.subjects)) {
@@ -172,7 +182,7 @@ var MarksheetGenerator = (() => {
       marksheet.subjects.forEach((subject, index) => {
         // Draw subject number
         _ctx.save();
-        _ctx.font = '150px serif';
+        _ctx.font = '100px serif';
         _ctx.fillStyle = '#000000';
         _ctx.textAlign = 'left';
         _ctx.fillText(`${index + 1}.`, _pct(10, W), currentY);
@@ -180,11 +190,11 @@ var MarksheetGenerator = (() => {
 
         // Draw subject name (with wrapping)
         _ctx.save();
-        _ctx.font = '150px serif';
+        _ctx.font = '100px serif';
         _ctx.fillStyle = '#000000';
         _ctx.textAlign = 'left';
         const subjectText = subject.subjectName || '-';
-        const maxWidth = _pct(35, W); // Leave some margin before marks column
+        const maxWidth = _pct(25, W); // Leave some margin before marks column
         const lines = _wrapText(subjectText, maxWidth, _ctx);
         lines.forEach((line, i) => {
           _ctx.fillText(line, _pct(15, W), currentY + i * lineSpacing);
@@ -194,7 +204,7 @@ var MarksheetGenerator = (() => {
         // Draw marks aligned with the first line of the subject
         // Draw theory marks
         _ctx.save();
-        _ctx.font = '150px serif';
+        _ctx.font = '100px serif';
         _ctx.fillStyle = '#000000';
         _ctx.textAlign = 'center';
         _ctx.fillText(`${subject.theoryMarks || 0}`, _pct(55, W), currentY);
@@ -202,19 +212,23 @@ var MarksheetGenerator = (() => {
 
         // Draw practical marks
         _ctx.save();
-        _ctx.font = '150px serif';
+        _ctx.font = '100px serif';
         _ctx.fillStyle = '#000000';
         _ctx.textAlign = 'center';
         _ctx.fillText(`${subject.practicalMarks || 0}`, _pct(70, W), currentY);
         _ctx.restore();
 
-        // Draw combined marks
-        _ctx.save();
-        _ctx.font = '150px serif';
-        _ctx.fillStyle = '#000000';
-        _ctx.textAlign = 'center';
-        _ctx.fillText(`${subject.combinedMarks || 0}`, _pct(82, W), currentY);
-        _ctx.restore();
+         // Draw combined marks
+         _ctx.save();
+         _ctx.font = '100px serif';
+         _ctx.fillStyle = '#000000';
+         _ctx.textAlign = 'center';
+         const theory = Number(subject.theoryMarks || 0);
+         const practical = Number(subject.practicalMarks || 0);
+         const objective = Number(subject.objectiveMarks || 0);
+         const combined = theory + practical + objective;
+         _ctx.fillText(`${combined}`, _pct(82, W), currentY);
+         _ctx.restore();
 
         // Advance Y position based on lines used (minimum 1 row)
         const usedLines = Math.max(1, lines.length);
@@ -416,4 +430,5 @@ var MarksheetGenerator = (() => {
     }
   };
 })();
-}
+
+window.MarksheetGenerator = MarksheetGenerator;

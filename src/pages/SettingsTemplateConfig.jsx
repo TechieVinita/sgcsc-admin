@@ -10,6 +10,10 @@ const TEMPLATE_TYPES = [
   { key: "franchiseCertificate", name: "Franchise Certificate", fields: [
     "trainingCentreName", "applicantName", "atcCode", "atcCode2", "dateOfIssue", "dateOfRenewal"
   ]},
+  { key: "studentCertificate", name: "Student Certificate", fields: [
+    "atcCode", "studentNameCombined", "courseName", "grade", "gradeExtra", "courseDuration",
+    "coursePeriodFrom", "coursePeriodTo", "certificateNumber", "dateOfIssue", "photo"
+  ]},
   { key: "marksheet", name: "Marksheet", fields: [
     "enrollmentNo", "rollNumber", "studentName", "fatherName", "motherName",
     "dob", "courseName", "courseDuration", "coursePeriodFrom", "coursePeriodTo", "instituteName",
@@ -50,8 +54,11 @@ const FIELD_LABELS = {
   trainingCentreName: "Training Centre Name",
   applicantName: "Applicant Name",
   atcCode: "ATC Code",
-  atcCode2: "ATC Code",
-  dateOfRenewal: "Date of Renewal"
+  atcCode2: "ATC Code 2",
+  dateOfRenewal: "Date of Renewal",
+  studentNameCombined: "Student Name (Combined)",
+  gradeExtra: "Grade Extra",
+  photo: "Photo (x, y, width, height)"
 };
 
 const SAMPLE_DATA = {
@@ -76,6 +83,19 @@ const SAMPLE_DATA = {
     atcCode2: "ATC12345",
     dateOfIssue: "2024-03-15",
     dateOfRenewal: "2025-03-15"
+  },
+  studentCertificate: {
+    atcCode: "CERT-2024-001",
+    studentNameCombined: "John Doe S/O Robert Doe",
+    courseName: "Certificate in Computer Application",
+    grade: "A+",
+    gradeExtra: "A+",
+    courseDuration: "1 Year",
+    coursePeriodFrom: "2023-04-01",
+    coursePeriodTo: "2024-03-31",
+    certificateNumber: "CERT-2024-001",
+    dateOfIssue: "2024-03-15",
+    photo: "/sample-photo.jpg"
   },
   marksheet: {
     enrollmentNo: "EN/2024/001",
@@ -147,7 +167,7 @@ export default function SettingsTemplateConfig() {
       }
 
       const certScript = document.createElement('script');
-      const scriptName = generatorName.replace('CertificateGenerator', '-certificate-generator').replace('MarksheetGenerator', 'marksheet-generator');
+      const scriptName = generatorName.replace('Generator', '-generator').toLowerCase();
       certScript.src = `/${scriptName}.js`;
       certScript.onload = async () => {
         try {
@@ -169,6 +189,7 @@ export default function SettingsTemplateConfig() {
       const templateMap = {
         typingCertificate: { generator: 'TypingCertificateGenerator', canvas: 'typingCertCanvas', template: '/typing-certificate-template.jpeg' },
         franchiseCertificate: { generator: 'FranchiseCertificateGenerator', canvas: 'franchiseCertCanvas', template: '/franchise-certificate-template.jpeg' },
+        studentCertificate: { generator: 'CertificateGenerator', canvas: 'certCanvas', template: '/student-certificate-template.jpeg' },
         marksheet: { generator: 'MarksheetGenerator', canvas: 'marksheetCanvas', template: '/marksheet-template.jpeg' }
       };
       const template = templateMap[activeTemplate];
@@ -326,9 +347,11 @@ export default function SettingsTemplateConfig() {
                   <table className="table table-bordered table-sm">
                     <thead className="table-light">
                       <tr>
-                        <th style={{ width: "30%" }}>Field</th>
+                        <th style={{ width: "25%" }}>Field</th>
                         <th>X (%)</th>
                         <th>Y (%)</th>
+                        <th>Width (%)</th>
+                        <th>Height (%)</th>
                         <th>Font</th>
                         <th>Color</th>
                         <th>Align</th>
@@ -361,6 +384,30 @@ export default function SettingsTemplateConfig() {
                                 className="form-control form-control-sm"
                                 value={fieldConfig.y ?? ""}
                                 onChange={(e) => handleFieldChange(activeTemplate, field, "y", e.target.value)}
+                                min="0"
+                                max="100"
+                                step="0.1"
+                                placeholder="0-100"
+                              />
+                            </td>
+                            <td>
+                              <input
+                                type="number"
+                                className="form-control form-control-sm"
+                                value={fieldConfig.width ?? ""}
+                                onChange={(e) => handleFieldChange(activeTemplate, field, "width", e.target.value)}
+                                min="0"
+                                max="100"
+                                step="0.1"
+                                placeholder="0-100"
+                              />
+                            </td>
+                            <td>
+                              <input
+                                type="number"
+                                className="form-control form-control-sm"
+                                value={fieldConfig.height ?? ""}
+                                onChange={(e) => handleFieldChange(activeTemplate, field, "height", e.target.value)}
                                 min="0"
                                 max="100"
                                 step="0.1"
