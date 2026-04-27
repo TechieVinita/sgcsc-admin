@@ -24,8 +24,8 @@ var CertificateGenerator = (() => {
       fields: {
         // { x, y } as % of image dimensions. font scales with canvas size.
         // Photo field requires x, y, width, height (all percentages)
-        photo:                { x: 20,  y: 25, width: 18, height: 22 },
-        atcName:              { x: 18,  y: 52.7, font: '60px serif', color: '#000000', align: 'left' },
+        photo:                { x: 39,  y: 30.5, width: 20, height: 14 },
+        centerName:           { x: 18,  y: 52.7, font: '60px serif', color: '#000000', align: 'left' },
         studentNameCombined:  { x: 50,  y: 49,  font: '60px serif', color: '#000000', align: 'center' },
         courseName:           { x: 50,  y: 58.5, font: '60px serif', color: '#000000', align: 'center' },
         grade:                { x: 56.5, y: 55.5, font: '50px serif', color: '#000000', align: 'left' },
@@ -159,7 +159,7 @@ var CertificateGenerator = (() => {
 
   // ─────────────────────────────────────────────
   // Core render function
-  // student = { atcName, studentNameCombined, courseName, grade, courseDuration, coursePeriodFrom, coursePeriodTo, certificateNumber, dateOfIssue, photo }
+  // student = { centerName, studentNameCombined, courseName, grade, courseDuration, coursePeriodFrom, coursePeriodTo, certificateNumber, dateOfIssue, photo }
   // ─────────────────────────────────────────────
    async function _render(studentOrRoll) {
     const student = _resolveStudentData(studentOrRoll);
@@ -223,7 +223,7 @@ var CertificateGenerator = (() => {
     }
 
     // Overlay fields
-    _drawField(CONFIG.fields.atcName,             student.atcName);
+    _drawField(CONFIG.fields.centerName,          student.centerName);
      _drawField(CONFIG.fields.studentNameCombined, student.studentNameCombined);
      _drawField(CONFIG.fields.courseName,          student.courseName);
      _drawField(CONFIG.fields.grade,               student.grade);
@@ -262,7 +262,7 @@ var CertificateGenerator = (() => {
          const found = window.StudentDB.find(studentOrRoll);
          if (found) {
           return {
-            atcName: found.atcName || found.atcCode || '',
+            centerName: found.centerName || found.center || '',
             studentNameCombined: found.studentName || found.applicantName || '',
             courseName: found.courseName || '',
             grade: found.grade || '',
@@ -361,7 +361,7 @@ var CertificateGenerator = (() => {
 
       /**
        * Get a Blob URL of the certificate (for <img> preview or custom handling).
-       * @param {Object} student — { atcName, studentNameCombined, courseName, grade, courseDuration, coursePeriodFrom, coursePeriodTo, certificateNumber, dateOfIssue, photo }
+       * @param {Object} student — { centerName, studentNameCombined, courseName, grade, courseDuration, coursePeriodFrom, coursePeriodTo, certificateNumber, dateOfIssue, photo }
        * @returns {string} dataURL — base64 data URL for image preview
        *
        * Example:
@@ -384,7 +384,7 @@ var CertificateGenerator = (() => {
 
       /**
        * Get raw canvas data URL (e.g. for embedding in <img> directly).
-       * @param {Object} student — { atcName, studentNameCombined, courseName, grade, courseDuration, coursePeriodFrom, coursePeriodTo, certificateNumber, dateOfIssue, photo }
+       * @param {Object} student — { centerName, studentNameCombined, courseName, grade, courseDuration, coursePeriodFrom, coursePeriodTo, certificateNumber, dateOfIssue, photo }
        * @returns {string} dataURL
        */
      async getDataURL(student, quality = 0.6) {
@@ -408,7 +408,7 @@ var CertificateGenerator = (() => {
 
       /**
        * Download a single student's certificate as a PDF.
-       * @param {Object} student — { atcName, studentNameCombined, courseName, grade, courseDuration, coursePeriodFrom, coursePeriodTo, certificateNumber, dateOfIssue, photo }
+       * @param {Object} student — { centerName, studentNameCombined, courseName, grade, courseDuration, coursePeriodFrom, coursePeriodTo, certificateNumber, dateOfIssue, photo }
        *
       * Example:
       *   CertificateGenerator.download({
@@ -438,7 +438,7 @@ var CertificateGenerator = (() => {
 
       /**
        * Download certificates for ALL students one by one.
-       * @param {Array}    students          — array of student objects { atcName, studentNameCombined, courseName, grade, courseDuration, coursePeriodFrom, coursePeriodTo, certificateNumber, dateOfIssue, photo }
+       * @param {Array}    students          — array of student objects { centerName, studentNameCombined, courseName, grade, courseDuration, coursePeriodFrom, coursePeriodTo, certificateNumber, dateOfIssue, photo }
        * @param {Function} [onProgress]      — optional callback(current, total)
        *
        * Example:

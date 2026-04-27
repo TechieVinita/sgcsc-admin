@@ -11,7 +11,7 @@ const TEMPLATE_TYPES = [
     "trainingCentreName", "applicantName", "atcCode", "atcCode2", "dateOfIssue", "dateOfRenewal"
   ]},
   { key: "studentCertificate", name: "Student Certificate", fields: [
-    "atcName", "studentNameCombined", "courseName", "grade", "gradeExtra", "courseDuration",
+    "centerName", "studentNameCombined", "courseName", "grade", "gradeExtra", "courseDuration",
     "coursePeriodFrom", "coursePeriodTo", "certificateNumber", "dateOfIssue", "photo"
   ]},
   { key: "marksheet", name: "Marksheet", fields: [
@@ -53,7 +53,7 @@ const FIELD_LABELS = {
   subjectRowHeight: "Subject Row Height (%)",
   trainingCentreName: "Training Centre Name",
   applicantName: "Applicant Name",
-  atcName: "ATC Name",
+  centerName: "Center Name",
   atcCode2: "ATC Code 2",
   dateOfRenewal: "Date of Renewal",
   studentNameCombined: "Student Name (Combined)",
@@ -85,7 +85,7 @@ const SAMPLE_DATA = {
     dateOfRenewal: "2025-03-15"
   },
   studentCertificate: {
-    atcName: "CERT-2024-001",
+    centerName: "Main Training Center",
     studentNameCombined: "John Doe S/O Robert Doe",
     courseName: "Certificate in Computer Application",
     grade: "A+",
@@ -242,7 +242,7 @@ export default function SettingsTemplateConfig() {
       // Set default values for studentCertificate if not present or empty
       if (!initialConfig.studentCertificate || Object.keys(initialConfig.studentCertificate).length === 0) {
         initialConfig.studentCertificate = {
-          atcName: { x: 18, y: 52.7, font: '60px serif', color: '#000000', align: 'left' },
+          centerName: { x: 18, y: 52.7, font: '60px serif', color: '#000000', align: 'left' },
           studentNameCombined: { x: 50, y: 49, font: '60px serif', color: '#000000', align: 'center' },
           courseName: { x: 50, y: 58.5, font: '60px serif', color: '#000000', align: 'center' },
           grade: { x: 56.5, y: 55.5, font: '50px serif', color: '#000000', align: 'left' },
