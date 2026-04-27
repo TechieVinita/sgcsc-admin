@@ -1,5 +1,5 @@
 // src/pages/ReceiptManagement.jsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import API from "../api/axiosInstance";
 
 export default function ReceiptManagement() {
@@ -22,9 +22,9 @@ export default function ReceiptManagement() {
 
   useEffect(() => {
     fetchReceipts();
-  }, [filters]);
+  }, [fetchReceipts]);
 
-  const fetchReceipts = async () => {
+  const fetchReceipts = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
@@ -40,10 +40,10 @@ export default function ReceiptManagement() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
 
   const handleDelete = async (receiptId) => {
-    if (!confirm('Are you sure you want to delete this receipt?')) return;
+    if (!window.confirm('Are you sure you want to delete this receipt?')) return;
 
     try {
       await API.delete(`/receipts/${receiptId}`);

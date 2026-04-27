@@ -85,7 +85,7 @@ export default function FeeReceipt() {
         courseId: selectedCourse?._id,
         receiptNo: receiptNo.trim(),
         sessionStart: sessionStart,
-        sessionEnd: getSessionEndYear().toString(),
+        sessionEnd: (getSessionYear() + 1).toString(),
         monthlyFee,
         dueAmount,
         totalPaid,
