@@ -20,10 +20,6 @@ export default function ReceiptManagement() {
     endDate: ''
   });
 
-  useEffect(() => {
-    fetchReceipts();
-  }, [fetchReceipts]);
-
   const fetchReceipts = useCallback(async () => {
     try {
       setLoading(true);
@@ -41,6 +37,10 @@ export default function ReceiptManagement() {
       setLoading(false);
     }
   }, [filters]);
+
+  useEffect(() => {
+    fetchReceipts();
+  }, [fetchReceipts]);
 
   const handleDelete = async (receiptId) => {
     if (!window.confirm('Are you sure you want to delete this receipt?')) return;
