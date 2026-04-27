@@ -29,11 +29,12 @@ export default function FeeReceipt() {
   // Initialize monthly data when months are selected
    const initializeMonthlyData = (monthsArray) => {
     const newData = {};
-    const year = getSessionYear().toString().slice(-2);
+    const year = getSessionYear();
     monthsArray.forEach(index => {
       const monthNum = index + 1;
+      // Format as YYYY-MM-DD for HTML date input
       newData[index] = {
-        date: `01-${monthNum.toString().padStart(2, '0')}-${year}`,
+        date: `${year}-${monthNum.toString().padStart(2, '0')}-01`,
         paid: monthlyFee,
         due: dueAmount
       };
@@ -485,11 +486,10 @@ export default function FeeReceipt() {
                               <td>{months[monthIndex]}</td>
                               <td>
                                 <input
-                                  type="text"
+                                  type="date"
                                   className="form-control form-control-sm"
                                   value={monthlyData[monthIndex]?.date || ''}
                                   onChange={(e) => updateMonthlyData(monthIndex, 'date', e.target.value)}
-                                  placeholder="DD-MM-YY"
                                 />
                               </td>
                               <td>
