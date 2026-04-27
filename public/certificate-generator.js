@@ -514,10 +514,7 @@ var CertificateGenerator = (() => {
      },
 
       /** Expose config for inspection */
-      get config() { return CONFIG; },
-
-      updateFieldPositions,
-      updateConfig
+      get config() { return CONFIG; }
     };
 
 })();
