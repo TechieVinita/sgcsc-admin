@@ -352,7 +352,28 @@ export default function ReceiptManagement() {
 
                 {/* Monthly Payments Section */}
                 <div className="mt-4">
-                  <h6>Monthly Payments</h6>
+                  <div className="d-flex justify-content-between align-items-center mb-3">
+                    <h6 className="mb-0">Monthly Payments</h6>
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-success"
+                      onClick={() => {
+                        const newPayment = {
+                          month: `Month ${editForm.monthlyPayments.length + 1}`,
+                          date: new Date().toISOString().split('T')[0],
+                          paid: 0,
+                          due: 0,
+                          status: 'Pending'
+                        };
+                        setEditForm({
+                          ...editForm,
+                          monthlyPayments: [...editForm.monthlyPayments, newPayment]
+                        });
+                      }}
+                    >
+                      + Add Month
+                    </button>
+                  </div>
                   <div className="table-responsive">
                     <table className="table table-sm">
                       <thead>
@@ -362,12 +383,24 @@ export default function ReceiptManagement() {
                           <th>Paid</th>
                           <th>Due</th>
                           <th>Status</th>
+                          <th>Action</th>
                         </tr>
                       </thead>
                       <tbody>
                         {editForm.monthlyPayments && editForm.monthlyPayments.map((payment, index) => (
                           <tr key={index}>
-                            <td>{payment.month}</td>
+                            <td>
+                              <input
+                                type="text"
+                                className="form-control form-control-sm"
+                                value={payment.month}
+                                onChange={(e) => {
+                                  const updatedPayments = [...editForm.monthlyPayments];
+                                  updatedPayments[index] = { ...payment, month: e.target.value };
+                                  setEditForm({...editForm, monthlyPayments: updatedPayments});
+                                }}
+                              />
+                            </td>
                             <td>
                               <input
                                 type="date"
@@ -404,7 +437,33 @@ export default function ReceiptManagement() {
                                 }}
                               />
                             </td>
-                            <td>{payment.status}</td>
+                            <td>
+                              <select
+                                className="form-select form-select-sm"
+                                value={payment.status}
+                                onChange={(e) => {
+                                  const updatedPayments = [...editForm.monthlyPayments];
+                                  updatedPayments[index] = { ...payment, status: e.target.value };
+                                  setEditForm({...editForm, monthlyPayments: updatedPayments});
+                                }}
+                              >
+                                <option value="Paid">Paid</option>
+                                <option value="Pending">Pending</option>
+                                <option value="Partial">Partial</option>
+                              </select>
+                            </td>
+                            <td>
+                              <button
+                                type="button"
+                                className="btn btn-sm btn-danger"
+                                onClick={() => {
+                                  const updatedPayments = editForm.monthlyPayments.filter((_, i) => i !== index);
+                                  setEditForm({...editForm, monthlyPayments: updatedPayments});
+                                }}
+                              >
+                                Remove
+                              </button>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
