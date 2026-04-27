@@ -104,20 +104,27 @@ export default function CertificateCreate() {
     }
     
     // Wait for certificate generator script to load if not available yet
+    console.log('Checking for CertificateGenerator, current:', typeof window.CertificateGenerator);
     if (!window.CertificateGenerator) {
       console.log('CertificateGenerator not found, checking if script is loaded...');
       const existingScript = document.querySelector('script[src*="certificate-generator.js"]');
+      console.log('Existing script tag:', existingScript);
       if (existingScript) {
         console.log('Script tag exists, waiting for it to execute...');
         await new Promise((resolve, reject) => {
           const checkLoaded = () => {
+            console.log('Checking again, CertificateGenerator:', typeof window.CertificateGenerator);
             if (window.CertificateGenerator) {
+              console.log('CertificateGenerator found!');
               resolve();
             } else {
               setTimeout(checkLoaded, 100);
             }
           };
-          setTimeout(() => reject(new Error('CertificateGenerator script failed to load')), 15000);
+          setTimeout(() => {
+            console.log('Timeout reached, CertificateGenerator still not found');
+            reject(new Error('CertificateGenerator script failed to load'));
+          }, 15000);
           checkLoaded();
         });
       } else {

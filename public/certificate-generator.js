@@ -11,6 +11,7 @@
 // ╚══════════════════════════════════════════════════════════════╝
 
 console.log('CertificateGenerator script loading...');
+try {
 var CertificateGenerator = (() => {
 
    // ─────────────────────────────────────────────
@@ -524,3 +525,6 @@ var CertificateGenerator = (() => {
 
 window.CertificateGenerator = CertificateGenerator;
 console.log('CertificateGenerator script loaded, window.CertificateGenerator set:', !!window.CertificateGenerator);
+} catch (err) {
+  console.error('Error in CertificateGenerator script:', err);
+}
