@@ -27,7 +27,7 @@ var CertificateGenerator = (() => {
         // { x, y } as % of image dimensions. font scales with canvas size.
         // Photo field requires x, y, width, height (all percentages)
         photo:                { x: 20,  y: 25, width: 18, height: 22 },
-        atcCode:              { x: 50,  y: 23,  font: '3%', color: '#000000', align: 'center' },
+        atcName:              { x: 50,  y: 23,  font: '3%', color: '#000000', align: 'center' },
         studentNameCombined:  { x: 50,  y: 32,  font: '3%', color: '#000000', align: 'center' },
         courseName:           { x: 50,  y: 40,  font: '2.7%', color: '#000000', align: 'center' },
         grade:                { x: 50,  y: 48,  font: '3%', color: '#000000', align: 'center' },
@@ -159,10 +159,10 @@ var CertificateGenerator = (() => {
      _ctx.restore();
    }
 
-   // ─────────────────────────────────────────────
-   // Core render function
-   // student = { studentNameCombined, courseName, grade, courseDuration, coursePeriodFrom, coursePeriodTo, certificateNumber, dateOfIssue, photo }
-   // ─────────────────────────────────────────────
+  // ─────────────────────────────────────────────
+  // Core render function
+  // student = { atcName, studentNameCombined, courseName, grade, courseDuration, coursePeriodFrom, coursePeriodTo, certificateNumber, dateOfIssue, photo }
+  // ─────────────────────────────────────────────
    async function _render(studentOrRoll) {
     const student = _resolveStudentData(studentOrRoll);
     console.log('_render called with student:', student);
@@ -224,8 +224,8 @@ var CertificateGenerator = (() => {
       console.log('No photo available in student data');
     }
 
-     // Overlay fields
-     _drawField(CONFIG.fields.atcCode,             student.atcCode);
+    // Overlay fields
+    _drawField(CONFIG.fields.atcName,             student.atcName);
      _drawField(CONFIG.fields.studentNameCombined, student.studentNameCombined);
      _drawField(CONFIG.fields.courseName,          student.courseName);
      _drawField(CONFIG.fields.grade,               student.grade);
@@ -263,17 +263,18 @@ var CertificateGenerator = (() => {
        if (typeof window !== 'undefined' && window.StudentDB) {
          const found = window.StudentDB.find(studentOrRoll);
          if (found) {
-           return {
-             studentNameCombined: found.studentName || found.applicantName || '',
-             courseName: found.courseName || '',
-             grade: found.grade || '',
-             courseDuration: found.courseDuration || '',
-             coursePeriodFrom: found.coursePeriodFrom || '',
-             coursePeriodTo: found.coursePeriodTo || '',
-             certificateNumber: found.certificateNumber || '',
-             dateOfIssue: found.dateOfIssue || '',
-             photo: found.photo || ''
-           };
+          return {
+            atcName: found.atcName || found.atcCode || '',
+            studentNameCombined: found.studentName || found.applicantName || '',
+            courseName: found.courseName || '',
+            grade: found.grade || '',
+            courseDuration: found.courseDuration || '',
+            coursePeriodFrom: found.coursePeriodFrom || '',
+            coursePeriodTo: found.coursePeriodTo || '',
+            certificateNumber: found.certificateNumber || '',
+            dateOfIssue: found.dateOfIssue || '',
+            photo: found.photo || ''
+          };
          }
          console.warn('No student found with lookup:', studentOrRoll);
          return { studentNameCombined: studentOrRoll };
@@ -360,15 +361,15 @@ var CertificateGenerator = (() => {
       });
     },
 
-     /**
-      * Get a Blob URL of the certificate (for <img> preview or custom handling).
-      * @param {Object} student
-      * @returns {string} dataURL — base64 data URL for image preview
-      *
-      * Example:
-      *   const url = await CertificateGenerator.preview({ ...studentData });
-      *   document.getElementById('preview').src = url;
-      */
+      /**
+       * Get a Blob URL of the certificate (for <img> preview or custom handling).
+       * @param {Object} student — { atcName, studentNameCombined, courseName, grade, courseDuration, coursePeriodFrom, coursePeriodTo, certificateNumber, dateOfIssue, photo }
+       * @returns {string} dataURL — base64 data URL for image preview
+       *
+       * Example:
+       *   const url = await CertificateGenerator.preview({ ...studentData });
+       *   document.getElementById('preview').src = url;
+       */
      async preview(studentOrRoll) {
        await _render(studentOrRoll);
        return _canvas.toDataURL('image/jpeg', 0.95);
@@ -385,7 +386,7 @@ var CertificateGenerator = (() => {
 
       /**
        * Get raw canvas data URL (e.g. for embedding in <img> directly).
-       * @param {Object} student
+       * @param {Object} student — { atcName, studentNameCombined, courseName, grade, courseDuration, coursePeriodFrom, coursePeriodTo, certificateNumber, dateOfIssue, photo }
        * @returns {string} dataURL
        */
      async getDataURL(student, quality = 0.6) {
@@ -409,8 +410,8 @@ var CertificateGenerator = (() => {
 
       /**
        * Download a single student's certificate as a PDF.
-       * @param {Object} student — { studentNameCombined, courseName, grade, courseDuration, coursePeriodFrom, coursePeriodTo, certificateNumber, dateOfIssue, photo }
-      *
+       * @param {Object} student — { atcName, studentNameCombined, courseName, grade, courseDuration, coursePeriodFrom, coursePeriodTo, certificateNumber, dateOfIssue, photo }
+       *
       * Example:
       *   CertificateGenerator.download({
       *     studentNameCombined: 'Ramesh Kumar S/O Suresh Kumar',
@@ -437,16 +438,16 @@ var CertificateGenerator = (() => {
        }
      },
 
-     /**
-      * Download certificates for ALL students one by one.
-      * @param {Array}    students          — array of student objects
-      * @param {Function} [onProgress]      — optional callback(current, total)
-      *
-      * Example:
-      *   await CertificateGenerator.downloadAll(students, (i, total) => {
-      *     console.log(`${i} of ${total} done`);
-      *   });
-      */
+      /**
+       * Download certificates for ALL students one by one.
+       * @param {Array}    students          — array of student objects { atcName, studentNameCombined, courseName, grade, courseDuration, coursePeriodFrom, coursePeriodTo, certificateNumber, dateOfIssue, photo }
+       * @param {Function} [onProgress]      — optional callback(current, total)
+       *
+       * Example:
+       *   await CertificateGenerator.downloadAll(students, (i, total) => {
+       *     console.log(`${i} of ${total} done`);
+       *   });
+       */
      async downloadAll(students, onProgress) {
        if (!Array.isArray(students) || students.length === 0) {
          console.warn('No students to download');

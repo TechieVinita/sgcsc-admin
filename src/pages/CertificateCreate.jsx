@@ -543,7 +543,7 @@ export default function CertificateCreate() {
         try {
           const studentNameCombined = `${name.trim()} S/O, D/O, W/O ${fatherName.trim()}`;
           const studentData = {
-            atcCode: certificateNumber.trim(),
+            atcName: certificateNumber.trim(),
             studentNameCombined: studentNameCombined,
             courseName: courseName.trim(),
             grade: grade.trim(),

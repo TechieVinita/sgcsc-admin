@@ -11,7 +11,7 @@ const TEMPLATE_TYPES = [
     "trainingCentreName", "applicantName", "atcCode", "atcCode2", "dateOfIssue", "dateOfRenewal"
   ]},
   { key: "studentCertificate", name: "Student Certificate", fields: [
-    "atcCode", "studentNameCombined", "courseName", "grade", "gradeExtra", "courseDuration",
+    "atcName", "studentNameCombined", "courseName", "grade", "gradeExtra", "courseDuration",
     "coursePeriodFrom", "coursePeriodTo", "certificateNumber", "dateOfIssue", "photo"
   ]},
   { key: "marksheet", name: "Marksheet", fields: [
@@ -53,7 +53,7 @@ const FIELD_LABELS = {
   subjectRowHeight: "Subject Row Height (%)",
   trainingCentreName: "Training Centre Name",
   applicantName: "Applicant Name",
-  atcCode: "ATC Code",
+  atcName: "ATC Name",
   atcCode2: "ATC Code 2",
   dateOfRenewal: "Date of Renewal",
   studentNameCombined: "Student Name (Combined)",
@@ -85,7 +85,7 @@ const SAMPLE_DATA = {
     dateOfRenewal: "2025-03-15"
   },
   studentCertificate: {
-    atcCode: "CERT-2024-001",
+    atcName: "CERT-2024-001",
     studentNameCombined: "John Doe S/O Robert Doe",
     courseName: "Certificate in Computer Application",
     grade: "A+",
