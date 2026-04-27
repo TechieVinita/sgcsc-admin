@@ -82,7 +82,7 @@ export default function FeeReceipt() {
       }));
 
       const receiptData = {
-        studentId: selectedStudent._id,
+        studentId: selectedStudent._id || selectedStudent.id,
         courseId: selectedCourse?._id,
         receiptNo: receiptNo.trim(),
         sessionStart: sessionStart,
