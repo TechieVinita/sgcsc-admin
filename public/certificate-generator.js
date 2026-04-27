@@ -25,16 +25,16 @@ var CertificateGenerator = (() => {
         // { x, y } as % of image dimensions. font scales with canvas size.
         // Photo field requires x, y, width, height (all percentages)
         photo:                { x: 20,  y: 25, width: 18, height: 22 },
-        atcName:              { x: 50,  y: 23,  font: '3%', color: '#000000', align: 'center' },
-        studentNameCombined:  { x: 50,  y: 32,  font: '3%', color: '#000000', align: 'center' },
-        courseName:           { x: 50,  y: 40,  font: '2.7%', color: '#000000', align: 'center' },
-        grade:                { x: 50,  y: 48,  font: '3%', color: '#000000', align: 'center' },
-        gradeExtra:           { x: 50,  y: 48,  font: '3%', color: '#000000', align: 'center' },
-        courseDuration:       { x: 50,  y: 56,  font: '2.7%', color: '#000000', align: 'center' },
-        coursePeriodFrom:     { x: 30,  y: 64,  font: '2.3%', color: '#000000', align: 'left' },
-        coursePeriodTo:       { x: 70,  y: 64,  font: '2.3%', color: '#000000', align: 'left' },
-        certificateNumber:    { x: 50,  y: 72,  font: '2.3%', color: '#000000', align: 'center' },
-        dateOfIssue:          { x: 50,  y: 79,  font: '2.3%', color: '#000000', align: 'center' },
+        atcName:              { x: 18,  y: 52.7, font: '60px serif', color: '#000000', align: 'left' },
+        studentNameCombined:  { x: 50,  y: 49,  font: '60px serif', color: '#000000', align: 'center' },
+        courseName:           { x: 50,  y: 58.5, font: '60px serif', color: '#000000', align: 'center' },
+        grade:                { x: 56.5, y: 55.5, font: '50px serif', color: '#000000', align: 'left' },
+        gradeExtra:           { x: 80,  y: 76.3, font: '60px serif', color: '#000000', align: 'left' },
+        courseDuration:       { x: 54,  y: 61.5, font: '60px serif', color: '#000000', align: 'left' },
+        coursePeriodFrom:     { x: 41.5, y: 64.3, font: '55px serif', color: '#000000', align: 'left' },
+        coursePeriodTo:       { x: 61,  y: 64.3, font: '55px serif', color: '#000000', align: 'left' },
+        certificateNumber:    { x: 23,  y: 93,  font: '40px serif', color: '#000000', align: 'left' },
+        dateOfIssue:          { x: 55,  y: 93,  font: '40px serif', color: '#000000', align: 'left' },
       }
    };
 

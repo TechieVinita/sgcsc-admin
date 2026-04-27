@@ -242,16 +242,16 @@ export default function SettingsTemplateConfig() {
       // Set default values for studentCertificate if not present or empty
       if (!initialConfig.studentCertificate || Object.keys(initialConfig.studentCertificate).length === 0) {
         initialConfig.studentCertificate = {
-          atcName: { x: 50, y: 10, font: 'bold 14px serif', color: '#000000', align: 'center' },
-          studentNameCombined: { x: 50, y: 20, font: 'bold 16px serif', color: '#000000', align: 'center' },
-          courseName: { x: 50, y: 30, font: '12px serif', color: '#000000', align: 'center' },
-          grade: { x: 50, y: 40, font: 'bold 12px serif', color: '#000000', align: 'center' },
-          gradeExtra: { x: 50, y: 40, font: 'bold 12px serif', color: '#000000', align: 'center' },
-          courseDuration: { x: 50, y: 50, font: '12px serif', color: '#000000', align: 'center' },
-          coursePeriodFrom: { x: 30, y: 60, font: '10px serif', color: '#000000', align: 'left' },
-          coursePeriodTo: { x: 70, y: 60, font: '10px serif', color: '#000000', align: 'left' },
-          certificateNumber: { x: 50, y: 70, font: '10px serif', color: '#000000', align: 'center' },
-          dateOfIssue: { x: 50, y: 80, font: '10px serif', color: '#000000', align: 'center' },
+          atcName: { x: 18, y: 52.7, font: '60px serif', color: '#000000', align: 'left' },
+          studentNameCombined: { x: 50, y: 49, font: '60px serif', color: '#000000', align: 'center' },
+          courseName: { x: 50, y: 58.5, font: '60px serif', color: '#000000', align: 'center' },
+          grade: { x: 56.5, y: 55.5, font: '50px serif', color: '#000000', align: 'left' },
+          gradeExtra: { x: 80, y: 76.3, font: '60px serif', color: '#000000', align: 'left' },
+          courseDuration: { x: 54, y: 61.5, font: '60px serif', color: '#000000', align: 'left' },
+          coursePeriodFrom: { x: 41.5, y: 64.3, font: '55px serif', color: '#000000', align: 'left' },
+          coursePeriodTo: { x: 61, y: 64.3, font: '55px serif', color: '#000000', align: 'left' },
+          certificateNumber: { x: 23, y: 93, font: '40px serif', color: '#000000', align: 'left' },
+          dateOfIssue: { x: 55, y: 93, font: '40px serif', color: '#000000', align: 'left' },
           photo: { x: 10, y: 10, width: 20, height: 25 }
         };
       }
