@@ -594,6 +594,8 @@ export default function CertificateCreate() {
       setEnrollmentNumber('');
       setName('');
       setFatherName('');
+      setCenterName('');
+      setAtcName('');
       setCourseName('');
       setSessionFrom('');
       setSessionTo('');
@@ -770,6 +772,30 @@ export default function CertificateCreate() {
                   <small className="text-muted">
                     Courses available for the selected student ({filteredCourses.length} found)
                   </small>
+                </div>
+
+                {/* Center Name - New field */}
+                <div className="col-md-6">
+                  <label className="form-label">Center Name</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={centerName}
+                    onChange={(e) => setCenterName(e.target.value)}
+                    placeholder="Center Name"
+                  />
+                </div>
+
+                {/* ATC Name - New field */}
+                <div className="col-md-6">
+                  <label className="form-label">ATC Name</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={atcName}
+                    onChange={(e) => setAtcName(e.target.value)}
+                    placeholder="ATC Name"
+                  />
                 </div>
 
                 <div className="col-md-6">
