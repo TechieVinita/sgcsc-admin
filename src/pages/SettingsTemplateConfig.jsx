@@ -239,8 +239,8 @@ export default function SettingsTemplateConfig() {
       setLoading(true);
       const data = await getCertificateTemplateConfig();
       let initialConfig = data || {};
-      // Set default values for studentCertificate if not present
-      if (!initialConfig.studentCertificate) {
+      // Set default values for studentCertificate if not present or empty
+      if (!initialConfig.studentCertificate || Object.keys(initialConfig.studentCertificate).length === 0) {
         initialConfig.studentCertificate = {
           atcName: { x: 50, y: 10, font: 'bold 14px serif', color: '#000000', align: 'center' },
           studentNameCombined: { x: 50, y: 20, font: 'bold 16px serif', color: '#000000', align: 'center' },
