@@ -105,18 +105,70 @@ export default function CertificateCreate() {
     
     // Wait for certificate generator script to load if not available yet
     if (!window.CertificateGenerator) {
-      console.log('Waiting for CertificateGenerator to load...');
-      await new Promise((resolve, reject) => {
-        const checkLoaded = () => {
-          if (window.CertificateGenerator) {
-            resolve();
+      console.log('CertificateGenerator not found, checking if script is loaded...');
+      const existingScript = document.querySelector('script[src*="certificate-generator.js"]');
+      if (existingScript) {
+        console.log('Script tag exists, waiting for it to execute...');
+        await new Promise((resolve, reject) => {
+          const checkLoaded = () => {
+            if (window.CertificateGenerator) {
+              resolve();
+            } else {
+              setTimeout(checkLoaded, 100);
+            }
+          };
+          setTimeout(() => reject(new Error('CertificateGenerator script failed to load')), 15000);
+          checkLoaded();
+        });
+      } else {
+        console.log('Loading CertificateGenerator script dynamically...');
+        // Script not loaded yet, dynamically load it
+        return new Promise((resolve) => {
+          // Load jspdf if not present
+          if (!window.jspdf) {
+            const jspdfScript = document.createElement('script');
+            jspdfScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+            jspdfScript.onload = () => {
+              // Load certificate-generator
+              const certScript = document.createElement('script');
+              certScript.src = '/certificate-generator.js';
+              certScript.onload = async () => {
+                if (window.CertificateGenerator) {
+                  certificateGenerator = window.CertificateGenerator;
+                  try {
+                    await certificateGenerator.loadTemplate('/student-certificate-template.jpeg');
+                    console.log('Certificate template loaded successfully');
+                  } catch (err) {
+                    console.warn('Certificate template not found. Please upload a template to /public/student-certificate-template.jpeg');
+                  }
+                }
+                resolve(certificateGenerator);
+              };
+              document.body.appendChild(certScript);
+            };
+            document.body.appendChild(jspdfScript);
+          } else if (!window.CertificateGenerator) {
+            // jspdf loaded but certificate-generator not loaded
+            const certScript = document.createElement('script');
+            certScript.src = '/certificate-generator.js';
+            certScript.onload = async () => {
+              if (window.CertificateGenerator) {
+                certificateGenerator = window.CertificateGenerator;
+                try {
+                  await certificateGenerator.loadTemplate('/student-certificate-template.jpeg');
+                  console.log('Certificate template loaded successfully');
+                } catch (err) {
+                  console.warn('Certificate template not found. Please upload a template to /public/student-certificate-template.jpeg');
+                }
+              }
+              resolve(certificateGenerator);
+            };
+            document.body.appendChild(certScript);
           } else {
-            setTimeout(checkLoaded, 100);
+            resolve(window.CertificateGenerator);
           }
-        };
-        setTimeout(() => reject(new Error('CertificateGenerator script failed to load')), 10000);
-        checkLoaded();
-      });
+        });
+      }
     }
 
     // Check if available on window
