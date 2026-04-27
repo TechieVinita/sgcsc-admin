@@ -304,6 +304,12 @@ export default function CertificateCreate() {
         setFilteredCourses([]);
       }
 
+      // Auto-fill basic student details
+      setName(selectedStudent.name || '');
+      setFatherName(selectedStudent.fatherName || '');
+      setCenterName(selectedStudent.center || '');
+      setAtcName(selectedStudent.center || '');
+
       setMessageType('info');
       setMessage(`Student selected. Now choose a course to auto-fill details.`);
     }
