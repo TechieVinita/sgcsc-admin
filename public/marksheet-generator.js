@@ -46,7 +46,7 @@ var MarksheetGenerator = (() => {
 
        // Subject marks will be rendered dynamically
       subjectsStartY:     53,  // Starting Y position for subjects table
-      subjectRowHeight:   2,   // Height of each subject row (increased 5x)
+      subjectRowHeight:   1.5,   // Height of each subject row (increased 5x)
     }
   };
 
