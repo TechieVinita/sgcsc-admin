@@ -153,20 +153,51 @@ var MarksheetGenerator = (() => {
     _drawField(CONFIG.fields.instituteName, marksheet.instituteName);
     _drawField(CONFIG.fields.dateOfIssue, _fmtDate(marksheet.dateOfIssue));
 
-    // Draw subjects table first, then summary below
-    let summaryY = _pct(CONFIG.fields.subjectsStartY, _canvas.height); // fallback
+    // Template has "Total" row at ~y=74% and "Grand Total" row at ~y=77.7% baked in.
+    // Subjects must fit between subjectsStartY (53%) and the Total row (73%).
+    // Dynamically calculate font size and row height based on subject count.
     if (marksheet.subjects && Array.isArray(marksheet.subjects)) {
       const W = _canvas.width, H = _canvas.height;
       const startY = _pct(CONFIG.fields.subjectsStartY, H);
-      const rowHeight = _pct(CONFIG.fields.subjectRowHeight, H);
-      const lineSpacing = _pct(1.8, H); // Spacing between wrapped lines
+      const endY = _pct(73, H); // just before the template's "Total" row
+      const availableHeight = endY - startY;
+
+      // Count total lines needed (subjects with wrapping)
+      _ctx.save();
+      _ctx.font = '100px serif';
+      const maxNameWidth = _pct(25, W);
+      let totalLines = 0;
+      const subjectLines = marksheet.subjects.map(s => {
+        const lines = _wrapText(s.subjectName || '-', maxNameWidth, _ctx);
+        totalLines += Math.max(1, lines.length);
+        return lines;
+      });
+      _ctx.restore();
+
+      // Calculate font size and row height to fit all subjects
+      const maxFontSize = 100;
+      const idealRowPx = availableHeight / totalLines;
+      const fontSize = Math.min(maxFontSize, Math.floor(idealRowPx * 0.85));
+      const fontStr = fontSize + 'px serif';
+      const rowHeight = idealRowPx;
+      const lineSpacing = idealRowPx;
+
+      // Re-calculate wrapping with actual font size
+      _ctx.save();
+      _ctx.font = fontStr;
+      const finalSubjectLines = marksheet.subjects.map(s => {
+        return _wrapText(s.subjectName || '-', maxNameWidth, _ctx);
+      });
+      _ctx.restore();
 
       let currentY = startY;
 
       marksheet.subjects.forEach((subject, index) => {
+        const lines = finalSubjectLines[index];
+
         // Draw subject number
         _ctx.save();
-        _ctx.font = '100px serif';
+        _ctx.font = fontStr;
         _ctx.fillStyle = '#000000';
         _ctx.textAlign = 'left';
         _ctx.fillText(`${index + 1}.`, _pct(10, W), currentY);
@@ -174,36 +205,21 @@ var MarksheetGenerator = (() => {
 
         // Draw subject name (with wrapping)
         _ctx.save();
-        _ctx.font = '100px serif';
+        _ctx.font = fontStr;
         _ctx.fillStyle = '#000000';
         _ctx.textAlign = 'left';
-        const subjectText = subject.subjectName || '-';
-        const maxWidth = _pct(25, W);
-        const lines = _wrapText(subjectText, maxWidth, _ctx);
         lines.forEach((line, i) => {
           _ctx.fillText(line, _pct(15, W), currentY + i * lineSpacing);
         });
         _ctx.restore();
 
-        // Draw marks aligned with the first line of the subject
+        // Draw marks aligned with the first line
         _ctx.save();
-        _ctx.font = '100px serif';
+        _ctx.font = fontStr;
         _ctx.fillStyle = '#000000';
         _ctx.textAlign = 'center';
         _ctx.fillText(`${subject.theoryMarks || 0}`, _pct(55, W), currentY);
-        _ctx.restore();
-
-        _ctx.save();
-        _ctx.font = '100px serif';
-        _ctx.fillStyle = '#000000';
-        _ctx.textAlign = 'center';
         _ctx.fillText(`${subject.practicalMarks || 0}`, _pct(70, W), currentY);
-        _ctx.restore();
-
-        _ctx.save();
-        _ctx.font = '100px serif';
-        _ctx.fillStyle = '#000000';
-        _ctx.textAlign = 'center';
         const theory = Number(subject.theoryMarks || 0);
         const practical = Number(subject.practicalMarks || 0);
         const objective = Number(subject.objectiveMarks || 0);
@@ -211,47 +227,33 @@ var MarksheetGenerator = (() => {
         _ctx.fillText(`${combined}`, _pct(82, W), currentY);
         _ctx.restore();
 
-        // Advance Y position based on lines used (minimum 1 row)
+        // Advance Y position
         const usedLines = Math.max(1, lines.length);
         currentY += usedLines * rowHeight;
       });
-
-      summaryY = currentY;
     }
 
-    // Draw summary fields dynamically below last subject row
+    // Draw summary at the template's FIXED positions (Total row & Grand Total row are printed on template)
     {
       const W = _canvas.width, H = _canvas.height;
-      const sumRowY = summaryY + _pct(1, H);  // small gap after last subject
-      const totalRowY = sumRowY + _pct(3, H); // gap before grand total row
 
-      // Draw sums row (theory, practical, total)
+      // Sums in the "Total" row (fixed on template at ~y=75%)
       const totalTheory = marksheet.subjects ? marksheet.subjects.reduce((sum, s) => sum + (Number(s.theoryMarks || 0)), 0) : 0;
       const totalPractical = marksheet.subjects ? marksheet.subjects.reduce((sum, s) => sum + (Number(s.practicalMarks || 0)), 0) : 0;
       const totalCombined = totalTheory + totalPractical;
 
-      _ctx.save();
-      _ctx.font = '100px serif';
-      _ctx.fillStyle = '#000000';
-      _ctx.textAlign = 'center';
-      _ctx.fillText(String(totalTheory), _pct(55, W), sumRowY);
-      _ctx.fillText(String(totalPractical), _pct(70, W), sumRowY);
-      _ctx.fillText(String(totalCombined), _pct(82, W), sumRowY);
-      _ctx.restore();
+      _drawField(CONFIG.fields.theorySum, String(totalTheory));
+      _drawField(CONFIG.fields.practicalSum, String(totalPractical));
+      _drawField(CONFIG.fields.objectiveSum, String(totalCombined));
 
-      // Draw grand total, grade, percentage on the next row
+      // Grand Total, Grade, Percentage (fixed on template at ~y=77.7%)
       const totalMarks = marksheet.totalCombinedMarks + '/' + marksheet.maxTotalMarks;
       const grade = marksheet.overallGrade || '';
       const totalPercent = marksheet.percentage ? marksheet.percentage.toFixed(1) + '%' : '';
 
-      _ctx.save();
-      _ctx.font = '100px serif';
-      _ctx.fillStyle = '#000000';
-      _ctx.textAlign = 'left';
-      _ctx.fillText(totalMarks, _pct(29, W), totalRowY);
-      _ctx.fillText(grade, _pct(56, W), totalRowY);
-      _ctx.fillText(totalPercent, _pct(80, W), totalRowY);
-      _ctx.restore();
+      _drawField(CONFIG.fields.grandTotal, totalMarks);
+      _drawField(CONFIG.fields.overallGrade, grade);
+      _drawField(CONFIG.fields.totalPercentage, totalPercent);
     }
 
     return _canvas;
