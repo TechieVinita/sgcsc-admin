@@ -1,5 +1,5 @@
 // ╔══════════════════════════════════════════════════════════════╗
-// ║           MARKSHEET GENERATOR — DROP-IN MODULE              ║
+// ║           MARKSHEET GENERATOR — DROP-IN MODULE  v2          ║
 // ║                                                              ║
 // ║  SETUP (do once):                                            ║
 // ║    MarksheetGenerator.loadTemplate('path/to/template.jpg')  ║
