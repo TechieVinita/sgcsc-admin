@@ -153,83 +153,60 @@ var MarksheetGenerator = (() => {
     _drawField(CONFIG.fields.instituteName, marksheet.instituteName);
     _drawField(CONFIG.fields.dateOfIssue, _fmtDate(marksheet.dateOfIssue));
 
-    // Template has "Total" row at ~y=74% and "Grand Total" row at ~y=77.7% baked in.
-    // Subjects must fit between subjectsStartY (53%) and the Total row (73%).
-    // Dynamically calculate font size and row height based on subject count.
+    // Draw subjects table
+    // Template has "Total" row at ~y=74% and "Grand Total" at ~y=77.7%.
+    // Subjects must fit between subjectsStartY (53%) and 73%.
     if (marksheet.subjects && Array.isArray(marksheet.subjects)) {
       const W = _canvas.width, H = _canvas.height;
       const startY = _pct(CONFIG.fields.subjectsStartY, H);
-      const endY = _pct(73, H); // just before the template's "Total" row
+      const endY = _pct(73, H);
       const availableHeight = endY - startY;
+      const font = '100px serif';
 
-      // Count total lines needed (subjects with wrapping)
+      // First pass: count total lines with wrapping at 100px
       _ctx.save();
-      _ctx.font = '100px serif';
+      _ctx.font = font;
       const maxNameWidth = _pct(25, W);
-      let totalLines = 0;
-      const subjectLines = marksheet.subjects.map(s => {
-        const lines = _wrapText(s.subjectName || '-', maxNameWidth, _ctx);
-        totalLines += Math.max(1, lines.length);
-        return lines;
-      });
+      const allLines = marksheet.subjects.map(s =>
+        _wrapText(s.subjectName || '-', maxNameWidth, _ctx)
+      );
+      let totalLines = allLines.reduce((sum, l) => sum + Math.max(1, l.length), 0);
       _ctx.restore();
 
-      // Calculate font size and row height to fit all subjects
-      const maxFontSize = 100;
-      const idealRowPx = availableHeight / totalLines;
-      const fontSize = Math.min(maxFontSize, Math.floor(idealRowPx * 0.85));
-      const fontStr = fontSize + 'px serif';
-      const rowHeight = idealRowPx;
-      const lineSpacing = idealRowPx;
-
-      // Re-calculate wrapping with actual font size
-      _ctx.save();
-      _ctx.font = fontStr;
-      const finalSubjectLines = marksheet.subjects.map(s => {
-        return _wrapText(s.subjectName || '-', maxNameWidth, _ctx);
-      });
-      _ctx.restore();
-
+      // Row height = available space / total lines (evenly spaced)
+      const rowHeight = availableHeight / totalLines;
       let currentY = startY;
 
       marksheet.subjects.forEach((subject, index) => {
-        const lines = finalSubjectLines[index];
+        const lines = allLines[index];
 
-        // Draw subject number
         _ctx.save();
-        _ctx.font = fontStr;
+        _ctx.font = font;
         _ctx.fillStyle = '#000000';
         _ctx.textAlign = 'left';
         _ctx.fillText(`${index + 1}.`, _pct(10, W), currentY);
         _ctx.restore();
 
-        // Draw subject name (with wrapping)
         _ctx.save();
-        _ctx.font = fontStr;
+        _ctx.font = font;
         _ctx.fillStyle = '#000000';
         _ctx.textAlign = 'left';
         lines.forEach((line, i) => {
-          _ctx.fillText(line, _pct(15, W), currentY + i * lineSpacing);
+          _ctx.fillText(line, _pct(15, W), currentY + i * rowHeight);
         });
         _ctx.restore();
 
-        // Draw marks aligned with the first line
         _ctx.save();
-        _ctx.font = fontStr;
+        _ctx.font = font;
         _ctx.fillStyle = '#000000';
         _ctx.textAlign = 'center';
         _ctx.fillText(`${subject.theoryMarks || 0}`, _pct(55, W), currentY);
         _ctx.fillText(`${subject.practicalMarks || 0}`, _pct(70, W), currentY);
-        const theory = Number(subject.theoryMarks || 0);
-        const practical = Number(subject.practicalMarks || 0);
-        const objective = Number(subject.objectiveMarks || 0);
-        const combined = theory + practical + objective;
+        const combined = Number(subject.theoryMarks || 0) + Number(subject.practicalMarks || 0) + Number(subject.objectiveMarks || 0);
         _ctx.fillText(`${combined}`, _pct(82, W), currentY);
         _ctx.restore();
 
-        // Advance Y position
-        const usedLines = Math.max(1, lines.length);
-        currentY += usedLines * rowHeight;
+        currentY += Math.max(1, lines.length) * rowHeight;
       });
     }
 
@@ -435,17 +412,9 @@ var MarksheetGenerator = (() => {
      * @param {string} apiBaseUrl — base URL for API (default '/api/settings')
      */
     async fetchConfigFromAPI(apiBaseUrl = '/api/settings') {
-      try {
-        const response = await fetch(`${apiBaseUrl}/certificate-template`);
-        const data = await response.json();
-        if (data.success && data.data && data.data.marksheet) {
-          CONFIG.fields = { ...CONFIG.fields, ...data.data.marksheet };
-          console.log('Template config loaded from API:', CONFIG.fields);
-          return true;
-        }
-      } catch (err) {
-        console.warn('Failed to fetch template config from API:', err);
-      }
+      // API config is currently not calibrated for the marksheet template.
+      // Skip loading to avoid overriding correct hardcoded positions.
+      console.log('Marksheet: using built-in field positions (API config skipped)');
       return false;
     }
   };
