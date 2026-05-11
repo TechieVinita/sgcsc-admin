@@ -499,17 +499,9 @@ var CertificateGenerator = (() => {
       * @param {string} apiBaseUrl — base URL for API (default '/api/settings')
       */
      async fetchConfigFromAPI(apiBaseUrl = '/api/settings') {
-       try {
-         const response = await fetch(`${apiBaseUrl}/certificate-template`);
-         const data = await response.json();
-         if (data.success && data.data && data.data.studentCertificate) {
-           CONFIG.fields = { ...CONFIG.fields, ...data.data.studentCertificate };
-           console.log('Template config loaded from API:', CONFIG.fields);
-           return true;
-         }
-       } catch (err) {
-         console.warn('Failed to fetch template config from API:', err);
-       }
+       // API config is currently not calibrated for the certificate template.
+       // Skip loading to avoid overriding correct hardcoded positions.
+       console.log('Certificate: using built-in field positions (API config skipped)');
        return false;
      },
 
