@@ -28,17 +28,17 @@ var AdmitCardGenerator = (() => {
     fields: {
       // { x, y } as % of image dimensions. font is px at full resolution.
       photo:           { x: 74,  y: 25, width: 15, height: 15 },
-      rollNumber:       { x: 30,  y: 27.5, font: '120px serif',     color: '#000000', align: 'left' },
-      studentName:      { x: 30,  y: 29.7, font: '120px serif',     color: '#000000', align: 'left' },
-      fatherName:       { x: 30,  y: 32, font: '120px serif',       color: '#000000', align: 'left' },
-      motherName:       { x: 30,  y: 34.3, font: '120px serif',     color: '#000000', align: 'left' },
-      courseName:       { x: 23,  y: 40.6, font: '120px serif',     color: '#000000', align: 'left' },
-      instituteName:    { x: 23,  y: 47.5, font: '120px serif',     color: '#000000', align: 'left' },
-      examCenterAddress:{ x: 28,  y: 52.5, font: '120px serif',     color: '#000000', align: 'left' },
-      examDate:         { x: 43,  y: 57.8, font: '120px serif',     color: '#000000', align: 'left' },
-      examTime:         { x: 43,  y: 60, font: '120px serif',       color: '#000000', align: 'left' },
-      reportingTime:    { x: 43,  y: 62.2, font: '120px serif',     color: '#000000', align: 'left' },
-      examDuration:     { x: 43,  y: 64.3, font: '120px serif',     color: '#000000', align: 'left' },
+      rollNumber:       { x: 40,  y: 27.5, font: '120px serif',     color: '#000000', align: 'left' },
+      studentName:      { x: 40,  y: 29.7, font: '120px serif',     color: '#000000', align: 'left' },
+      fatherName:       { x: 40,  y: 32, font: '120px serif',       color: '#000000', align: 'left' },
+      motherName:       { x: 40,  y: 34.3, font: '120px serif',     color: '#000000', align: 'left' },
+      courseName:       { x: 30,  y: 40.6, font: '120px serif',     color: '#000000', align: 'left' },
+      instituteName:    { x: 30,  y: 47.5, font: '120px serif',     color: '#000000', align: 'left' },
+      examCenterAddress:{ x: 33,  y: 52.5, font: '120px serif',     color: '#000000', align: 'left' },
+      examDate:         { x: 47,  y: 57.8, font: '120px serif',     color: '#000000', align: 'left' },
+      examTime:         { x: 47,  y: 60, font: '120px serif',       color: '#000000', align: 'left' },
+      reportingTime:    { x: 47,  y: 62.2, font: '120px serif',     color: '#000000', align: 'left' },
+      examDuration:     { x: 47,  y: 64.3, font: '120px serif',     color: '#000000', align: 'left' },
     }
   };
 
